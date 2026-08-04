@@ -27,6 +27,11 @@
   header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
   main{max-width:680px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+
+  .progress-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:28px;}
+  .progress-top{display:flex; justify-content:space-between; font-family:'Fraunces', serif; font-weight:600; font-size:0.9rem; color:var(--forest); margin-bottom:10px;}
+  .progress-track{background:var(--paper); border-radius:20px; height:10px; overflow:hidden;}
+  .progress-fill{background:linear-gradient(90deg, var(--brass-light), var(--pop)); height:100%; width:0%; transition:width 0.3s ease; border-radius:20px;}
   .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin:24px 0 12px; display:flex; align-items:center; gap:8px;}
   .section-label:first-of-type{margin-top:0;}
   .count{font-family:'Inter', sans-serif; font-size:0.72rem; font-weight:700; color:var(--muted); background:var(--card); border:1px solid var(--line); padding:2px 8px; border-radius:10px;}
@@ -59,7 +64,15 @@
   <p>Every placeholder still waiting for real content</p>
 </header>
 <main>
-  <div class="notice">This is an example page with a starting list pulled from everything built so far — tick things off as they're done, and add new ones as they come up. Unticked state resets each visit since there's no backend; treat it as a working reference, not a saved tracker.</div>
+  <div class="notice">This is an example page with a starting list pulled from everything built so far — tick things off as they're done, and add new ones as they come up. Progress is now saved on this device, so it'll still be here next time you visit.</div>
+
+  <div class="progress-card">
+    <div class="progress-top">
+      <span id="progress-label">0 of 23 done</span>
+      <span id="progress-percent">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
 
   <div class="section-label">Public Site <span class="count">8</span></div>
   <div class="item" onclick="toggle(this)"><input type="checkbox"><div class="item-text">Add Bookings and Secretary contact emails, if wanted<span class="where">Hours &amp; Contact</span></div></div>
@@ -94,11 +107,50 @@
 
 </main>
 <script>
+  const STORAGE_KEY = 'siteTodosChecked';
+
+  function getCheckedSet(){
+    return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+  }
+  function saveCheckedSet(set){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
+  }
+
+  function updateProgress(){
+    const items = document.querySelectorAll('.item');
+    const total = items.length;
+    const done = document.querySelectorAll('.item.checked').length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('progress-label').textContent = `${done} of ${total} done`;
+    document.getElementById('progress-percent').textContent = `${pct}%`;
+    document.getElementById('progress-fill').style.width = `${pct}%`;
+  }
+
   function toggle(el){
     const box = el.querySelector('input[type="checkbox"]');
     box.checked = !box.checked;
     el.classList.toggle('checked', box.checked);
+
+    const items = [...document.querySelectorAll('.item')];
+    const index = items.indexOf(el);
+    const checkedSet = getCheckedSet();
+    if(box.checked) checkedSet.add(index); else checkedSet.delete(index);
+    saveCheckedSet(checkedSet);
+    updateProgress();
   }
+
+  // Restore saved progress on load
+  (function restoreProgress(){
+    const items = [...document.querySelectorAll('.item')];
+    const checkedSet = getCheckedSet();
+    items.forEach((el, index) => {
+      if(checkedSet.has(index)){
+        el.querySelector('input[type="checkbox"]').checked = true;
+        el.classList.add('checked');
+      }
+    });
+    updateProgress();
+  })();
 </script>
 <script>
   const themeToggle = document.getElementById('theme-toggle');
