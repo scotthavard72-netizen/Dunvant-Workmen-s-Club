@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="referrer" content="no-referrer-when-downgrade">
 <meta name="robots" content="noindex, nofollow">
 <title>Publish File Update — Dunvant WMC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +24,7 @@
     border-radius:50%; width:38px; height:38px;
     display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
   }
-  #offline-banner{display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:var(--brass); color:#fff;}
+  #offline-banner{display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:#8a2f2f; color:#fff;}
   main{max-width:760px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
   [data-theme="dark"] .notice{background:#2a2318;}
@@ -50,18 +49,15 @@
     padding:14px 16px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink);
     resize:vertical; line-height:1.6;
   }
-  .status{font-size:0.85rem; margin-top:10px; color:var(--muted);} 
+  .status{font-size:0.85rem; margin-top:10px; color:var(--muted);}
   .status.success{color:#3d8f6f; font-weight:600;}
   .status.error{color:#c25a4d; font-weight:600;}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
-  /* dialog styling */
-  dialog{border:none; border-radius:8px; padding:18px; max-width:520px;}
-  dialog::backdrop{background:rgba(0,0,0,0.4);} 
 </style>
 </head>
 <body>
-<div id="offline-banner" role="status" aria-hidden="true">📡 You're offline — Fetch and Publish won't work until you're back online.</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false"><span id="theme-icon">☀️</span></button>
+<div id="offline-banner">📡 You're offline — Fetch and Publish won't work until you're back online.</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
   <span class="eyebrow">Site Admin</span>
@@ -69,57 +65,170 @@
   <p>Update any file on the site directly — no manual GitHub editing needed</p>
 </header>
 <main>
-  <div class="notice">Works for any file in the repo, not just staff logins. Fetch pulls the current content so you're editing the real thing, not overwriting blind. Consider using a short-lived token or a server-side proxy for production.</div>
+  <div class="notice">Works for any file in the repo, not just staff logins. Fetch pulls the current content so you're editing the real thing, not overwriting blind. Same GitHub connection as Manage Staff Logins and Weekly Rota Builder — set it up once, it's remembered everywhere.</div>
 
   <div class="section-label">GitHub Connection</div>
   <div class="github-config">
     <div class="config-row">
-      <label for="gh-owner">GitHub Username</label>
+      <label>GitHub Username</label>
       <input type="text" id="gh-owner" placeholder="e.g. scotthavard72-netizen">
     </div>
     <div class="config-row">
-      <label for="gh-repo">Repository Name</label>
+      <label>Repository Name</label>
       <input type="text" id="gh-repo" placeholder="e.g. Dunvant-Workmen-s-Club">
     </div>
     <div class="config-row">
-      <label for="gh-token">Personal Access Token</label>
+      <label>Personal Access Token</label>
       <input type="password" id="gh-token" placeholder="ghp_... or github_pat_...">
-      <div class="config-hint">Do NOT store long-lived tokens in localStorage. This page will not persist your token by default; you may optionally remember it for this browser session only.</div>
-      <label style="font-size:0.85rem; margin-top:6px; display:flex; gap:8px; align-items:center;"><input type="checkbox" id="remember-token" /> Remember token for this session</label>
     </div>
     <p class="config-hint">Needs "Contents: Read and write" permission on this repo. See Manage Staff Logins for the full token setup steps if you haven't done this yet.</p>
   </div>
 
   <div class="section-label">File</div>
   <div class="config-row">
-    <label for="file-path">File path (exactly as it appears in the repo)</label>
+    <label>File path (exactly as it appears in the repo)</label>
     <input type="text" id="file-path" placeholder="e.g. club-website.html or manage-staff-logins.html">
   </div>
 
   <div class="btn-row">
-    <button type="button" id="fetch-btn" class="btn btn-fetch">⬇️ Fetch Current Content</button>
+    <button class="btn btn-fetch" onclick="fetchFile()">⬇️ Fetch Current Content</button>
   </div>
 
-  <textarea id="file-content" placeholder="Fetched content will appear here — or paste new content directly if you already have it." aria-label="File content"></textarea>
+  <textarea id="file-content" placeholder="Fetched content will appear here — or paste new content directly if you already have it."></textarea>
 
   <div class="btn-row" style="margin-top:14px;">
-    <button type="button" id="publish-btn" class="btn btn-publish">🚀 Publish This File</button>
+    <button class="btn btn-publish" onclick="publishFile()">🚀 Publish This File</button>
   </div>
-  <p class="status" id="publish-status" aria-live="polite"></p>
+  <p class="status" id="publish-status"></p>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
+<script>
+  let currentSha = null;
 
-<!-- Accessible confirm dialog to replace window.confirm -->
-<dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-desc">
-  <h3 id="confirm-title">Confirm publish</h3>
-  <p id="confirm-desc">Are you sure you want to publish changes to the file? This will overwrite the file on the default branch.</p>
-  <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
-    <button id="confirm-cancel" type="button" class="btn">Cancel</button>
-    <button id="confirm-ok" type="button" class="btn btn-publish">Yes, publish</button>
-  </div>
-</dialog>
+  const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
+  if(saved){
+    document.getElementById('gh-owner').value = saved.owner || '';
+    document.getElementById('gh-repo').value = saved.repo || '';
+    document.getElementById('gh-token').value = saved.token || '';
+  }
 
-<script src="publish-file-update.js" defer></script>
+  function getConfig(){
+    return {
+      owner: document.getElementById('gh-owner').value.trim(),
+      repo: document.getElementById('gh-repo').value.trim(),
+      token: document.getElementById('gh-token').value.trim(),
+      path: document.getElementById('file-path').value.trim().replace(/^\//, '')
+    };
+  }
+
+  async function fetchFile(){
+    const { owner, repo, token, path } = getConfig();
+    const statusEl = document.getElementById('publish-status');
+    if(!owner || !repo || !token || !path){
+      statusEl.textContent = 'Fill in your GitHub username, repository name, token, and the file path first.';
+      statusEl.className = 'status error';
+      return;
+    }
+    statusEl.textContent = 'Fetching…';
+    statusEl.className = 'status';
+    try{
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+      const res = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
+      if(!res.ok) throw new Error(`Couldn't fetch that file (${res.status}). Check the path is exactly right, including case.`);
+      const data = await res.json();
+      currentSha = data.sha;
+      document.getElementById('file-content').value = decodeURIComponent(escape(atob(data.content)));
+      statusEl.textContent = '✓ Loaded — edit below, then Publish when ready.';
+      statusEl.className = 'status success';
+    } catch(err){
+      statusEl.textContent = err.message;
+      statusEl.className = 'status error';
+    }
+  }
+
+  async function publishFile(){
+    const { owner, repo, token, path } = getConfig();
+    const statusEl = document.getElementById('publish-status');
+    const newContent = document.getElementById('file-content').value;
+
+    if(!owner || !repo || !token || !path){
+      statusEl.textContent = 'Fill in your GitHub username, repository name, token, and the file path first.';
+      statusEl.className = 'status error';
+      return;
+    }
+    if(!newContent.trim()){
+      statusEl.textContent = "The content box is empty — that would wipe the file. Fetch first, or paste content in.";
+      statusEl.className = 'status error';
+      return;
+    }
+    if(!confirm(`Publish changes to "${path}"? This overwrites the live file immediately.`)) return;
+
+    statusEl.textContent = 'Publishing…';
+    statusEl.className = 'status';
+    try{
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+      let sha = currentSha;
+      if(!sha){
+        const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
+        if(getRes.ok){
+          const data = await getRes.json();
+          sha = data.sha;
+        }
+      }
+
+      const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
+      const body = {
+        message: `Update ${path} — by ${loggedInName}`,
+        content: btoa(unescape(encodeURIComponent(newContent)))
+      };
+      if(sha) body.sha = sha;
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if(!putRes.ok) throw new Error(`Publish failed (${putRes.status}). Check the token has "repo" write access, and that the file wasn't changed elsewhere since you fetched it.`);
+
+      currentSha = (await putRes.json()).content.sha;
+      statusEl.textContent = '✓ Published — live on the site within a couple of minutes.';
+      statusEl.className = 'status success';
+    } catch(err){
+      statusEl.textContent = err.message;
+      statusEl.className = 'status error';
+    }
+  }
+
+  function updateOnlineStatus(){
+    document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'flex';
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
 </body>
 </html>
