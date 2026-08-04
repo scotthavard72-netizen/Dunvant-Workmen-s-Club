@@ -52,6 +52,13 @@
     background:var(--paper); color:var(--forest); border:1px solid var(--line);
     border-radius:8px; padding:7px 14px; cursor:pointer; margin-top:8px;
   }
+  .maintenance-btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  .maintenance-btn{
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    border-radius:8px; padding:9px 14px; cursor:pointer; border:none;
+  }
+  .maintenance-btn.on{background:#8a2f2f; color:#fff;}
+  .maintenance-btn.off{background:#3d8f6f; color:#fff;}
   #deploy-status.status-live{color:#3d8f6f; font-weight:600;}
   #deploy-status.status-building{color:var(--brass); font-weight:600;}
   #deploy-status.status-error{color:#c25a4d; font-weight:600;}
@@ -131,6 +138,16 @@
     <button class="deploy-refresh-btn" onclick="checkDeployStatus()">🔄 Check Again</button>
   </div>
 
+  <div class="activity-widget">
+    <div class="activity-header">Public Site Maintenance Mode</div>
+    <p class="activity-empty" id="maintenance-status-text">Checking…</p>
+    <div class="maintenance-btn-row">
+      <button class="maintenance-btn on" onclick="toggleMaintenanceMode(true)">🔴 Turn ON (close public site)</button>
+      <button class="maintenance-btn off" onclick="toggleMaintenanceMode(false)">🟢 Turn OFF (reopen public site)</button>
+    </div>
+    <p class="activity-empty" style="margin-top:6px; font-size:0.72rem;">Only affects the public site — Staff Area and all internal tools stay working either way. This link always previews the real site regardless: <a href="club-website.html?preview=1" target="_blank" rel="noopener">club-website.html?preview=1</a></p>
+  </div>
+
   <input type="text" class="dash-search" id="dash-search" placeholder="Search everything…" oninput="filterDashboard(this.value)">
 
   <div class="dash-tabs" id="dash-tabs">
@@ -156,6 +173,7 @@
       <a href="overall-changelog.html" target="_blank" rel="noopener">Overall Changelog<small>The big picture, in plain English</small></a>
       <a href="backup-reminder.html" target="_blank" rel="noopener">Backup Reminder<small>Keep a fresh copy somewhere safe</small></a>
       <a href="hosting-status.html" target="_blank" rel="noopener">Domain / Hosting Status<small>Where the site actually lives</small></a>
+      <a href="site-health-check.html" target="_blank" rel="noopener">Site Health Check<small>Scans for broken or wrong-folder links</small></a>
       <a href="https://forms.cloud.microsoft/r/xPbfry03VW" target="_blank" rel="noopener">Booking Form Responses<small>Function room submissions</small></a>
       <a href="shift-cover-form-responses.html" target="_blank" rel="noopener">Shift Cover Form Responses<small>Routine cover request submissions</small></a>
       <a href="https://outlook.live.com/owa/calendar/bb8f79de-cbbe-4d7b-8e7f-2123ebde7711/c726ef94-949e-4889-9aa2-39f3f93837b8/cid-FC69B5B067121F85/index.html" target="_blank" rel="noopener">Outlook Rota Calendar<small>Add, edit, or remove shifts</small></a>
@@ -299,6 +317,65 @@
     }
   }
   checkDeployStatus();
+
+  async function checkMaintenanceStatus(){
+    const textEl = document.getElementById('maintenance-status-text');
+    try{
+      const res = await fetch('maintenance-status.json', { cache: 'no-store' });
+      if(!res.ok) throw new Error();
+      const status = await res.json();
+      textEl.textContent = status.active
+        ? `🔴 Currently CLOSED to the public${status.lastChanged ? ' — since ' + status.lastChanged : ''}`
+        : '🟢 Currently open to the public as normal';
+    } catch(e){
+      textEl.textContent = "Couldn't check right now.";
+    }
+  }
+  checkMaintenanceStatus();
+
+  async function toggleMaintenanceMode(turnOn){
+    const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
+    const textEl = document.getElementById('maintenance-status-text');
+    if(!saved || !saved.owner || !saved.repo || !saved.token){
+      alert('Set up your GitHub connection (with a token) in Manage Staff Logins first.');
+      return;
+    }
+    const action = turnOn ? 'close the public site to visitors' : 'reopen the public site';
+    if(!confirm(`Are you sure you want to ${action}? This takes effect within a couple of minutes.`)) return;
+
+    textEl.textContent = 'Updating…';
+    try{
+      const apiUrl = `https://api.github.com/repos/${saved.owner}/${saved.repo}/contents/maintenance-status.json`;
+      const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${saved.token}` } });
+      if(!getRes.ok) throw new Error(`Couldn't fetch maintenance-status.json (${getRes.status}).`);
+      const fileData = await getRes.json();
+
+      const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
+      const newStatus = {
+        active: turnOn,
+        message: "We're making a few updates behind the scenes — back shortly.",
+        lastChanged: new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+      };
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: { Authorization: `token ${saved.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `${turnOn ? 'Close' : 'Reopen'} public site — by ${loggedInName}`,
+          content: btoa(JSON.stringify(newStatus, null, 2)),
+          sha: fileData.sha
+        })
+      });
+      if(!putRes.ok) throw new Error(`Update failed (${putRes.status}). Check the token has "repo" write access.`);
+
+      textEl.textContent = turnOn
+        ? '🔴 Closing now — takes effect within a couple of minutes.'
+        : '🟢 Reopening now — takes effect within a couple of minutes.';
+      setTimeout(checkMaintenanceStatus, 8000);
+    } catch(err){
+      textEl.textContent = err.message;
+    }
+  }
 
   function logoutFromDashboard(){
     localStorage.removeItem('staffUser');
