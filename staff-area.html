@@ -219,6 +219,10 @@
 </div>
 
 <script>
+  // Set to true right before any redirect we trigger ourselves, so the
+  // sign-off-on-close listener further down doesn't treat it as a real close.
+  let intentionalNavigation = false;
+
   // ── Staff login list ──
   // Site Admin: add, remove, or edit people here. Each person needs a unique
   // username, a password, their display name, and a list of roles
@@ -386,6 +390,7 @@
     // Site Admin's dashboard already covers every role and tool — skip the in-page
     // menu entirely and go straight there, rather than making it one more tap.
     if(user.roles.includes('admin')){
+      intentionalNavigation = true;
       window.location.href = 'full-admin-dashboard.html';
       return;
     }
@@ -444,7 +449,7 @@
       const items = roleData.groups ? roleData.groups.flatMap(g => g.items) : roleData.items;
       items.forEach(([href, title, , badge]) => {
         if(badge){
-          chips.push(`<a href="${href}" class="summary-chip">${title} <span class="num">${badge}</span></a>`);
+          chips.push(`<a href="${href}" class="summary-chip" target="_blank" rel="noopener">${title} <span class="num">${badge}</span></a>`);
         }
       });
     });
@@ -452,9 +457,10 @@
   }
 
   function renderMenuItem([href, title, desc, badge]){
-    const external = href.startsWith('http');
+    // Every tile opens in its own new tab now, so the menu itself stays put in the background
+    const opensNewTab = !href.startsWith('mailto:') && !href.startsWith('#');
     const badgeHtml = badge ? `<span class="item-badge">${badge}</span>` : '';
-    return `<a href="${href}"${external ? ' target="_blank" rel="noopener"' : ''}><span class="item-title-row">${title}${badgeHtml}</span><small>${desc}</small></a>`;
+    return `<a href="${href}"${opensNewTab ? ' target="_blank" rel="noopener"' : ''}><span class="item-title-row">${title}${badgeHtml}</span><small>${desc}</small></a>`;
   }
 
   function renderItems(roleKey){
@@ -529,12 +535,24 @@
     if(e.key === 'Enter') attemptLogin();
   });
 
-  // Stay signed in on this device until Log Out is tapped
+  // Stay signed in on this device until Log Out is tapped, OR until the tab/browser actually closes
   const savedUsername = localStorage.getItem('staffUser');
   if(savedUsername){
     const user = STAFF_USERS.find(u => u.username === savedUsername);
     if(user) renderMenu(user);
-  }  // Dark mode toggle
+  }
+
+  // Sign off automatically when this tab or the browser closes.
+  // Doesn't fire for our own redirects (like Site Admin → Dashboard) — only real closes.
+  window.addEventListener('pagehide', () => {
+    if(intentionalNavigation) return;
+    localStorage.removeItem('staffUser');
+    localStorage.removeItem('staffUserName');
+    localStorage.removeItem('staffUserRoles');
+    if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+  });
+
+  // Dark mode toggle
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
