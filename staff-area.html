@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Staff Area — Dunvant WMC</title>
+<link rel="manifest" href="staff-manifest.json">
+<meta name="theme-color" content="#2c3f38">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dunvant Staff">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='34' fill='%232c3f38'/%3E%3Ctext x='96' y='132' font-family='Georgia,serif' font-size='112' font-weight='700' fill='%23e0b56a' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#181614; --paper:#faf7f1; --card:#ffffff; --line:#e8e0d2; --muted:#8a7f6b;
+    --brass:#b8873f; --brass-light:#e0b56a; --forest:#2c3f38;
+  --pop:#ff7a45;
+  }
+  [data-theme="dark"]{
+    --ink:#f0ece2; --paper:#161412; --card:#211e1a; --line:#3a352c; --muted:#a89c85;
+    --brass:#d4a45c; --brass-light:#e8c584; --forest:#4a6b5f;
+  --pop:#ff9166;
+  }
+  body{transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(ellipse at top, rgba(184,135,63,0.16), transparent 60%),
+      linear-gradient(160deg, #181614 0%, #241f1c 55%, #1a2620 100%);
+    color:var(--ink); font-family:'Inter', sans-serif; padding:20px; -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Fraunces', serif;}
+  .card{max-width:420px; width:100%; text-align:center;}
+
+  .status-banner{
+    display:none; align-items:center; justify-content:center; gap:14px;
+    padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600;
+    text-align:center; position:sticky; top:0; z-index:300;
+  }
+  .status-banner.offline-style{background:#8a2f2f; color:#fff;}
+  .status-banner.update-style{background:var(--brass); color:#181614;}
+  .status-banner button{
+    font-family:'Inter', sans-serif; font-weight:700; font-size:0.78rem;
+    background:#181614; color:#fff; border:none; border-radius:6px;
+    padding:6px 14px; cursor:pointer;
+  }
+
+  .eyebrow{
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    font-size:0.7rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--brass-light); margin-bottom:14px;
+  }
+  h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.7rem; color:#fff; margin-bottom:8px;}
+  .sub{font-size:0.9rem; color:rgba(255,255,255,0.6); margin-bottom:30px;}
+
+  input[type="text"], input[type="password"]{
+    width:100%; font-family:'Inter', sans-serif; font-size:1rem;
+    padding:15px 18px; border:1px solid rgba(255,255,255,0.15); border-radius:8px;
+    margin-bottom:14px; background:rgba(255,255,255,0.06); color:#fff;
+  }
+  input::placeholder{color:rgba(255,255,255,0.4);}
+  input:focus{outline:none; border-color:var(--brass);}
+  button.enter{
+    width:100%; font-family:'Inter', sans-serif; font-weight:600; font-size:0.95rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;
+    border:none; padding:15px 16px; border-radius:8px; cursor:pointer; transition:transform 0.15s ease;
+  }
+  button.enter:hover{transform:translateY(-2px);}
+  .error{font-size:0.8rem; color:#e08a7d; margin-top:12px; display:none;}
+
+  .menu a{
+    display:block; text-decoration:none; background:var(--card); color:var(--ink);
+    font-weight:600; font-size:0.95rem; padding:18px 20px; border-radius:10px;
+    margin-bottom:12px; border:1px solid var(--line);
+    transition:transform 0.2s ease, border-color 0.2s ease; text-align:left;
+  }
+  .menu a:hover{transform:translateY(-2px); border-color:var(--brass);}
+  .menu a small{display:block; font-weight:400; font-size:0.78rem; color:var(--muted); margin-top:3px;}
+  .item-title-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .item-badge{
+    font-family:'Inter', sans-serif; font-size:0.72rem; font-weight:700;
+    background:var(--pop); color:#fff; border-radius:20px;
+    padding:2px 9px; flex-shrink:0;
+  }
+  .menu-group-label{
+    font-family:'Fraunces', serif; font-size:0.85rem; font-weight:600;
+    color:var(--brass-light); text-transform:uppercase; letter-spacing:0.06em;
+    margin:20px 0 10px; text-align:left;
+  }
+  .menu-group-label:first-child{margin-top:0;}
+
+  .tabs{
+    display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;
+  }
+  .tab-btn{
+    font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600;
+    background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.65);
+    border:1px solid rgba(255,255,255,0.15); border-radius:20px;
+    padding:8px 16px; cursor:pointer; transition:all 0.15s ease;
+  }
+  .tab-btn:hover{border-color:var(--brass-light); color:#fff;}
+  .tab-btn.active{
+    background:linear-gradient(135deg, var(--brass-light), var(--brass));
+    color:#181614; border-color:transparent;
+  }
+  .note{font-size:0.72rem; color:rgba(255,255,255,0.45); margin-top:20px;}
+
+  .welcome-row{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px; text-align:left;
+  }
+  .welcome-row div{display:flex; flex-direction:column;}
+  .welcome-name{font-family:'Fraunces', serif; font-size:1.3rem; font-weight:600; color:#fff;}
+  .welcome-role{font-size:0.78rem; color:var(--brass-light); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px;}
+  .logout-btn{
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);
+    padding:8px 14px; border-radius:20px; cursor:pointer;
+  }
+  .logout-btn:hover{border-color:var(--brass);}
+
+  .summary-bar{
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;
+  }
+  .summary-chip{
+    display:flex; align-items:center; gap:7px;
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    padding:8px 14px; font-size:0.8rem; font-weight:600; color:var(--ink);
+    text-decoration:none; cursor:pointer;
+  }
+  .summary-chip:hover{border-color:var(--brass);}
+  .summary-chip .num{
+    background:var(--pop); color:#fff; font-size:0.72rem; font-weight:700;
+    border-radius:10px; padding:1px 7px;
+  }
+
+  .quick-search{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.88rem;
+    padding:11px 14px; border:1px solid rgba(255,255,255,0.15); border-radius:8px;
+    margin-bottom:16px; background:rgba(255,255,255,0.06); color:#fff;
+  }
+  .quick-search::placeholder{color:rgba(255,255,255,0.4);}
+  .quick-search:focus{outline:none; border-color:var(--brass);}
+  .menu a.hidden, .menu-group-label.hidden{display:none;}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+</style>
+</head>
+<body>
+
+<div class="status-banner offline-style" id="offline-banner">
+  📡 You're offline — viewing cached pages. Submitting forms, saving, or publishing won't work until you're back online.
+</div>
+<div class="status-banner update-style" id="update-banner">
+  <span>🔄 A new version is available.</span>
+  <button onclick="reloadForUpdate()">Refresh</button>
+</div>
+
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+
+<div class="card">
+
+  <!-- Screen: login -->
+  <div class="screen active" id="screen-login">
+    <span class="eyebrow">Restricted access</span>
+    <h1>Staff Area</h1>
+    <p class="sub">Sign in with your staff login</p>
+    <input type="text" id="login-username" placeholder="Username" autocomplete="off">
+    <input type="password" id="login-password" placeholder="Password" autocomplete="off">
+    <button class="enter" onclick="attemptLogin()">Sign In</button>
+    <p class="error" id="login-error">Username or password not recognised</p>
+    <p class="note">Don't have a login? Ask Site Admin to add you.</p>
+    <button class="enter" id="install-btn" style="display:none; margin-top:14px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25);" onclick="installApp()">📲 Install App</button>
+    <p class="note" id="ios-install-note" style="display:none;">On iPhone: tap Share → Add to Home Screen to install.</p>
+  </div>
+
+  <!-- Screen: menu (shared across roles, content swapped by JS) -->
+  <div class="screen" id="screen-menu">
+    <div class="welcome-row">
+      <div>
+        <span class="welcome-name" id="welcome-name">—</span>
+        <span class="welcome-role" id="welcome-role">—</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+    <div class="summary-bar" id="summary-bar"></div>
+    <div class="tabs" id="menu-tabs"></div>
+    <input type="text" class="quick-search" id="quick-search" placeholder="Search this menu…" oninput="filterMenu(this.value)">
+    <div class="menu" id="menu-items"></div>
+    <p class="note" id="menu-note"></p>
+  </div>
+
+</div>
+
+<script>
+  // ── Staff login list ──
+  // Site Admin: add, remove, or edit people here. Each person needs a unique
+  // username, a password, their display name, and a list of roles
+  // (from: "bar", "keyholder", "mgmt", "admin", "committee").
+  // Most people have one role; a few have more than one.
+  const STAFF_USERS = [
+    { username: "carol",   password: "lovely",     name: "Carol",   roles: ["committee", "mgmt"] },
+    { username: "tim",     password: "walter",     name: "Tim",     roles: ["mgmt"] },
+    { username: "hayley",  password: "gnome",      name: "Hayley",  roles: ["bar"] },
+    { username: "mark",    password: "angelic",    name: "Mark",    roles: ["mgmt"] },
+    { username: "amy",     password: "old",        name: "Amy",     roles: ["keyholder"] },
+    { username: "charley", password: "moody",      name: "Charley", roles: ["keyholder"] },
+    { username: "jack",    password: "spastic",    name: "Jack",    roles: ["bar"] },
+    { username: "penny",   password: "ocd",        name: "Penny",   roles: ["bar"] },
+    { username: "rach",    password: "theboss",    name: "Rach",    roles: ["mgmt", "committee"] },
+    { username: "sally",   password: "smart",      name: "Sally",   roles: ["keyholder"] },
+    { username: "scott",   password: "scotthav88", name: "Site Admin", roles: ["admin"] },
+    { username: "euan",    password: "windup",     name: "Euan",    roles: ["bar"] },
+    { username: "kelly",   password: "rosa",       name: "Kelly",   roles: ["keyholder"] }
+  ];
+
+  // ── Menus per role ──
+  const MENUS = {
+    bar: {
+      label: "Bar Staff",
+      items: [
+        ["current-rota.html", "Current Rota", "Bookmark this — always shows the latest week"],
+        ["this-weeks-rota.html", "This Week's Rota", "See your shifts and confirm you've seen them"],
+        ["staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
+        ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
+        ["till-card-lookup.html", "Till &amp; Card Lookup Guide", "How to scan and apply the member discount"],
+        ["closing-checklist.html", "Closing Checklist", "Cleaning down the bar, cellar, bandits &amp; mopping"],
+        ["whats-on-this-week.html", "What's On This Week", "Upcoming bookings and events"],
+        ["shift-cover-request.html", "Shift Cover Request", "Can't make a shift? Flag it here"],
+        ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"],
+        ["#staff-ticket-form-link", "Submit a Ticket", "Report a problem or request something from management"],
+        ["price-list.html", "Price List", "Quick reference for drink prices"],
+        ["incident-report.html", "Accident / Incident Report", "For health &amp; safety, not till issues"]
+      ]
+    },
+    keyholder: {
+      label: "Keyholder",
+      groups: [
+        {
+          label: "Closing",
+          items: [
+            ["#cash-up-guide-link", "Cashing Up", "End-of-night till count and drop procedure"],
+            ["#locking-alarm-link", "Locking &amp; Setting the Alarm", "Final lock-up at close"]
+          ]
+        },
+        {
+          label: "Opening",
+          items: [
+            ["#unlocking-alarm-link", "Unlocking &amp; Disarming the Alarm", "First in — opening the building"],
+            ["#opening-checks-link", "Opening Checks", "Float count and other checks before doors open"]
+          ]
+        },
+        {
+          label: "If Something Goes Wrong",
+          items: [
+            ["alarm-fault.html", "Alarm Fault", "Who to call and what to do if the alarm won't set or trips"],
+            ["till-discrepancy.html", "Till Discrepancy", "Steps for a count that doesn't match"],
+            ["out-of-hours-contact.html", "Out-of-Hours Contact", "Emergency keyholder and callout numbers"]
+          ]
+        },
+        {
+          label: "Safety",
+          items: [
+            ["fire-safety.html", "Fire Safety / Evacuation", "What to do, and where everyone goes"],
+            ["first-aid.html", "First Aid", "Kit location and who's trained"],
+            ["weather-closure.html", "Weather Closure Guide", "Snow days, power cuts, who decides"]
+          ]
+        }
+      ]
+    },
+    mgmt: {
+      label: "Management",
+      groups: [
+        {
+          label: "Rota",
+          items: [
+            ["weekly-rota-builder.html", "Weekly Rota Builder", "Build the week, send to Outlook, notify bar staff"],
+            ["staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
+            ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"]
+          ]
+        },
+        {
+          label: "Requests &amp; Bookings",
+          items: [
+            ["pending-bookings.html", "Pending Bookings", "Function room requests awaiting approval", "2"],
+            ["shift-cover-requests-mgmt.html", "Shift Cover Requests", "Track cover requests submitted by bar staff", "2"],
+            ["expense-requests.html", "Expense / Petty Cash Requests", "Claiming back costs"]
+          ]
+        },
+        {
+          label: "Reference",
+          items: [
+            ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
+            ["supplier-contacts.html", "Supplier Contacts", "Drinks, food, and entertainment suppliers"],
+            ["entertainment-tracker.html", "Entertainment Booking Tracker", "Bands, quiz masters, DJs"],
+            ["licensing-compliance.html", "Licensing / Compliance", "Premises license conditions and renewals"],
+            ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"]
+          ]
+        },
+        {
+          label: "Team",
+          items: [
+            ["new-starter-checklist.html", "New Starter Checklist", "Training and setup steps for someone joining the team"],
+            ["manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access"]
+          ]
+        }
+      ]
+    },
+    admin: {
+      label: "Site Admin",
+      items: [
+        ["full-admin-dashboard.html", "Full Admin Dashboard", "Everything on the site, in one place"],
+        ["edit-site-files.html", "Edit Site Files", "GitHub repo — where the site's files live and get updated"],
+        ["https://forms.cloud.microsoft/r/xPbfry03VW", "Booking Form Responses", "View and manage function room booking submissions"],
+        ["shift-cover-form-responses.html", "Shift Cover Form Responses", "View submissions from the routine cover request form"],
+        ["https://outlook.live.com/owa/calendar/bb8f79de-cbbe-4d7b-8e7f-2123ebde7711/c726ef94-949e-4889-9aa2-39f3f93837b8/cid-FC69B5B067121F85/index.html", "Outlook Rota Calendar", "Add, edit, or remove staff shifts"],
+        ["facebook-page-admin.html", "Facebook Page", "Post updates and manage the club's page"],
+        ["manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access and to what"],
+        ["site-todos.html", "Site To-Do List", "Every placeholder still waiting for real content", "23"],
+        ["tickets.html", "Tickets", "Issues and requests from the public and staff"],
+        ["google-analytics.html", "Google Analytics", "See how many people visit, and which pages"],
+        ["content-quick-edit.html", "Content Quick-Edit Cheat Sheet", "Where to make common changes, without hunting"],
+        ["site-changelog.html", "Site Changelog", "Every real change, pulled automatically from GitHub"],
+        ["overall-changelog.html", "Overall Changelog", "The big picture, in plain English"],
+        ["backup-reminder.html", "Backup Reminder", "Keep a fresh copy somewhere safe"],
+        ["hosting-status.html", "Domain / Hosting Status", "Where the site actually lives"]
+      ]
+    },
+    committee: {
+      label: "Committee",
+      items: [
+        ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
+        ["pending-bookings.html", "Pending Bookings", "Function room requests, for visibility", "2"],
+        ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
+        ["#meeting-minutes-link", "Meeting Minutes &amp; Agendas", "Past minutes and upcoming meeting agendas"],
+        ["finances-accounts.html", "Finances &amp; Accounts", "Club accounts and financial oversight"],
+        ["agm-planning.html", "AGM Planning", "Agenda and action tracking"],
+        ["membership-numbers.html", "Membership Numbers", "Joining and lapsing trends"],
+        ["club-constitution.html", "Club Constitution / Rules", "The club's governing document"],
+        ["funding-opportunities.html", "Grant / Funding Opportunities", "Worth tracking as they come up"]
+      ]
+    }
+  };
+
+  // ── Which menus each role sees, beyond its own ──
+  // mgmt also sees bar; keyholder also sees bar; admin sees everything.
+  const ROLE_EXTRAS = {
+    bar: ["bar"],
+    keyholder: ["bar", "keyholder"],
+    mgmt: ["bar", "keyholder", "mgmt"],
+    admin: ["bar", "keyholder", "mgmt", "admin", "committee"],
+    committee: ["committee"]
+  };
+
+  // Canonical display order when someone has more than one role's worth of menus
+  const ROLE_ORDER = ["bar", "keyholder", "mgmt", "admin", "committee"];
+
+  function renderMenu(user){
+    document.getElementById('welcome-name').textContent = user.name;
+    document.getElementById('welcome-role').textContent = user.roles.map(r => MENUS[r].label).join(' · ');
+
+    // Union of every menu each of the user's roles grants access to, in a fixed order
+    const accessible = ROLE_ORDER.filter(r =>
+      user.roles.some(userRole => ROLE_EXTRAS[userRole].includes(r))
+    );
+
+    updateAppBadge(accessible);
+
+    const container = document.getElementById('menu-items');
+    const tabsContainer = document.getElementById('menu-tabs');
+
+    if(accessible.length === 1){
+      tabsContainer.innerHTML = '';
+      renderItems(accessible[0]);
+    } else {
+      tabsContainer.innerHTML = accessible.map((roleKey, i) =>
+        `<button class="tab-btn${i === 0 ? ' active' : ''}" data-role="${roleKey}" onclick="switchTab('${roleKey}', this)">${MENUS[roleKey].label}</button>`
+      ).join('');
+      renderItems(accessible[0]);
+    }
+
+    document.getElementById('menu-note').textContent = "Please don't share your login with anyone else.";
+    buildSummaryBar(accessible);
+    document.getElementById('screen-login').classList.remove('active');
+    document.getElementById('screen-menu').classList.add('active');
+  }
+
+  function updateAppBadge(accessibleRoles){
+    if(!('setAppBadge' in navigator)) return;
+    let total = 0;
+    accessibleRoles.forEach(roleKey => {
+      const roleData = MENUS[roleKey];
+      const items = roleData.groups ? roleData.groups.flatMap(g => g.items) : roleData.items;
+      items.forEach(([, , , badge]) => {
+        if(badge) total += parseInt(badge, 10) || 0;
+      });
+    });
+    if(total > 0){
+      navigator.setAppBadge(total).catch(() => {});
+    } else {
+      navigator.clearAppBadge().catch(() => {});
+    }
+  }
+
+  function buildSummaryBar(accessibleRoles){
+    const summaryEl = document.getElementById('summary-bar');
+    const chips = [];
+    accessibleRoles.forEach(roleKey => {
+      const roleData = MENUS[roleKey];
+      const items = roleData.groups ? roleData.groups.flatMap(g => g.items) : roleData.items;
+      items.forEach(([href, title, , badge]) => {
+        if(badge){
+          chips.push(`<a href="${href}" class="summary-chip">${title} <span class="num">${badge}</span></a>`);
+        }
+      });
+    });
+    summaryEl.innerHTML = chips.join('');
+  }
+
+  function renderMenuItem([href, title, desc, badge]){
+    const external = href.startsWith('http');
+    const badgeHtml = badge ? `<span class="item-badge">${badge}</span>` : '';
+    return `<a href="${href}"${external ? ' target="_blank" rel="noopener"' : ''}><span class="item-title-row">${title}${badgeHtml}</span><small>${desc}</small></a>`;
+  }
+
+  function renderItems(roleKey){
+    const container = document.getElementById('menu-items');
+    const roleData = MENUS[roleKey];
+
+    if(roleData.groups){
+      // Grouped role (e.g. Keyholder: Closing / Opening) — render each with its own heading
+      container.innerHTML = roleData.groups.map(g => {
+        const items = g.items.map(renderMenuItem).join('');
+        return `<div class="menu-group-label">${g.label}</div>${items}`;
+      }).join('');
+    } else {
+      container.innerHTML = roleData.items.map(renderMenuItem).join('');
+    }
+  }
+
+  function switchTab(roleKey, btn){
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderItems(roleKey);
+    document.getElementById('quick-search').value = '';
+  }
+
+  function filterMenu(query){
+    const q = query.trim().toLowerCase();
+    document.querySelectorAll('#menu-items a').forEach(a => {
+      const matches = a.textContent.toLowerCase().includes(q);
+      a.classList.toggle('hidden', !matches);
+    });
+    document.querySelectorAll('#menu-items .menu-group-label').forEach(label => {
+      let sib = label.nextElementSibling;
+      let anyVisible = false;
+      while(sib && !sib.classList.contains('menu-group-label')){
+        if(!sib.classList.contains('hidden')) anyVisible = true;
+        sib = sib.nextElementSibling;
+      }
+      label.classList.toggle('hidden', !anyVisible);
+    });
+  }
+
+  function attemptLogin(){
+    const username = document.getElementById('login-username').value.trim().toLowerCase();
+    const password = document.getElementById('login-password').value;
+    const user = STAFF_USERS.find(u => u.username === username && u.password === password);
+    if(user){
+      document.getElementById('login-error').style.display = 'none';
+      localStorage.setItem('staffUser', username);
+      localStorage.setItem('staffUserName', user.name);
+      localStorage.setItem('staffUserRoles', JSON.stringify(user.roles));
+      renderMenu(user);
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  }
+
+  function logout(){
+    localStorage.removeItem('staffUser');
+    localStorage.removeItem('staffUserName');
+    localStorage.removeItem('staffUserRoles');
+    if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+    document.getElementById('screen-menu').classList.remove('active');
+    document.getElementById('screen-login').classList.add('active');
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+  }
+
+  document.getElementById('login-username').addEventListener('keydown', e => {
+    if(e.key === 'Enter') attemptLogin();
+  });
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if(e.key === 'Enter') attemptLogin();
+  });
+
+  // Stay signed in on this device until Log Out is tapped
+  const savedUsername = localStorage.getItem('staffUser');
+  if(savedUsername){
+    const user = STAFF_USERS.find(u => u.username === savedUsername);
+    if(user) renderMenu(user);
+  }  // Dark mode toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+
+  // ── PWA: service worker for offline access, with update detection ──
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').then((registration) => {
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+            document.getElementById('update-banner').style.display = 'flex';
+          }
+        });
+      });
+    }).catch(() => {
+      // Fine if this fails (e.g. running from a local file) — just no offline support
+    });
+  }
+
+  function reloadForUpdate(){
+    window.location.reload();
+  }
+
+  // ── Offline status banner ──
+  function updateOnlineStatus(){
+    document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'flex';
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // ── PWA: install prompt ──
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    document.getElementById('install-btn').style.display = 'block';
+  });
+
+  function installApp(){
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(() => {
+      deferredInstallPrompt = null;
+      document.getElementById('install-btn').style.display = 'none';
+    });
+  }
+
+  // iOS Safari doesn't support beforeinstallprompt — show manual instructions instead
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isInStandaloneMode = window.navigator.standalone === true;
+  if(isIOS && !isInStandaloneMode){
+    document.getElementById('ios-install-note').style.display = 'block';
+  }
+</script>
+
+</body>
+</html>

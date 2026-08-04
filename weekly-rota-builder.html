@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Weekly Rota Builder — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#181614;--paper:#faf7f1;--card:#ffffff;--line:#e8e0d2;--muted:#8a7f6b;--brass:#b8873f;--brass-light:#e0b56a;--forest:#2c3f38;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#f0ece2;--paper:#161412;--card:#211e1a;--line:#3a352c;--muted:#a89c85;--brass:#d4a45c;--brass-light:#e8c584;--forest:#4a6b5f;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #181614 0%, #1a2620 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:760px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  .week-picker{display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap;}
+  .week-picker label{font-size:0.85rem; font-weight:600; color:var(--forest);}
+  .week-picker input{
+    font-family:'Inter', sans-serif; font-size:0.88rem; padding:9px 12px;
+    border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink);
+  }
+
+  .day-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:12px;}
+  .day-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .day-name{font-family:'Fraunces', serif; font-weight:600; font-size:1rem; color:var(--forest);}
+  .day-date{font-size:0.76rem; color:var(--muted);}
+  .shift-row{display:grid; grid-template-columns:1.1fr 0.9fr 1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:center;}
+  @media(max-width:620px){ .shift-row{grid-template-columns:1fr 1fr; grid-template-rows:auto auto auto;} }
+  .shift-row input, .shift-row select{
+    font-family:'Inter', sans-serif; font-size:0.82rem; padding:8px 10px;
+    border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+  }
+  .shift-row select.role-keyholder{border-color:var(--brass); font-weight:600;}
+  .remove-shift{background:none; border:none; color:#c25a4d; font-size:1rem; cursor:pointer; padding:4px 8px;}
+  .add-shift-btn{
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    background:none; border:1px dashed var(--brass); color:var(--brass);
+    border-radius:6px; padding:7px 12px; cursor:pointer; margin-top:4px;
+  }
+
+  .action-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
+  .action-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.88rem;
+    border:none; border-radius:8px; padding:13px 20px; cursor:pointer; text-decoration:none; display:inline-block;
+  }
+  .action-btn.primary{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;}
+  .action-btn.secondary{background:var(--forest); color:#fff;}
+  .action-status{font-size:0.82rem; color:var(--muted); margin-top:10px;}
+  .action-status.success{color:#3d8f6f; font-weight:600;}
+  .action-status.error{color:#c25a4d; font-weight:600;}
+
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:12px;}
+  .github-config{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:18px 20px; margin-bottom:14px;
+  }
+  .config-row{margin-bottom:12px;}
+  .config-row label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:5px;}
+  .config-row input{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.85rem;
+    padding:9px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+  }
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<div id="offline-banner" style="display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:#8a2f2f; color:#fff;">
+  📡 You're offline — Publish, Notify, and Save won't work until you're back online. Download Calendar File (.ics) still works.
+</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Management</span>
+  <h1>Weekly Rota Builder</h1>
+  <p>Build the week, send it to Outlook, and let bar staff know it's out</p>
+</header>
+<main>
+  <div class="notice">Build the week below, then download it as a calendar file — a real .ics file that Outlook (or any calendar app) can import directly, no Microsoft sign-in dance needed. "Notify Bar Staff" opens an email with the week's shifts already written out, ready to send.</div>
+
+  <div class="week-picker">
+    <label>Week starting (Monday)</label>
+    <input type="date" id="week-start" onchange="updateDayDates()">
+  </div>
+
+  <div id="days-container"></div>
+
+  <div class="action-row">
+    <button class="action-btn primary" onclick="downloadICS()">📅 Download Calendar File (.ics)</button>
+    <button class="action-btn secondary" onclick="notifyStaff()">✉️ Notify Bar Staff — Rota's Out (Email)</button>
+    <button class="action-btn secondary" onclick="copyForWhatsApp()">💬 Copy Message for WhatsApp</button>
+  </div>
+  <p class="action-status" id="action-status"></p>
+
+  <div class="section-label" style="margin-top:30px;">Publish to Current Rota (permanent link)</div>
+  <div class="notice" style="margin-bottom:16px;">Publishes this week straight onto the site's one permanent bookmarkable link — same GitHub connection as Manage Staff Logins. Set it up once there and it's remembered here too.</div>
+  <div class="github-config">
+    <div class="config-row">
+      <label>GitHub Username</label>
+      <input type="text" id="gh-owner" placeholder="e.g. scott123">
+    </div>
+    <div class="config-row">
+      <label>Repository Name</label>
+      <input type="text" id="gh-repo" placeholder="e.g. dunvant-wmc-site">
+    </div>
+    <div class="config-row">
+      <label>Personal Access Token</label>
+      <input type="password" id="gh-token" placeholder="ghp_...">
+    </div>
+  </div>
+  <p class="action-status" id="audit-note"></p>
+  <button class="action-btn primary" onclick="publishRota()">🚀 Publish This Week's Rota</button>
+  <p class="action-status" id="publish-status"></p>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script>
+  const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+  function buildDayCards(){
+    const container = document.getElementById('days-container');
+    container.innerHTML = DAYS.map((day, i) => `
+      <div class="day-card" data-day-index="${i}">
+        <div class="day-header">
+          <span class="day-name">${day}</span>
+          <span class="day-date" id="date-${i}">—</span>
+        </div>
+        <div class="shifts-list" id="shifts-${i}"></div>
+        <button class="add-shift-btn" onclick="addShiftRow(${i})">+ Add Shift</button>
+      </div>
+    `).join('');
+    DAYS.forEach((_, i) => addShiftRow(i));
+  }
+
+  function addShiftRow(dayIndex){
+    const list = document.getElementById(`shifts-${dayIndex}`);
+    const row = document.createElement('div');
+    row.className = 'shift-row';
+    row.innerHTML = `
+      <input type="text" class="s-name" placeholder="Name">
+      <select class="s-role" onchange="this.classList.toggle('role-keyholder', this.value === 'Keyholder')">
+        <option value="Bar Staff">Bar Staff</option>
+        <option value="Keyholder">Keyholder</option>
+      </select>
+      <input type="time" class="s-start" value="18:00">
+      <input type="time" class="s-end" value="23:00">
+      <button class="remove-shift" onclick="this.closest('.shift-row').remove()">✕</button>
+    `;
+    list.appendChild(row);
+  }
+
+  function updateDayDates(){
+    const startVal = document.getElementById('week-start').value;
+    if(!startVal) return;
+    const start = new Date(startVal + 'T00:00:00');
+    DAYS.forEach((day, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      document.getElementById(`date-${i}`).textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    });
+  }
+
+  function collectShifts(){
+    const startVal = document.getElementById('week-start').value;
+    if(!startVal){
+      document.getElementById('action-status').textContent = 'Pick a week starting date first.';
+      return null;
+    }
+    const start = new Date(startVal + 'T00:00:00');
+    const shifts = [];
+    DAYS.forEach((day, i) => {
+      const dayDate = new Date(start);
+      dayDate.setDate(start.getDate() + i);
+      const rows = document.querySelectorAll(`#shifts-${i} .shift-row`);
+      rows.forEach(row => {
+        const name = row.querySelector('.s-name').value.trim();
+        const role = row.querySelector('.s-role').value;
+        const startTime = row.querySelector('.s-start').value;
+        const endTime = row.querySelector('.s-end').value;
+        if(name && startTime && endTime){
+          shifts.push({ day, date: dayDate, name, role, startTime, endTime });
+        }
+      });
+    });
+    return shifts;
+  }
+
+  function formatICSDate(date, time){
+    const [h, m] = time.split(':');
+    const d = new Date(date);
+    d.setHours(parseInt(h), parseInt(m), 0, 0);
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  }
+
+  function downloadICS(){
+    const shifts = collectShifts();
+    if(!shifts) return;
+    if(shifts.length === 0){
+      document.getElementById('action-status').textContent = 'Add at least one shift first.';
+      return;
+    }
+    let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Dunvant WMC//Rota//EN\r\n';
+    shifts.forEach((s, idx) => {
+      ics += 'BEGIN:VEVENT\r\n';
+      ics += `UID:${Date.now()}-${idx}@dunvantwmc\r\n`;
+      ics += `DTSTART:${formatICSDate(s.date, s.startTime)}\r\n`;
+      ics += `DTEND:${formatICSDate(s.date, s.endTime)}\r\n`;
+      ics += `SUMMARY:${s.name} — ${s.role}${s.role === 'Keyholder' ? ' 🔑' : ''}\r\n`;
+      ics += 'END:VEVENT\r\n';
+    });
+    ics += 'END:VCALENDAR\r\n';
+
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dunvant-wmc-rota.ics';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    document.getElementById('action-status').textContent = `Downloaded — ${shifts.length} shifts. In Outlook: File → Open & Export → Import/Export → Import an iCalendar file, and select this file.`;
+  }
+
+  function buildShareableLink(shifts){
+    const compact = shifts.map(s => ({
+      d: s.day.slice(0, 3),
+      dt: s.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+      n: s.name,
+      r: s.role === 'Keyholder' ? 'K' : 'B',
+      st: s.startTime,
+      et: s.endTime
+    }));
+    const encoded = encodeURIComponent(btoa(JSON.stringify(compact)));
+    return `${location.origin}${location.pathname.replace('weekly-rota-builder.html', 'this-weeks-rota.html')}?w=${encoded}`;
+  }
+
+  function buildSummaryText(shifts){
+    let body = "This week's rota is out:\n\n";
+    let currentDay = '';
+    shifts.forEach(s => {
+      if(s.day !== currentDay){
+        currentDay = s.day;
+        body += `\n${s.day} (${s.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}):\n`;
+      }
+      body += `  ${s.name} (${s.role}${s.role === 'Keyholder' ? ' 🔑' : ''}): ${s.startTime}–${s.endTime}\n`;
+    });
+    return body;
+  }
+
+  function notifyStaff(){
+    const shifts = collectShifts();
+    if(!shifts) return;
+    if(shifts.length === 0){
+      document.getElementById('action-status').textContent = 'Add at least one shift first.';
+      return;
+    }
+    const body = buildSummaryText(shifts) + `\nTap here to see your shift and confirm you've seen it:\n${buildShareableLink(shifts)}`;
+    const mailto = `mailto:teamupdates@dunvantclub.example?subject=${encodeURIComponent("This week's rota is out")}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+    document.getElementById('action-status').textContent = 'Opening your email app with the rota written out — check it and hit send.';
+  }
+
+  function copyForWhatsApp(){
+    const shifts = collectShifts();
+    if(!shifts) return;
+    if(shifts.length === 0){
+      document.getElementById('action-status').textContent = 'Add at least one shift first.';
+      return;
+    }
+    const message = buildSummaryText(shifts) + `\nTap to see your shift and confirm you've seen it:\n${buildShareableLink(shifts)}`;
+    navigator.clipboard.writeText(message);
+    document.getElementById('action-status').textContent = 'Copied! Now open the WhatsApp group and paste it in.';
+  }
+
+  function updateOnlineStatus(){
+    document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'flex';
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  buildDayCards();
+
+  const loggedInName = localStorage.getItem('staffUserName');
+  document.getElementById('audit-note').textContent = loggedInName
+    ? `Publishing here is recorded in Site Changelog as being made by: ${loggedInName}`
+    : "Not logged in via Staff Area — publishes will be recorded as 'unknown user'. Log in through staff-area.html first for proper attribution.";
+
+  // Reuse the same GitHub connection saved by Manage Staff Logins
+  const savedGh = JSON.parse(localStorage.getItem('ghConfig') || 'null');
+  if(savedGh){
+    document.getElementById('gh-owner').value = savedGh.owner || '';
+    document.getElementById('gh-repo').value = savedGh.repo || '';
+    document.getElementById('gh-token').value = savedGh.token || '';
+  }
+
+  async function publishRota(){
+    const shifts = collectShifts();
+    if(!shifts) return;
+    if(shifts.length === 0){
+      document.getElementById('publish-status').textContent = 'Add at least one shift first.';
+      return;
+    }
+    const owner = document.getElementById('gh-owner').value.trim();
+    const repo = document.getElementById('gh-repo').value.trim();
+    const token = document.getElementById('gh-token').value.trim();
+    const statusEl = document.getElementById('publish-status');
+
+    if(!owner || !repo || !token){
+      statusEl.textContent = 'Fill in your GitHub username, repository name, and token first.';
+      statusEl.className = 'action-status error';
+      return;
+    }
+    statusEl.textContent = 'Publishing…';
+    statusEl.className = 'action-status';
+
+    try{
+      const compact = shifts.map(s => ({
+        d: s.day.slice(0, 3), dt: s.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+        n: s.name, r: s.role === 'Keyholder' ? 'K' : 'B', st: s.startTime, et: s.endTime
+      }));
+      const publishedDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/current-rota.html`;
+      const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
+      if(!getRes.ok) throw new Error(`Couldn't fetch current-rota.html (${getRes.status}). Check the username, repo name, and token.`);
+      const fileData = await getRes.json();
+      const currentContent = decodeURIComponent(escape(atob(fileData.content)));
+
+      let updatedContent = currentContent.replace(
+        /const CURRENT_SHIFTS = \[[\s\S]*?\];/,
+        `const CURRENT_SHIFTS = ${JSON.stringify(compact)};`
+      );
+      updatedContent = updatedContent.replace(
+        /const PUBLISHED_DATE = "[^"]*";/,
+        `const PUBLISHED_DATE = "${publishedDate}";`
+      );
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Publish rota for week of ${document.getElementById('week-start').value} — by ${localStorage.getItem('staffUserName') || 'unknown user'}`,
+          content: btoa(unescape(encodeURIComponent(updatedContent))),
+          sha: fileData.sha
+        })
+      });
+      if(!putRes.ok) throw new Error(`Publish failed (${putRes.status}). Check the token has "repo" write access.`);
+
+      statusEl.textContent = '✓ Published — Current Rota is live within a couple of minutes.';
+      statusEl.className = 'action-status success';
+    } catch(err){
+      statusEl.textContent = err.message;
+      statusEl.className = 'action-status error';
+    }
+  }
+
+  // Dark mode
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+</body>
+</html>

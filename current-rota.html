@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Current Rota">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232c3f38'/%3E%3Ctext x='50' y='68' font-family='Georgia,serif' font-size='58' font-weight='700' fill='%23e0b56a' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+<title>Current Rota — Dunvant WMC</title>
+<meta property="og:title" content="Current Rota — Dunvant WMC">
+<meta property="og:description" content="Bookmark this — always shows the latest week.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#181614;--paper:#faf7f1;--card:#ffffff;--line:#e8e0d2;--muted:#8a7f6b;--brass:#b8873f;--brass-light:#e0b56a;--forest:#2c3f38;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#f0ece2;--paper:#161412;--card:#211e1a;--line:#3a352c;--muted:#a89c85;--brass:#d4a45c;--brass-light:#e8c584;--forest:#4a6b5f;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #181614 0%, #1a2620 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:640px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+  .published-note{font-size:0.78rem; color:var(--muted); margin-bottom:16px; text-align:center;}
+
+  .day-group{margin-bottom:16px;}
+  .day-label{font-family:'Fraunces', serif; font-size:0.9rem; font-weight:600; color:var(--forest); margin-bottom:8px;}
+  .shift{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:14px 18px; margin-bottom:8px; cursor:pointer; transition:border-color 0.15s ease;
+  }
+  .shift:hover{border-color:var(--brass);}
+  .shift.seen{opacity:0.6; border-color:#3d8f6f;}
+  .shift-info .name{font-weight:600; font-size:0.92rem;}
+  .shift-info .time{font-size:0.78rem; color:var(--muted); margin-top:2px;}
+  .role-tag{font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:8px;}
+  .role-tag.keyholder{background:var(--brass); color:#fff;}
+  .role-tag.barstaff{background:var(--line); color:var(--muted);}
+  .shift-status{
+    font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+    padding:4px 10px; border-radius:20px; white-space:nowrap;
+  }
+  .shift-status.unseen{background:#fff2d9; color:#8a6a1f;}
+  .shift-status.seen-tag{background:#e4ece9; color:#2c3f38;}
+
+  .confirm-card{
+    background:var(--card); border:1px dashed var(--brass); border-radius:12px;
+    padding:18px 20px; margin-top:20px; text-align:center;
+  }
+  .confirm-card p{font-size:0.86rem; color:var(--muted); margin-bottom:14px;}
+  .confirm-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.9rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;
+    border:none; border-radius:8px; padding:13px 22px; cursor:pointer; text-decoration:none; display:inline-block;
+  }
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Bar Staff</span>
+  <h1>Current Rota</h1>
+  <p>Bookmark this page — it always shows the latest week</p>
+</header>
+<main>
+  <div class="notice">This is the one permanent rota link. Add it to your home screen (Share → Add to Home Screen) and you'll never need to dig through WhatsApp for it again — Management publishes straight to this page each week.</div>
+
+  <p class="published-note" id="published-note"></p>
+  <div id="rota-content"></div>
+
+  <div class="confirm-card">
+    <p>Once you've checked your shifts, let management know you've seen the rota.</p>
+    <a class="confirm-btn" href="#confirm-rota-form-link" target="_blank" rel="noopener">✓ Confirm You've Seen the Rota</a>
+  </div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script>
+  // ── This block is overwritten automatically each time Management publishes ──
+  // Do not edit by hand — use Weekly Rota Builder's "Publish This Week's Rota" button.
+  const CURRENT_SHIFTS = [];
+  const PUBLISHED_DATE = "";
+  // ── End auto-updated block ──
+
+  function formatTime12h(t){
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${m.toString().padStart(2, '0')} ${period}`;
+  }
+
+  function renderRota(){
+    const container = document.getElementById('rota-content');
+    const noteEl = document.getElementById('published-note');
+
+    if(CURRENT_SHIFTS.length === 0){
+      container.innerHTML = '<p style="text-align:center; color:var(--muted); font-size:0.88rem; padding:20px 0;">No rota published yet — check back once management has published this week\'s shifts.</p>';
+      noteEl.textContent = '';
+      return;
+    }
+
+    noteEl.textContent = PUBLISHED_DATE ? `Published ${PUBLISHED_DATE}` : '';
+
+    const grouped = {};
+    CURRENT_SHIFTS.forEach(s => {
+      const key = `${s.d}|${s.dt}`;
+      if(!grouped[key]) grouped[key] = [];
+      grouped[key].push(s);
+    });
+    container.innerHTML = Object.entries(grouped).map(([key, dayShifts]) => {
+      const [day, date] = key.split('|');
+      const rows = dayShifts.map(s => `
+        <div class="shift" onclick="toggleSeen(this)">
+          <div class="shift-info">
+            <div class="name">${s.n} <span class="role-tag ${s.r === 'K' ? 'keyholder' : 'barstaff'}">${s.r === 'K' ? '🔑 Keyholder' : 'Bar Staff'}</span></div>
+            <div class="time">${formatTime12h(s.st)} – ${s.et === '23:59' ? 'Midnight' : formatTime12h(s.et)}</div>
+          </div>
+          <span class="shift-status unseen">Unseen</span>
+        </div>
+      `).join('');
+      return `<div class="day-group"><div class="day-label">${day}, ${date}</div>${rows}</div>`;
+    }).join('');
+  }
+
+  function toggleSeen(el){
+    el.classList.toggle('seen');
+    const tag = el.querySelector('.shift-status');
+    if(el.classList.contains('seen')){
+      tag.textContent = 'Seen';
+      tag.className = 'shift-status seen-tag';
+    } else {
+      tag.textContent = 'Unseen';
+      tag.className = 'shift-status unseen';
+    }
+  }
+
+  renderRota();
+
+  // Dark mode
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+</body>
+</html>
