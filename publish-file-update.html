@@ -227,8 +227,9 @@
       if(!delRes.ok) throw new Error(`Delete failed (${delRes.status}). Check the token has "repo" write access.`);
       setProgress('action-progress', 100);
 
-      statusEl.textContent = `✓ Deleted — "${path}" is gone from the live site within a couple of minutes.`;
+      statusEl.textContent = `✓ Deleted — checking deployment status…`;
       statusEl.className = 'status success';
+      pollDeployStatus(statusEl, `✓ Deleted "${path}".`);
       document.getElementById('file-content').value = '';
       currentSha = null;
     } catch(err){
@@ -294,6 +295,44 @@
     const pct = document.getElementById(id + '-pct');
     if(bar) bar.style.width = percent + '%';
     if(pct) pct.textContent = percent + '%';
+  }
+
+  async function pollDeployStatus(statusEl, baseMessage){
+    const owner = document.getElementById('gh-owner').value.trim();
+    const repo = document.getElementById('gh-repo').value.trim();
+    const token = document.getElementById('gh-token').value.trim();
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const check = async () => {
+      attempts++;
+      try{
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages/builds/latest`, {
+          headers: { Authorization: `token ${token}` }
+        });
+        if(res.ok){
+          const build = await res.json();
+          if(build.status === 'built'){
+            statusEl.textContent = `${baseMessage} 🟢 Live now — refreshing the page…`;
+            setTimeout(() => window.location.reload(), 1800);
+            statusEl.className = 'status success';
+            return;
+          }
+          if(build.status === 'errored'){
+            statusEl.textContent = `${baseMessage} 🔴 GitHub Pages reported a build error — check the repo's Settings → Pages for details.`;
+            statusEl.className = 'status error';
+            return;
+          }
+        }
+      } catch(e){}
+      if(attempts < maxAttempts){
+        statusEl.textContent = `${baseMessage} 🟡 Deploying… (checking again shortly)`;
+        setTimeout(check, 6000);
+      } else {
+        statusEl.textContent = `${baseMessage} Still deploying after 2 minutes — check Domain / Hosting Status if this seems stuck.`;
+      }
+    };
+    check();
   }
 
   async function fetchFile(){
@@ -382,9 +421,10 @@
 
       currentSha = (await putRes.json()).content.sha;
       setProgress('action-progress', 100);
-      statusEl.textContent = '✓ Published — live on the site within a couple of minutes.';
-      addRecentFile(path);
+      statusEl.textContent = '✓ Published — checking deployment status…';
       statusEl.className = 'status success';
+      pollDeployStatus(statusEl, '✓ Published.');
+      addRecentFile(path);
     } catch(err){
       statusEl.textContent = err.message;
       statusEl.className = 'status error';
