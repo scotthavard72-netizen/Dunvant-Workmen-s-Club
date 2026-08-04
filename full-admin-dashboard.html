@@ -47,6 +47,14 @@
   .activity-meta{font-size:0.74rem; color:var(--muted); margin-top:2px;}
   .activity-empty{font-size:0.82rem; color:var(--muted);}
   .activity-link{font-size:0.76rem; color:var(--brass); text-decoration:none; font-weight:600; display:block; margin-top:10px;}
+  .deploy-refresh-btn{
+    font-family:'Inter', sans-serif; font-size:0.76rem; font-weight:600;
+    background:var(--paper); color:var(--forest); border:1px solid var(--line);
+    border-radius:8px; padding:7px 14px; cursor:pointer; margin-top:8px;
+  }
+  #deploy-status.status-live{color:#3d8f6f; font-weight:600;}
+  #deploy-status.status-building{color:var(--brass); font-weight:600;}
+  #deploy-status.status-error{color:#c25a4d; font-weight:600;}
   [data-theme="dark"] .notice{background:#2a2318;}
 
   .dash-search{
@@ -115,6 +123,12 @@
     <div id="activity-list" class="activity-list">
       <p class="activity-empty" id="activity-status">Loading…</p>
     </div>
+  </div>
+
+  <div class="activity-widget">
+    <div class="activity-header">Deployment Status</div>
+    <p class="activity-empty" id="deploy-status">Checking…</p>
+    <button class="deploy-refresh-btn" onclick="checkDeployStatus()">🔄 Check Again</button>
   </div>
 
   <input type="text" class="dash-search" id="dash-search" placeholder="Search everything…" oninput="filterDashboard(this.value)">
@@ -252,6 +266,39 @@
     }
   }
   loadRecentActivity();
+
+  async function checkDeployStatus(){
+    const statusEl = document.getElementById('deploy-status');
+    const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
+    if(!saved || !saved.owner || !saved.repo){
+      statusEl.textContent = 'Set up your GitHub connection in Manage Staff Logins to see this.';
+      statusEl.className = '';
+      return;
+    }
+    statusEl.textContent = 'Checking…';
+    statusEl.className = '';
+    try{
+      const headers = saved.token ? { Authorization: `token ${saved.token}` } : {};
+      const res = await fetch(`https://api.github.com/repos/${saved.owner}/${saved.repo}/pages/builds/latest`, { headers });
+      if(!res.ok) throw new Error();
+      const build = await res.json();
+      const when = new Date(build.updated_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      if(build.status === 'built'){
+        statusEl.textContent = `🟢 Live — last deployed ${when}`;
+        statusEl.className = 'status-live';
+      } else if(build.status === 'errored'){
+        statusEl.textContent = `🔴 Last deployment failed (${when}) — check Settings → Pages on GitHub`;
+        statusEl.className = 'status-error';
+      } else {
+        statusEl.textContent = `🟡 Deploying now… started ${when}`;
+        statusEl.className = 'status-building';
+      }
+    } catch(e){
+      statusEl.textContent = "Couldn't check right now — the connection may need a token with read access.";
+      statusEl.className = '';
+    }
+  }
+  checkDeployStatus();
 
   function logoutFromDashboard(){
     localStorage.removeItem('staffUser');
