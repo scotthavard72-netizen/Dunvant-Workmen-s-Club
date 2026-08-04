@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Member Suggestions — Dunvant WMC</title>
+<title>Membership Renewal — Dunvant WMC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -63,22 +63,46 @@
 </style>
 </head>
 <body>
+<div id="maintenance-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:#181614; color:#fff; align-items:center; justify-content:center; text-align:center; padding:24px; flex-direction:column; font-family:'Inter', sans-serif;">
+  <div style="font-family:'Fraunces', serif; font-size:1.6rem; font-weight:600; margin-bottom:12px;">Dunvant Workingmens Club</div>
+  <p id="maintenance-message" style="max-width:400px; color:rgba(255,255,255,0.7); line-height:1.6;"></p>
+</div>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
   <span class="eyebrow">Public Site · Example</span>
-  <h1>Member Suggestions</h1>
-  <p>A place for members specifically to suggest ideas</p>
+  <h1>Membership Renewal</h1>
+  <p>What to do if membership lapses</p>
 </header>
 <main>
 
-  <div class="notice">This is an example page — distinct from the public "Report an Issue" link, this is for ideas and suggestions rather than problems. Would need a Microsoft Form the same way as everything else here.</div>
-  <div class="card"><h3>Have an idea for the club?</h3><p>[Link to Suggestion Form once built] — new events, changes you'd like to see, anything at all.</p></div>
+  <div class="notice">This is an example page — confirm the real renewal process and fee with the committee.</div>
+  <div class="card"><h3>How to renew</h3><p>[Ask at the bar / pay via a specific method] — confirm the real process.</p></div>
+  <div class="card"><h3>Renewal fee</h3><p>[£ amount] per year</p></div>
+  <div class="card"><h3>What happens if it lapses</h3><p>[e.g. reverts to non-member pricing until renewed]</p></div>
 
   <a class="back" href="club-website.html">← Back to Homepage</a>
 </main>
 
 <script>
+  // Maintenance mode — checks the shared toggle file. A ?preview=1 link
+  // (used automatically from Full Admin Dashboard) bypasses it for Site Admin.
+  (async function checkMaintenanceMode(){
+    const bypass = new URLSearchParams(location.search).get('preview') === '1';
+    if(bypass) return;
+    try{
+      const res = await fetch('maintenance-status.json', { cache: 'no-store' });
+      if(!res.ok) return;
+      const status = await res.json();
+      if(status.active){
+        document.getElementById('maintenance-message').textContent = status.message || "We'll be back shortly.";
+        document.getElementById('maintenance-overlay').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    } catch(e){}
+  })();
+
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
