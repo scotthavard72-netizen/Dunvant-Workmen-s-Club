@@ -3,885 +3,296 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Dunvant Workingmens Club</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#181614">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Dunvant WMC">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='34' fill='%232c3f38'/%3E%3Ctext x='96' y='132' font-family='Georgia,serif' font-size='112' font-weight='700' fill='%23e0b56a' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
-<meta name="description" content="Dunvant Workingmens Club — your local club for a drink, a function, and a bit of community in the heart of Dunvant. Book the function room, see what's on, and get in touch.">
-<meta property="og:title" content="Dunvant Workingmens Club">
-<meta property="og:description" content="Your local club for a drink, a function, and a bit of community — right in the heart of Dunvant.">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232c3f38'/%3E%3Ctext x='50' y='68' font-family='Georgia,serif' font-size='58' font-weight='700' fill='%23e0b56a' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+<meta name="robots" content="noindex, nofollow">
+<title>Full Admin Dashboard — Dunvant WMC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --ink:#181614;
-    --paper:#faf7f1;
-    --card:#ffffff;
-    --line:#e8e0d2;
-    --muted:#6b6152;
-    --brass:#b8873f;
-    --brass-light:#e0b56a;
-    --forest:#2c3f38;
-    --forest-light:#3d5a50;
-    --pop:#ff7a45;
-    --band-forest:#eef2ef;
-    --band-brass:#fdf3e2;
-  }
+  :root{--ink:#181614;--paper:#faf7f1;--card:#ffffff;--line:#e8e0d2;--muted:#8a7f6b;--brass:#b8873f;--brass-light:#e0b56a;--forest:#2c3f38;--pop:#ff7a45;}
   [data-theme="dark"]{
-    --ink:#f0ece2;
-    --paper:#161412;
-    --card:#211e1a;
-    --line:#3a352c;
-    --muted:#a89c85;
-    --brass:#d4a45c;
-    --brass-light:#e8c584;
-    --forest:#4a6b5f;
-    --forest-light:#5c8072;
-    --pop:#ff9166;
-    --band-forest:#1c2620;
-    --band-brass:#2a2318;
+    --ink:#f0ece2; --paper:#161412; --card:#211e1a; --line:#3a352c; --muted:#a89c85;
+    --brass:#d4a45c; --brass-light:#e8c584; --forest:#4a6b5f; --pop:#ff9166;
   }
-  body{transition:background 0.25s ease, color 0.25s ease;}
-  * , *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
   *{box-sizing:border-box; margin:0; padding:0;}
-  html{scroll-behavior:smooth;}
-  body{
-    background:var(--paper);
-    color:var(--ink);
-    font-family:'Inter', sans-serif;
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #181614 0%, #1a2620 100%); padding:26px 24px; text-align:center; position:relative;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.5rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .logout-btn{
+    margin-top:16px; font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.2);
+    padding:8px 16px; border-radius:20px; cursor:pointer;
   }
-  a{color:inherit;}
-  .display{font-family:'Fraunces', serif;}
-
-  /* nav */
-  header{
-    position:sticky; top:0; z-index:50;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:18px 32px;
-    background:rgba(24,22,20,0.72);
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-    border-bottom:1px solid rgba(255,255,255,0.08);
-  }
-  .brand{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:1.15rem;
-    color:#fff;
-    letter-spacing:0.01em;
-  }
-  nav{display:flex; gap:28px;}
-  nav a{
-    font-size:0.82rem;
-    font-weight:500;
-    color:rgba(255,255,255,0.75);
-    text-decoration:none;
-    border:1px solid rgba(255,255,255,0.18);
-    padding:6px 14px;
-    border-radius:20px;
-    transition:color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-  }
-  nav a:hover{color:var(--brass-light); border-color:var(--brass-light); background:rgba(255,255,255,0.06);}
-  nav a.staff-link{
-    color:#fff;
-    border-color:rgba(255,255,255,0.25);
-  }
-  nav a.staff-link:hover{border-color:var(--brass-light); background:rgba(255,255,255,0.06);}
-
+  .logout-btn:hover{border-color:var(--brass);}
   .theme-toggle{
-    background:rgba(255,255,255,0.08);
-    border:1px solid rgba(255,255,255,0.18);
-    border-radius:50%;
-    width:36px; height:36px;
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
     display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-    font-size:1rem;
-    margin-left:10px;
-    transition:border-color 0.2s ease, transform 0.2s ease;
+    cursor:pointer; font-size:1.05rem;
   }
-  .theme-toggle:hover{border-color:var(--brass-light); transform:scale(1.08);}
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:820px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:28px;}
 
-  .nav-toggle{
-    display:none;
-    flex-direction:column;
-    gap:5px;
-    background:none;
-    border:none;
-    cursor:pointer;
-    padding:6px;
-  }
-  .nav-toggle span{
-    width:22px; height:2px;
-    background:#fff;
-    border-radius:2px;
-    transition:transform 0.25s ease, opacity 0.25s ease;
-  }
-  .nav-toggle.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
-  .nav-toggle.open span:nth-child(2){opacity:0;}
-  .nav-toggle.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+  .activity-widget{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:28px;}
+  .activity-header{font-family:'Fraunces', serif; font-size:0.9rem; font-weight:600; color:var(--forest); margin-bottom:12px;}
+  .activity-item{display:flex; gap:12px; padding:9px 0; border-top:1px solid var(--line); font-size:0.82rem;}
+  .activity-item:first-child{border-top:none;}
+  .activity-dot{width:7px; height:7px; border-radius:50%; background:var(--pop); margin-top:6px; flex-shrink:0;}
+  .activity-msg{font-weight:600;}
+  .activity-meta{font-size:0.74rem; color:var(--muted); margin-top:2px;}
+  .activity-empty{font-size:0.82rem; color:var(--muted);}
+  .activity-link{font-size:0.76rem; color:var(--brass); text-decoration:none; font-weight:600; display:block; margin-top:10px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
 
-  @media(max-width:640px){
-    .nav-toggle{display:flex;}
-    nav{
-      position:absolute;
-      top:100%; left:0; right:0;
-      flex-direction:column;
-      gap:10px;
-      background:rgba(24,22,20,0.96);
-      backdrop-filter:blur(14px);
-      padding:18px 24px 24px;
-      border-bottom:1px solid rgba(255,255,255,0.08);
-      max-height:0;
-      overflow:hidden;
-      opacity:0;
-      transition:max-height 0.3s ease, opacity 0.2s ease;
-    }
-    nav.open{max-height:340px; opacity:1;}
-    nav a{width:100%; text-align:center;}
+  .dash-search{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.9rem;
+    padding:13px 16px; border:1px solid var(--line); border-radius:10px;
+    margin-bottom:26px; background:var(--card); color:var(--ink);
   }
-    nav{gap:16px;}
-    nav a{font-size:0.72rem;}
-  }
+  .dash-search:focus{outline:none; border-color:var(--brass);}
 
-  /* hero */
-  .hero{
-    position:relative;
-    padding:70px 24px 56px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    text-align:center;
-    background:
-      radial-gradient(ellipse at top, rgba(184,135,63,0.18), transparent 60%),
-      linear-gradient(160deg, #181614 0%, #241f1c 55%, #1a2620 100%);
-    color:#fff;
-    overflow:hidden;
+  .dash-tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px;}
+  .dash-tab-btn{
+    font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600;
+    background:var(--card); color:var(--muted); border:1px solid var(--line);
+    border-radius:20px; padding:8px 16px; cursor:pointer;
   }
-  .hero::after{
-    content:"";
-    position:absolute; left:50%; bottom:0;
-    transform:translateX(-50%);
-    width:1px; height:60px;
-    background:linear-gradient(var(--brass), transparent);
+  .dash-tab-btn:hover{border-color:var(--brass);}
+  .dash-tab-btn.active{
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614; border-color:transparent;
   }
-  .eyebrow{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:12px;
-    font-size:0.72rem;
-    font-weight:600;
-    letter-spacing:0.2em;
-    text-transform:uppercase;
-    color:var(--brass-light);
-    margin-bottom:22px;
-  }
-  .eyebrow::before,
-  .eyebrow::after{
-    content:"";
-    width:32px;
-    height:1px;
-    background:linear-gradient(90deg, transparent, var(--brass));
-  }
-  .eyebrow::after{background:linear-gradient(90deg, var(--brass), transparent);}
-  .hero h1{
-    font-weight:600;
-    font-size:clamp(1.8rem, 9vw, 3.2rem);
-    letter-spacing:-0.02em;
-    line-height:1.15;
-    margin-bottom:18px;
-    overflow-wrap:break-word;
-    word-break:break-word;
-    max-width:640px;
-  }
-  .hero p{
-    font-size:1.05rem;
-    color:rgba(255,255,255,0.68);
-    max-width:460px;
-    margin:0 auto 24px;
-  }
-  .hero .history-blurb{
-    font-family:'Fraunces', serif;
-    font-style:italic;
-    font-size:0.92rem;
-    color:rgba(255,255,255,0.5);
-    max-width:440px;
-    margin:20px auto 0;
-    line-height:1.6;
-  }
-  .btn{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    font-weight:600;
-    font-size:0.92rem;
-    padding:15px 28px;
-    border-radius:8px;
-    text-decoration:none;
-    transition:transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .btn:hover{transform:translateY(-2px);}
-  .btn-brass{
-    background:linear-gradient(135deg, var(--brass-light), var(--brass));
-    color:#181614;
-    box-shadow:0 8px 20px rgba(184,135,63,0.3);
-    animation:pulse-glow 2.6s ease-in-out infinite;
-  }
-  @keyframes pulse-glow{
-    0%, 100%{box-shadow:0 8px 20px rgba(184,135,63,0.3);}
-    50%{box-shadow:0 8px 28px rgba(255,122,69,0.45);}
-  }
-  @media(prefers-reduced-motion:reduce){
-    .btn-brass{animation:none;}
-  }
+  .group{display:none;}
+  .group.tab-active{display:block;}
+  body.searching .group{display:block;}
+  .group.no-match{display:none !important;}
+  .grid a.hidden{display:none;}
+  .group.hidden{display:none;}
 
-  section{
-    max-width:820px;
-    margin:0 auto;
-    padding:70px 24px;
-    position:relative;
+  .group{margin-bottom:30px;}
+  .group-label{
+    font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest);
+    display:flex; align-items:center; gap:10px; margin-bottom:12px;
   }
-  .band-forest{
-    background:var(--band-forest);
-    box-shadow:0 0 0 100vmax var(--band-forest);
-    clip-path:inset(0 -100vmax);
+  .group-count{
+    font-family:'Inter', sans-serif; font-size:0.7rem; font-weight:700; color:var(--muted);
+    background:var(--card); border:1px solid var(--line); padding:2px 8px; border-radius:10px;
   }
-  .band-brass{
-    background:var(--band-brass);
-    box-shadow:0 0 0 100vmax var(--band-brass);
-    clip-path:inset(0 -100vmax);
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media(max-width:600px){ .grid{grid-template-columns:1fr;} }
+  .grid a{
+    display:block; text-decoration:none; background:var(--card); color:var(--ink);
+    border:1px solid var(--line); border-radius:10px; padding:14px 16px;
+    font-weight:600; font-size:0.88rem; transition:transform 0.15s ease, border-color 0.15s ease;
   }
-  .section-head{
-    display:flex;
-    align-items:baseline;
-    gap:14px;
-    margin-bottom:30px;
+  .grid a:hover{transform:translateY(-2px); border-color:var(--brass);}
+  .grid a small{display:block; font-weight:400; font-size:0.74rem; color:var(--muted); margin-top:3px;}
+  .badge{
+    display:inline-block; font-size:0.68rem; font-weight:700; color:#fff;
+    background:var(--pop); border-radius:20px; padding:1px 8px; margin-left:6px;
   }
-  .section-num{
-    font-family:'Fraunces', serif;
-    font-size:0.85rem;
-    color:var(--brass);
-    font-weight:600;
-  }
-  h2{
-    font-family:'Fraunces', serif;
-    font-size:1.6rem;
-    font-weight:600;
-    color:var(--ink);
-  }
-  .rule{
-    flex:1;
-    height:1px;
-    background:linear-gradient(90deg, var(--line), transparent);
-  }
-
-  /* first time here */
-  .welcome-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:16px;
-  }
-  @media(max-width:700px){ .welcome-grid{grid-template-columns:1fr 1fr;} }
-  @media(max-width:480px){ .welcome-grid{grid-template-columns:1fr;} }
-  .welcome-card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:22px 18px;
-    text-align:center;
-    transition:transform 0.2s ease, border-color 0.2s ease;
-  }
-  .welcome-card:hover{transform:translateY(-3px); border-color:var(--brass);}
-  .welcome-icon{font-size:1.6rem; margin-bottom:10px;}
-  .welcome-card h3{
-    font-family:'Fraunces', serif;
-    font-size:0.92rem;
-    font-weight:600;
-    margin-bottom:6px;
-  }
-  .welcome-card p{
-    font-size:0.8rem;
-    color:var(--muted);
-    line-height:1.5;
-  }
-
-  /* hours & contact */
-  .info-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-    align-items:start;
-  }
-  @media(max-width:560px){ .info-grid{grid-template-columns:1fr;} }
-  .info-card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:26px;
-    transition:border-color 0.2s ease, transform 0.2s ease;
-  }
-  .info-card:hover{border-color:var(--brass); transform:translateY(-3px);}
-  .info-card h3{
-    font-family:'Fraunces', serif;
-    font-size:1rem;
-    font-weight:600;
-    color:var(--forest);
-    margin-bottom:14px;
-  }
-  .row{
-    display:flex; justify-content:space-between;
-    gap:16px;
-    font-size:0.95rem;
-    padding:11px 0;
-    border-top:1px solid var(--line);
-  }
-  .row:first-of-type{border-top:none;}
-  .row span:last-child{text-align:right;}
-  .row span:first-child{color:var(--muted);}
-  .row span:last-child{font-weight:600;}
-
-  /* events */
-  .event{
-    display:flex;
-    align-items:center;
-    gap:18px;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:16px 20px;
-    margin-bottom:12px;
-    transition:border-color 0.2s ease, transform 0.2s ease;
-  }
-  .event:hover{border-color:var(--brass); transform:translateX(4px);}
-  .event .date{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:0.78rem;
-    color:#fff;
-    background:var(--forest);
-    padding:7px 12px;
-    border-radius:6px;
-    white-space:nowrap;
-  }
-  .event .title{font-weight:600; font-size:0.94rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
-  .pop-tag{
-    font-family:'Inter', sans-serif; font-size:0.68rem; font-weight:700;
-    text-transform:uppercase; letter-spacing:0.04em; color:#fff;
-    background:var(--pop); padding:3px 10px; border-radius:20px;
-  }
-
-  /* booking */
-  .booking-card{
-    background:linear-gradient(135deg, var(--forest) 0%, #1e2d27 100%);
-    color:#fff;
-    border-radius:16px;
-    padding:44px 34px;
-    text-align:center;
-    box-shadow:0 16px 40px rgba(44,63,56,0.28);
-  }
-  .booking-icon{
-    width:52px; height:52px;
-    margin:0 auto 18px;
-    display:flex; align-items:center; justify-content:center;
-    background:rgba(255,255,255,0.1);
-    border-radius:50%;
-  }
-  .booking-card h3{
-    font-family:'Fraunces', serif;
-    font-size:1.4rem;
-    font-weight:600;
-    margin-bottom:10px;
-  }
-  .booking-card p{
-    color:rgba(255,255,255,0.72);
-    margin-bottom:24px;
-    font-size:0.95rem;
-    max-width:420px;
-    margin-left:auto; margin-right:auto;
-  }
-  .booking-facts{
-    display:flex;
-    justify-content:center;
-    gap:14px;
-    flex-wrap:wrap;
-    margin-bottom:28px;
-  }
-  .booking-facts div{
-    background:rgba(255,255,255,0.08);
-    border:1px solid rgba(255,255,255,0.12);
-    border-radius:8px;
-    padding:10px 18px;
-    font-size:0.78rem;
-    text-align:left;
-  }
-  .booking-facts strong{
-    display:block;
-    font-family:'Fraunces', serif;
-    font-size:1rem;
-    margin-bottom:2px;
-  }
-  .btn-light{
-    background:#fff;
-    color:var(--forest);
-    box-shadow:0 8px 20px rgba(0,0,0,0.2);
-  }
-
-  /* gallery */
-  .gallery{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:12px;
-  }
-  .gallery div{
-    aspect-ratio:1;
-    border-radius:10px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:0.7rem;
-    font-weight:600;
-    color:rgba(255,255,255,0.85);
-    text-align:center;
-    padding:8px;
-    transition:transform 0.2s ease;
-  }
-  .gallery div:hover{transform:scale(1.04);}
-  .g1{background:linear-gradient(135deg,#3d5a50,#2c3f38);}
-  .g2{background:linear-gradient(135deg,#6e2f2a,#4a1f1c);}
-  .g3{background:linear-gradient(135deg,#b8873f,#8a6530);}
-  .g4{background:linear-gradient(135deg,#4a4038,#2e2822);}
-  .g5{background:linear-gradient(135deg,#5a4a38,#3a2e22);}
-  .g6{background:linear-gradient(135deg,#3d5a50,#1e2d27);}
-
-  /* map */
-  .map-embed-card{
-    border-radius:12px; overflow:hidden; border:1px solid var(--line);
-    margin-bottom:14px; line-height:0;
-  }
-  .map-card{
-    background:linear-gradient(135deg, var(--forest) 0%, #1e2d27 100%);
-    border-radius:12px; padding:36px 28px; text-align:center; margin-bottom:14px;
-  }
-  .map-icon{
-    width:48px; height:48px; margin:0 auto 14px;
-    display:flex; align-items:center; justify-content:center;
-    background:rgba(255,255,255,0.1); border-radius:50%;
-  }
-  .map-card h3{font-family:'Fraunces', serif; color:#fff; font-size:1.1rem; margin-bottom:6px;}
-  .map-card p{color:rgba(255,255,255,0.65); font-size:0.86rem; margin-bottom:20px;}
-  .map-btn{
-    display:inline-flex; align-items:center; gap:8px;
-    background:#fff; color:var(--forest); font-weight:600; font-size:0.9rem;
-    padding:13px 24px; border-radius:8px; text-decoration:none;
-  }
-  .map-address{font-size:0.86rem; color:var(--muted);}
-
-  /* faq */
-  .faq-list{display:flex; flex-direction:column; gap:10px;}
-  .faq-item{
-    background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden;
-  }
-  .faq-question{
-    width:100%; text-align:left; background:none; border:none; cursor:pointer;
-    font-family:'Fraunces', serif; font-weight:600; font-size:0.96rem; color:var(--ink);
-    padding:18px 20px; display:flex; justify-content:space-between; align-items:center;
-  }
-  .faq-icon{
-    font-family:'Inter', sans-serif; font-size:1.2rem; color:var(--brass);
-    transition:transform 0.2s ease; flex-shrink:0; margin-left:14px;
-  }
-  .faq-item.open .faq-icon{transform:rotate(45deg);}
-  .faq-answer{
-    max-height:0; overflow:hidden; transition:max-height 0.25s ease, padding 0.25s ease;
-    font-size:0.94rem; color:var(--muted); padding:0 20px;
-  }
-  .faq-item.open .faq-answer{max-height:200px; padding:0 20px 18px;}
-
-  /* members */
-  .members-card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:30px;
-  }
-  .members-card > p{color:var(--muted); font-size:0.92rem; margin-bottom:16px;}
-  .members-card ul{list-style:none;}
-  .members-card li{
-    display:flex; align-items:center; gap:10px;
-    padding:11px 0;
-    border-top:1px solid var(--line);
-    font-size:0.92rem;
-  }
-  .members-card li:first-child{border-top:none;}
-  .members-card li::before{
-    content:"";
-    width:6px; height:6px;
-    border-radius:50%;
-    background:var(--brass);
-    flex-shrink:0;
-  }
-
-  .compare-card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px;
-    overflow:hidden;
-    margin-bottom:20px;
-  }
-  .compare-header, .compare-row{
-    display:grid;
-    grid-template-columns:1.3fr 1fr 1fr;
-  }
-  .compare-header{background:var(--forest);}
-  .compare-col-head{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:0.9rem;
-    color:#fff;
-    text-align:center;
-    padding:14px 10px;
-  }
-  .compare-col-head.highlight{background:var(--brass);}
-  .compare-row{border-top:1px solid var(--line);}
-  .compare-row:first-of-type{border-top:none;}
-  .compare-label{
-    font-size:0.82rem;
-    font-weight:600;
-    color:var(--muted);
-    padding:14px 14px;
-  }
-  .compare-val{
-    font-size:0.84rem;
-    text-align:center;
-    padding:14px 8px;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .compare-val.highlight{
-    background:rgba(184,135,63,0.08);
-    font-weight:700;
-    color:var(--forest);
-  }
-  @media(max-width:480px){
-    .compare-label{font-size:0.72rem; padding:12px 8px;}
-    .compare-val{font-size:0.74rem; padding:12px 4px;}
-    .compare-col-head{font-size:0.76rem; padding:12px 6px;}
-  }
-
-  footer{
-    text-align:center;
-    padding:40px 20px 50px;
-    font-size:0.78rem;
-    color:var(--muted);
-    border-top:1px solid var(--line);
-    margin-top:20px;
-  }
-
-  .reveal{
-    opacity:0;
-    transform:translateY(16px);
-    transition:opacity 0.6s ease, transform 0.6s ease;
-  }
-  .reveal.revealed{opacity:1; transform:translateY(0);}
-  @media(prefers-reduced-motion:reduce){
-    .reveal{opacity:1; transform:none; transition:none;}
-  }
+  a.back{display:inline-block; margin-top:10px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
 </style>
 </head>
 <body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <div class="brand">Dunvant WMC</div>
-  <nav id="site-nav">
-    <a href="#events">Events</a>
-    <a href="#book">Book</a>
-    <a href="#gallery">Gallery</a>
-    <a href="#members">Members</a>
-    <a href="staff-area.html" class="staff-link">Staff</a>
-  </nav>
-  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
-    <span class="theme-icon" id="theme-icon">☀️</span>
-  </button>
-  <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
-    <span></span><span></span><span></span>
-  </button>
+  <span class="eyebrow">Full Admin</span>
+  <h1>Full Admin Dashboard</h1>
+  <p>Everything on the site, in one place</p>
+  <button class="logout-btn" onclick="logoutFromDashboard()">Log Out</button>
 </header>
+<main>
+  <div class="notice">Every tool and page across the whole site, laid out flat so you don't need to switch roles or tabs to get to something. This is a convenience view — nothing here works differently than reaching it through the normal Staff Area menus.</div>
 
-<div class="hero">
-  <span class="eyebrow">Est. 1900</span>
-  <h1 class="display">Dunvant Workingmens Club</h1>
-  <p>Your local club for a drink, a function, and a bit of community — right in the heart of Dunvant.</p>
-  <a class="btn btn-brass" href="#book">Book the Function Room →</a>
-  <p class="history-blurb">Serving Dunvant since 1900 — three generations of members have raised a glass under this roof, from the pit villages of old Dunvant to the community it is today.</p>
-</div>
-
-<section id="first-time" class="band-brass">
-  <div class="section-head">
-    <span class="section-num">01</span>
-    <h2>First Time Here?</h2>
-    <div class="rule"></div>
-  </div>
-  <div class="welcome-grid">
-    <div class="welcome-card">
-      <div class="welcome-icon">🙋</div>
-      <h3>Guests Welcome</h3>
-      <p>Non-members are welcome as guests — just ask at the bar.</p>
-    </div>
-    <div class="welcome-card">
-      <div class="welcome-icon">💷</div>
-      <h3>Members Get a Discount</h3>
-      <p>Drinks are cheaper for members — worth joining if you're a regular.</p>
-    </div>
-    <div class="welcome-card">
-      <div class="welcome-icon">👨‍👩‍👧</div>
-      <h3>Kids Welcome Until 9pm</h3>
-      <p>Families are welcome in the club up until 9pm.</p>
-    </div>
-    <div class="welcome-card">
-      <div class="welcome-icon">🅿️</div>
-      <h3>Parking</h3>
-      <p>Car park accessed via Voylart Road, about 100 metres from the club.</p>
-    </div>
-    <div class="welcome-card">
-      <div class="welcome-icon">♿</div>
-      <h3>Accessibility</h3>
-      <p>[Step-free access / accessible toilet details — to confirm]</p>
-    </div>
-  </div>
-</section>
-
-<section id="hours">
-  <div class="section-head">
-    <span class="section-num">02</span>
-    <h2>Hours &amp; Contact</h2>
-    <div class="rule"></div>
-  </div>
-  <div class="info-grid">
-    <div class="info-card">
-      <h3>Opening Hours</h3>
-      <div class="row"><span>Mon – Fri</span><span>2:00 PM – 11:00 PM</span></div>
-      <div class="row"><span>Saturday</span><span>12:00 PM – 11:30 PM</span></div>
-      <div class="row"><span>Sunday</span><span>11:30 AM – 10:30 PM</span></div>
-    </div>
-    <div class="info-card">
-      <h3>Get in Touch</h3>
-      <div class="row"><span>Phone</span><span><a href="tel:01792202770" style="color:inherit; text-decoration:none;">01792 202770</a></span></div>
-      <div class="row"><span>Email</span><span>dunvantclub@outlook.com</span></div>
-      <div class="row"><span>Address</span><span>1 Killan Road, Dunvant, Swansea SA2 7TD</span></div>
-    </div>
-  </div>
-</section>
-
-<section id="events" class="band-forest">
-  <div class="section-head">
-    <span class="section-num">03</span>
-    <h2>What's On</h2>
-    <div class="rule"></div>
-  </div>
-  <div class="event">
-    <span class="date">[Date]</span>
-    <span class="title">🎤 [Event name — e.g. Live music night]<span class="pop-tag">This Week</span></span>
-  </div>
-  <div class="event">
-    <span class="date">[Date]</span>
-    <span class="title">🎯 [Event name]</span>
-  </div>
-  <div class="event">
-    <span class="date">[Date]</span>
-    <span class="title">🎉 [Event name]</span>
-  </div>
-</section>
-
-<section id="book">
-  <div class="section-head">
-    <span class="section-num">04</span>
-    <h2>Function Room</h2>
-    <div class="rule"></div>
-  </div>
-  <div class="booking-card">
-    <div class="booking-icon">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="5" width="18" height="16" rx="2" stroke="#fff" stroke-width="1.8"/>
-        <path d="M3 9H21" stroke="#fff" stroke-width="1.8"/>
-        <path d="M7 3V6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M17 3V6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <h3 class="display">Book the Function Room</h3>
-    <p>Planning a party, wake, or private event? Check availability and submit a request online — takes a couple of minutes.</p>
-    <div class="booking-facts">
-      <div><strong>4 weeks</strong>notice for Saturdays</div>
-      <div><strong>£40</strong>deposit</div>
-    </div>
-    <a class="btn btn-light" href="https://forms.cloud.microsoft/r/xPbfry03VW" target="_blank" rel="noopener">Go to Booking Form</a>
-  </div>
-</section>
-
-<section id="gallery">
-  <div class="section-head">
-    <span class="section-num">05</span>
-    <h2>Gallery</h2>
-    <div class="rule"></div>
-  </div>
-  <div class="gallery">
-    <div class="g1">Photo 1</div>
-    <div class="g2">Photo 2</div>
-    <div class="g3">Photo 3</div>
-    <div class="g4">Photo 4</div>
-    <div class="g5">Photo 5</div>
-    <div class="g6">Photo 6</div>
-  </div>
-</section>
-
-<section id="find-us">
-  <div class="section-head">
-    <span class="section-num">06</span>
-    <h2>Find Us</h2>
-    <div class="rule"></div>
-  </div>
-  <div class="map-embed-card">
-    <iframe
-      src="https://www.openstreetmap.org/export/embed.html?bbox=-4.0402%2C51.6231%2C-4.0282%2C51.6291&layer=mapnik&marker=51.6261%2C-4.0342"
-      width="100%" height="300" style="border:0;" loading="lazy" title="Map showing Dunvant Workingmens Club">
-    </iframe>
-  </div>
-  <div class="map-card">
-    <div class="map-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 21C12 21 19 15 19 10C19 5.5 15.5 2 12 2C8.5 2 5 5.5 5 10C5 15 12 21 12 21Z" stroke="#fff" stroke-width="1.8"/>
-        <circle cx="12" cy="10" r="3" stroke="#fff" stroke-width="1.8"/>
-      </svg>
-    </div>
-    <h3>1 Killan Road, Dunvant</h3>
-    <p>Swansea SA2 7TD — accessed via Voylart Road</p>
-    <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=1+Killan+Road,+Dunvant,+Swansea+SA2+7TD" target="_blank" rel="noopener">Open in Maps →</a>
-  </div>
-</section>
-
-<section id="faq" class="band-brass">
-  <div class="section-head">
-    <span class="section-num">07</span>
-    <h2>FAQ</h2>
-    <div class="rule"></div>
-  </div>
-  <div class="faq-list">
-    <div class="faq-item">
-      <button class="faq-question" onclick="toggleFaq(this)">
-        Can non-members come in?
-        <span class="faq-icon">+</span>
-      </button>
-      <div class="faq-answer">Yes — non-members are welcome as guests, though members get a discounted drink price.</div>
-    </div>
-    <div class="faq-item">
-      <button class="faq-question" onclick="toggleFaq(this)">
-        Is the club child-friendly?
-        <span class="faq-icon">+</span>
-      </button>
-      <div class="faq-answer">Children are welcome up to 9pm.</div>
-    </div>
-    <div class="faq-item">
-      <button class="faq-question" onclick="toggleFaq(this)">
-        Is there parking?
-        <span class="faq-icon">+</span>
-      </button>
-      <div class="faq-answer">There's a car park accessed via Voylart Road, roughly 100 metres from the club, below the front of the building near the mini-roundabout.</div>
-    </div>
-    <div class="faq-item">
-      <button class="faq-question" onclick="toggleFaq(this)">
-        How do I become a member?
-        <span class="faq-icon">+</span>
-      </button>
-      <div class="faq-answer">Ask at the bar — a committee member can talk you through it.</div>
-    </div>
-    <div class="faq-item">
-      <button class="faq-question" onclick="toggleFaq(this)">
-        Can I hire the function room even if I'm not a member?
-        <span class="faq-icon">+</span>
-      </button>
-      <div class="faq-answer">Function room bookings need a member as the nominated responsible adult present for the whole event — see the Book section for details.</div>
-    </div>
-  </div>
-</section>
-
-<section id="members">
-  <div class="section-head">
-    <span class="section-num">08</span>
-    <h2>Members</h2>
-    <div class="rule"></div>
-  </div>
-
-  <div class="compare-card">
-    <div class="compare-header">
-      <div></div>
-      <div class="compare-col-head">Non-Member</div>
-      <div class="compare-col-head highlight">Member</div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-label">Drink prices</div>
-      <div class="compare-val">Standard price</div>
-      <div class="compare-val highlight">Discounted price</div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-label">Function room booking</div>
-      <div class="compare-val">Guest of a member only</div>
-      <div class="compare-val highlight">Book directly</div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-label">Club events</div>
-      <div class="compare-val">Welcome as a guest</div>
-      <div class="compare-val highlight">Priority &amp; member rates</div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-label">Say in how the club runs</div>
-      <div class="compare-val">—</div>
-      <div class="compare-val highlight">Vote at AGM</div>
+  <div class="activity-widget">
+    <div class="activity-header">Recent Activity</div>
+    <div id="activity-list" class="activity-list">
+      <p class="activity-empty" id="activity-status">Loading…</p>
     </div>
   </div>
 
-  <div class="members-card">
-    <p>Stay in the loop with what's happening at the club.</p>
-    <ul>
-      <li>Follow us on <a href="https://www.facebook.com/profile.php?id=61563877044858" target="_blank" rel="noopener" style="color:var(--brass); font-weight:600;">Facebook</a> for updates</li>
-      <li>Not a member yet? Ask at the bar about joining.</li>
-      <li>Membership lapsed? See <a href="membership-renewal.html" style="color:var(--brass); font-weight:600;">how to renew</a></li>
-      <li>Got an idea for the club? <a href="member-suggestions.html" style="color:var(--brass); font-weight:600;">Let us know</a></li>
-    </ul>
+  <input type="text" class="dash-search" id="dash-search" placeholder="Search everything…" oninput="filterDashboard(this.value)">
+
+  <div class="dash-tabs" id="dash-tabs">
+    <button class="dash-tab-btn active" onclick="switchDashTab('site-admin', this)">Site Admin</button>
+    <button class="dash-tab-btn" onclick="switchDashTab('management', this)">Management</button>
+    <button class="dash-tab-btn" onclick="switchDashTab('keyholder', this)">Keyholder</button>
+    <button class="dash-tab-btn" onclick="switchDashTab('bar-staff', this)">Bar Staff</button>
+    <button class="dash-tab-btn" onclick="switchDashTab('committee', this)">Committee</button>
+    <button class="dash-tab-btn" onclick="switchDashTab('public-site', this)">Public Site</button>
   </div>
-</section>
 
-<footer>
-  <p>Dunvant Workingmens Club — built and maintained by the committee</p>
-  <p style="margin-top:10px;"><a href="https://www.facebook.com/profile.php?id=61563877044858" target="_blank" rel="noopener" style="color:var(--brass); text-decoration:none; font-weight:600;">Find us on Facebook →</a></p>
-  <p style="margin-top:6px;"><a href="mailto:dunvantclub@outlook.com?subject=Website%20issue" style="color:var(--muted); text-decoration:none; font-size:0.78rem;">Spotted a problem with this website? Let us know →</a></p>
-</footer>
+  <div class="group tab-active" id="group-site-admin">
+    <div class="group-label">Site Admin</div>
+    <div class="grid">
+      <a href="edit-site-files.html" target="_blank" rel="noopener">Edit Site Files<small>Where the site's files live and how to update them</small></a>
+      <a href="publish-file-update.html" target="_blank" rel="noopener">Publish File Update<small>Update any file directly — no manual editing</small></a>
+      <a href="manage-staff-logins.html" target="_blank" rel="noopener">Manage Staff Logins<small>Add, remove, or update access</small></a>
+      <a href="site-todos.html" target="_blank" rel="noopener">Site To-Do List <span class="badge">23</span><small>Everything still waiting for real content</small></a>
+      <a href="tickets.html" target="_blank" rel="noopener">Tickets<small>Issues from the public and staff</small></a>
+      <a href="google-analytics.html" target="_blank" rel="noopener">Google Analytics<small>Setup guide — free, no backend needed</small></a>
+      <a href="content-quick-edit.html" target="_blank" rel="noopener">Content Quick-Edit Cheat Sheet<small>Where to make common changes</small></a>
+      <a href="site-changelog.html" target="_blank" rel="noopener">Site Changelog<small>Automatic — pulled from GitHub history</small></a>
+      <a href="overall-changelog.html" target="_blank" rel="noopener">Overall Changelog<small>The big picture, in plain English</small></a>
+      <a href="backup-reminder.html" target="_blank" rel="noopener">Backup Reminder<small>Keep a fresh copy somewhere safe</small></a>
+      <a href="hosting-status.html" target="_blank" rel="noopener">Domain / Hosting Status<small>Where the site actually lives</small></a>
+      <a href="https://forms.cloud.microsoft/r/xPbfry03VW" target="_blank" rel="noopener">Booking Form Responses<small>Function room submissions</small></a>
+      <a href="shift-cover-form-responses.html" target="_blank" rel="noopener">Shift Cover Form Responses<small>Routine cover request submissions</small></a>
+      <a href="https://outlook.live.com/owa/calendar/bb8f79de-cbbe-4d7b-8e7f-2123ebde7711/c726ef94-949e-4889-9aa2-39f3f93837b8/cid-FC69B5B067121F85/index.html" target="_blank" rel="noopener">Outlook Rota Calendar<small>Add, edit, or remove shifts</small></a>
+      <a href="facebook-page-admin.html" target="_blank" rel="noopener">Facebook Page<small>Post updates, manage the page</small></a>
+    </div>
+  </div>
 
+  <div class="group" id="group-management">
+    <div class="group-label">Management <span class="group-count">12</span></div>
+    <div class="grid">
+      <a href="../management/weekly-rota-builder.html">Weekly Rota Builder<small>Build, send to Outlook, notify staff</small></a>
+      <a href="../shared/staff-rota.html">Full Rota Calendar<small>Live Outlook rota calendar</small></a>
+      <a href="https://outlook.live.com/calendar/0/view/month" target="_blank" rel="noopener">Edit Rota Directly<small>Sign in to add or change shifts</small></a>
+      <a href="../management/pending-bookings.html">Pending Bookings <span class="badge">2</span><small>Function room requests</small></a>
+      <a href="../management/shift-cover-requests-mgmt.html">Shift Cover Requests <span class="badge">2</span><small>Track bar staff cover requests</small></a>
+      <a href="../management/membership-till-system.html">Membership &amp; Till System<small>Card system and discount setup</small></a>
+      <a href="../management/new-starter-checklist.html">New Starter Checklist<small>Training for someone joining</small></a>
+      <a href="../management/supplier-contacts.html">Supplier Contacts<small>Drinks, food, entertainment suppliers</small></a>
+      <a href="../management/expense-requests.html">Expense / Petty Cash Requests<small>Claiming back costs</small></a>
+      <a href="../management/entertainment-tracker.html">Entertainment Booking Tracker<small>Bands, quiz masters, DJs</small></a>
+      <a href="../management/licensing-compliance.html">Licensing / Compliance<small>Premises license conditions</small></a>
+      <a href="manage-staff-logins.html" target="_blank" rel="noopener">Manage Staff Logins<small>Add, remove, or update access</small></a>
+    </div>
+  </div>
+
+  <div class="group" id="group-keyholder">
+    <div class="group-label">Keyholder <span class="group-count">7</span></div>
+    <div class="grid">
+      <a href="../keyholder/alarm-fault.html">Alarm Fault<small>Who to call, what to do</small></a>
+      <a href="../keyholder/till-discrepancy.html">Till Discrepancy<small>Steps for a count that's off</small></a>
+      <a href="../keyholder/out-of-hours-contact.html">Out-of-Hours Contact<small>Emergency callout order</small></a>
+      <a href="../bar-staff/closing-checklist.html">Closing Checklist<small>Cleaning, cellar, bandits, mopping</small></a>
+      <a href="../keyholder/fire-safety.html">Fire Safety / Evacuation<small>Assembly point, extinguishers</small></a>
+      <a href="../keyholder/first-aid.html">First Aid<small>Kit location and who's trained</small></a>
+      <a href="../keyholder/weather-closure.html">Weather Closure Guide<small>Snow days, power cuts</small></a>
+    </div>
+  </div>
+
+  <div class="group" id="group-bar-staff">
+    <div class="group-label">Bar Staff <span class="group-count">7</span></div>
+    <div class="grid">
+      <a href="../bar-staff/current-rota.html">Current Rota<small>Bookmark this — always the latest week</small></a>
+      <a href="../bar-staff/this-weeks-rota.html">This Week's Rota<small>See shifts, confirm you've seen them</small></a>
+      <a href="../bar-staff/till-card-lookup.html">Till &amp; Card Lookup Guide<small>Applying the member discount</small></a>
+      <a href="../bar-staff/whats-on-this-week.html">What's On This Week<small>Upcoming bookings and events</small></a>
+      <a href="../bar-staff/shift-cover-request.html">Shift Cover Request<small>Report cover needed, routine or urgent</small></a>
+      <a href="../bar-staff/price-list.html">Price List<small>Quick drink price reference</small></a>
+      <a href="../bar-staff/incident-report.html">Accident / Incident Report<small>Health &amp; safety, not till issues</small></a>
+    </div>
+  </div>
+
+  <div class="group" id="group-committee">
+    <div class="group-label">Committee <span class="group-count">6</span></div>
+    <div class="grid">
+      <a href="../committee/finances-accounts.html">Finances &amp; Accounts<small>Club accounts and oversight</small></a>
+      <a href="../shared/staff-faq.html">Staff FAQ / Handbook<small>Common questions</small></a>
+      <a href="../committee/agm-planning.html">AGM Planning<small>Agenda and action tracking</small></a>
+      <a href="../committee/membership-numbers.html">Membership Numbers<small>Joining and lapsing trends</small></a>
+      <a href="../committee/club-constitution.html">Club Constitution / Rules<small>The governing document</small></a>
+      <a href="../committee/funding-opportunities.html">Grant / Funding Opportunities<small>Worth tracking</small></a>
+    </div>
+  </div>
+
+  <div class="group" id="group-public-site">
+    <div class="group-label">Public Site</div>
+    <div class="grid">
+      <a href="../club-website.html">Homepage<small>Live view of the public site</small></a>
+      <a href="../staff-area.html">Staff Area Login<small>Back to the normal role-based menu</small></a>
+      <a href="../membership-renewal.html">Membership Renewal<small>What to do if it lapses</small></a>
+      <a href="../member-suggestions.html">Member Suggestions<small>Ideas from members specifically</small></a>
+    </div>
+  </div>
+
+</main>
 <script>
-  // PWA: offline access for the public site
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Recent Activity — reuses the same GitHub connection saved elsewhere on the site
+  async function loadRecentActivity(){
+    const statusEl = document.getElementById('activity-status');
+    const listEl = document.getElementById('activity-list');
+    const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
+    if(!saved || !saved.owner || !saved.repo){
+      statusEl.textContent = 'Set up your GitHub connection in Manage Staff Logins to see recent changes here.';
+      return;
+    }
+    try{
+      const res = await fetch(`https://api.github.com/repos/${saved.owner}/${saved.repo}/commits?per_page=3`);
+      if(!res.ok) throw new Error();
+      const commits = await res.json();
+      if(commits.length === 0){
+        statusEl.textContent = 'No changes yet.';
+        return;
+      }
+      listEl.innerHTML = commits.map(c => {
+        const date = new Date(c.commit.author.date);
+        const when = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        return `
+          <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div>
+              <div class="activity-msg">${c.commit.message.split('\n')[0]}</div>
+              <div class="activity-meta">${when}</div>
+            </div>
+          </div>
+        `;
+      }).join('') + '<a class="activity-link" href="site-changelog.html">See full history →</a>';
+    } catch(e){
+      statusEl.textContent = "Couldn't load recent activity — check your GitHub connection.";
+    }
+  }
+  loadRecentActivity();
+
+  function logoutFromDashboard(){
+    localStorage.removeItem('staffUser');
+    localStorage.removeItem('staffUserName');
+    localStorage.removeItem('staffUserRoles');
+    if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+    window.location.href = '../staff-area.html';
   }
 
-  // FAQ accordion
-  function toggleFaq(btn){
-    const item = btn.closest('.faq-item');
-    const wasOpen = item.classList.contains('open');
-    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
-    if(!wasOpen) item.classList.add('open');
+  function filterDashboard(query){
+    const q = query.trim().toLowerCase();
+    document.body.classList.toggle('searching', q.length > 0);
+    document.querySelectorAll('.group').forEach(group => {
+      let anyVisible = false;
+      group.querySelectorAll('.grid a').forEach(a => {
+        const matches = a.textContent.toLowerCase().includes(q);
+        a.classList.toggle('hidden', !matches);
+        if(matches) anyVisible = true;
+      });
+      group.classList.toggle('no-match', q.length > 0 && !anyVisible);
+    });
   }
 
-  // Dark mode toggle
+  function switchDashTab(tabName, btn){
+    document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.group').forEach(g => g.classList.remove('tab-active'));
+    document.getElementById(`group-${tabName}`).classList.add('tab-active');
+    // Clear any active search when switching tabs, so it doesn't fight with tab visibility
+    const searchBox = document.getElementById('dash-search');
+    if(searchBox.value){
+      searchBox.value = '';
+      filterDashboard('');
+    }
+  }
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
   const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-
   function applyTheme(theme){
     if(theme === 'dark'){
       document.documentElement.setAttribute('data-theme', 'dark');
@@ -892,43 +303,12 @@
     }
   }
   applyTheme(initialTheme);
-
   themeToggle.addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const newTheme = isDark ? 'light' : 'dark';
     applyTheme(newTheme);
     localStorage.setItem('theme', newTheme);
   });
-
-  // Mobile nav toggle
-  const toggle = document.getElementById('nav-toggle');
-  const siteNav = document.getElementById('site-nav');
-  toggle.addEventListener('click', () => {
-    const isOpen = siteNav.classList.toggle('open');
-    toggle.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', isOpen);
-  });
-  siteNav.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      siteNav.classList.remove('open');
-      toggle.classList.remove('open');
-      toggle.setAttribute('aria-expanded', false);
-    });
-  });
-
-  // Scroll-reveal
-  const revealEls = document.querySelectorAll('section, .event, .info-card, .members-card, .booking-card');
-  revealEls.forEach(el => el.classList.add('reveal'));
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting){
-        entry.target.classList.add('revealed');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12 });
-  revealEls.forEach(el => observer.observe(el));
 </script>
-
 </body>
 </html>
