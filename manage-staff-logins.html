@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Staff Logins">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232c3f38'/%3E%3Ctext x='50' [...]
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232c3f38'/%3E%3Ctext x='50' y='68' font-family='Georgia,serif' font-size='58' font-weight='700' fill='%23e0b56a' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
 <title>Manage Staff Logins — Dunvant WMC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +28,7 @@
     border-radius:50%; width:38px; height:38px;
     display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
   }
-  .theme-toggle:hover{border-color:var(--brass-light);} 
+  .theme-toggle:hover{border-color:var(--brass-light);}
   main{max-width:800px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
   [data-theme="dark"] .notice{background:#2a2318;}
@@ -134,32 +134,19 @@
 </style>
 </head>
 <body>
-<div id="offline-banner" style="display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600; text-al[...]
+<div id="offline-banner" style="display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:#8a2f2f; color:#fff;">
   📡 You're offline — Save to GitHub won't work until you're back online. Generate Code + copy still works as a fallback.
 </div>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
-<!-- Face ID / Touch ID lock screen -->
-<div id="lock-screen" class="lock-screen">
-  <div class="lock-content">
-    <span class="eyebrow" style="color:var(--brass-light);">Restricted access</span>
-    <div class="lock-icon">🔒</div>
-    <h1 class="lock-h1">Manage Staff Logins</h1>
-    <p class="lock-p" id="lock-status">Checking for Face ID / Touch ID…</p>
-    <button class="lock-btn" id="lock-unlock-btn" style="display:none;" onclick="unlockWithBiometric()">Unlock with Face ID / Touch ID</button>
-    <button class="lock-btn-secondary" id="lock-setup-btn" style="display:none;" onclick="setupBiometric()">Set Up Face ID / Touch ID on This Device</button>
-    <p class="lock-fallback" id="lock-fallback" style="display:none;">Biometric lock isn't available on this device/browser — continuing without it.</p>
-  </div>
-</div>
-
-<div id="page-content" style="display:none;">
+<div id="page-content">
 <header>
   <span class="eyebrow">Site Admin</span>
   <h1>Manage Staff Logins</h1>
   <p>Add, edit, or remove people — then copy the result back into staff-area.html</p>
 </header>
 <main>
-  <div class="notice">This can't save changes on its own by default — there's no backend to write to. But if you set up a free GitHub token below (one-time, two minutes), the Save button can co[...]
+  <div class="notice">This can't save changes on its own by default — there's no backend to write to. But if you set up a free GitHub token below (one-time, two minutes), the Save button can commit changes straight to the live site — no copying, no file hunting. Without a token, use Generate Code + paste as before.</div>
 
   <div class="section-label">GitHub Connection (optional, but saves the copy-paste step)</div>
   <div class="github-config">
@@ -177,8 +164,8 @@
     </div>
     <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device (stored in this browser only)</label>
     <p class="config-hint">
-      One shared token for the club, used by whoever needs to publish — Management and Site Admin. Get it at github.com → Settings → Developer settings → Personal access tokens → Genera[...]
-      Since it's shared, anyone with it can publish as if they were anyone — the "by [Name]" credit in Site Changelog only works if people stay logged into their own Staff Area account while do[...]
+      One shared token for the club, used by whoever needs to publish — Management and Site Admin. Get it at github.com → Settings → Developer settings → Personal access tokens → Generate new token, scoped to just this one repository with "Contents: Read and write" permission, and set an expiry (90 days is sensible) rather than "no expiration."<br><br>
+      Since it's shared, anyone with it can publish as if they were anyone — the "by [Name]" credit in Site Changelog only works if people stay logged into their own Staff Area account while doing it. Keep the token itself private (a password manager, not a group chat), and if it's ever exposed or someone with access leaves, revoke and regenerate it — that's the one clean-up step that matters here.
     </p>
   </div>
 
@@ -202,7 +189,7 @@
   <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy Code</button>
   <p class="save-status" id="save-status"></p>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
 </main>
 </div>
 <script>
@@ -386,7 +373,7 @@
   async function loadCurrentUsers(){
     const statusEl = document.getElementById('load-status');
     try{
-      const res = await fetch('staff-area.html');
+      const res = await fetch('../staff-area.html');
       if(!res.ok) throw new Error('fetch failed');
       const text = await res.text();
       const match = text.match(/const STAFF_USERS\s*=\s*\[([\s\S]*?)\];/);
@@ -405,7 +392,7 @@
       }
     } catch(e){
       FALLBACK_USERS.forEach(u => addRow(u));
-      statusEl.textContent = `Couldn't auto-load from staff-area.html directly (only works once the site's actually hosted) — showing the ${FALLBACK_USERS.length} people already gathered instea[...]`;
+      statusEl.textContent = `Couldn't auto-load from staff-area.html directly (only works once the site's actually hosted) — showing the ${FALLBACK_USERS.length} people already gathered instead. Edits here won't update that fallback list automatically; regenerate and paste the code back in as usual.`;
     }
   }
   function updateOnlineStatus(){
@@ -423,87 +410,6 @@
 
   loadCurrentUsers();
 
-  // ── Face ID / Touch ID lock (WebAuthn, on-device only — no server involved) ──
-  function bufToBase64(buf){
-    return btoa(String.fromCharCode(...new Uint8Array(buf)));
-  }
-  function base64ToBuf(b64){
-    return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-  }
-
-  async function checkBiometricSupport(){
-    const statusEl = document.getElementById('lock-status');
-    if(!window.PublicKeyCredential){
-      revealPage();
-      return;
-    }
-    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
-    if(!available){
-      document.getElementById('lock-fallback').style.display = 'block';
-      statusEl.style.display = 'none';
-      setTimeout(revealPage, 1200);
-      return;
-    }
-
-    const storedCredId = localStorage.getItem('biometricCredentialId');
-    if(storedCredId){
-      statusEl.textContent = 'This device is set up — tap below to unlock.';
-      document.getElementById('lock-unlock-btn').style.display = 'block';
-    } else {
-      statusEl.textContent = 'No Face ID / Touch ID set up on this device yet.';
-      document.getElementById('lock-setup-btn').style.display = 'block';
-    }
-  }
-
-  async function setupBiometric(){
-    const statusEl = document.getElementById('lock-status');
-    try{
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const userId = crypto.getRandomValues(new Uint8Array(16));
-      const cred = await navigator.credentials.create({
-        publicKey: {
-          challenge: challenge,
-          rp: { name: "Dunvant WMC Staff Logins" },
-          user: { id: userId, name: "site-admin", displayName: "Site Admin" },
-          pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-          timeout: 60000
-        }
-      });
-      localStorage.setItem('biometricCredentialId', bufToBase64(cred.rawId));
-      statusEl.textContent = 'Set up! Unlocking…';
-      revealPage();
-    } catch(err){
-      statusEl.textContent = "Couldn't set up Face ID / Touch ID — continuing without it.";
-      setTimeout(revealPage, 1500);
-    }
-  }
-
-  async function unlockWithBiometric(){
-    const statusEl = document.getElementById('lock-status');
-    const storedCredId = localStorage.getItem('biometricCredentialId');
-    try{
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      await navigator.credentials.get({
-        publicKey: {
-          challenge: challenge,
-          allowCredentials: [{ id: base64ToBuf(storedCredId), type: "public-key" }],
-          userVerification: "required",
-          timeout: 60000
-        }
-      });
-      revealPage();
-    } catch(err){
-      statusEl.textContent = 'Face ID / Touch ID didn\'t match — try again.';
-    }
-  }
-
-  function revealPage(){
-    document.getElementById('lock-screen').style.display = 'none';
-    document.getElementById('page-content').style.display = 'block';
-  }
-
-  checkBiometricSupport();
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
