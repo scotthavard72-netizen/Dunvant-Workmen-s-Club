@@ -36,6 +36,10 @@
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
   [data-theme="dark"] .notice{background:#2a2318;}
   .published-note{font-size:0.78rem; color:var(--muted); margin-bottom:16px; text-align:center;}
+  .published-note:has(strong){
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;
+    padding:10px 16px; border-radius:10px; font-size:0.86rem; font-weight:600;
+  }
 
   .day-group{margin-bottom:16px;}
   .day-label{font-family:'Fraunces', serif; font-size:0.9rem; font-weight:600; color:var(--forest); margin-bottom:8px;}
@@ -90,13 +94,14 @@
     <a class="confirm-btn" href="#confirm-rota-form-link" target="_blank" rel="noopener">✓ Confirm You've Seen the Rota</a>
   </div>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
 </main>
 <script>
   // ── This block is overwritten automatically each time Management publishes ──
   // Do not edit by hand — use Weekly Rota Builder's "Publish This Week's Rota" button.
   const CURRENT_SHIFTS = [];
   const PUBLISHED_DATE = "";
+  const PUBLISHED_TIMESTAMP = "";
   // ── End auto-updated block ──
 
   function formatTime12h(t){
@@ -104,6 +109,12 @@
     const period = h >= 12 ? 'PM' : 'AM';
     const h12 = h % 12 === 0 ? 12 : h % 12;
     return `${h12}:${m.toString().padStart(2, '0')} ${period}`;
+  }
+
+  function isRecentlyPublished(){
+    if(!PUBLISHED_TIMESTAMP) return false;
+    const hoursSince = (Date.now() - new Date(PUBLISHED_TIMESTAMP).getTime()) / (1000 * 60 * 60);
+    return hoursSince >= 0 && hoursSince < 48; // "New" for the first 48 hours after publishing
   }
 
   function renderRota(){
@@ -116,7 +127,9 @@
       return;
     }
 
-    noteEl.textContent = PUBLISHED_DATE ? `Published ${PUBLISHED_DATE}` : '';
+    noteEl.innerHTML = PUBLISHED_DATE
+      ? (isRecentlyPublished() ? `🔔 <strong>New rota!</strong> Published ${PUBLISHED_DATE}` : `Published ${PUBLISHED_DATE}`)
+      : '';
 
     const grouped = {};
     CURRENT_SHIFTS.forEach(s => {
