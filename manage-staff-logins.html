@@ -105,13 +105,11 @@
     padding:11px 18px; cursor:pointer; margin-top:10px;
   }
   .save-status{font-size:0.82rem; margin-top:10px; color:var(--muted);}
-  .mini-progress{display:none; height:4px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:8px;}
-  .mini-progress.active{display:block;}
-  .mini-progress-bar{height:100%; width:40%; background:linear-gradient(90deg, var(--brass-light), var(--pop, var(--brass))); border-radius:4px; animation:mini-progress-slide 1.1s ease-in-out infinite;}
-  @keyframes mini-progress-slide{
-    0%{transform:translateX(-100%);}
-    100%{transform:translateX(250%);}
-  }
+  .mini-progress{display:none; align-items:center; gap:10px; margin-top:8px;}
+  .mini-progress.active{display:flex;}
+  .mini-progress-track{flex:1; height:6px; border-radius:4px; background:var(--line); overflow:hidden;}
+  .mini-progress-bar{height:100%; width:0%; background:linear-gradient(90deg, var(--brass-light), var(--pop, var(--brass))); border-radius:4px; transition:width 0.35s ease;}
+  .mini-progress-pct{font-family:'Inter', sans-serif; font-size:0.74rem; font-weight:700; color:var(--muted); min-width:34px; text-align:right;}
   .save-status.success{color:#3d8f6f; font-weight:600;}
   .save-status.error{color:#c25a4d; font-weight:600;}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
@@ -177,7 +175,7 @@
   </div>
 
   <div class="load-status" id="load-status">Attempting to load the current list from staff-area.html…</div>
-  <div class="mini-progress" id="load-progress"><div class="mini-progress-bar"></div></div>
+  <div class="mini-progress" id="load-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="load-progress-bar"></div></div><span class="mini-progress-pct" id="load-progress-pct">0%</span></div>
 
   <div class="section-label">Staff</div>
   <div class="table-scroll">
@@ -196,7 +194,7 @@
   <div class="code-card" id="code-output"></div>
   <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy Code</button>
   <p class="save-status" id="save-status"></p>
-  <div class="mini-progress" id="save-progress"><div class="mini-progress-bar"></div></div>
+  <div class="mini-progress" id="save-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="save-progress-bar"></div></div><span class="mini-progress-pct" id="save-progress-pct">0%</span></div>
 
   <a class="back" href="../staff-area.html">← Back to Staff Area</a>
 </main>
@@ -321,6 +319,13 @@
   }
 
   // ── Save directly to GitHub via the Contents API ──
+  function setProgress(id, percent){
+    const bar = document.getElementById(id + '-bar');
+    const pct = document.getElementById(id + '-pct');
+    if(bar) bar.style.width = percent + '%';
+    if(pct) pct.textContent = percent + '%';
+  }
+
   async function saveToGitHub(){
     const dupes = findDuplicateUsernames();
     if(dupes.size > 0){
@@ -341,13 +346,16 @@
     statusEl.textContent = 'Saving…';
     statusEl.className = 'save-status';
     document.getElementById('save-progress').classList.add('active');
+    setProgress('save-progress', 5);
 
     try{
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/staff-area.html`;
+      setProgress('save-progress', 20);
       const getRes = await fetch(apiUrl, {
         headers: { Authorization: `token ${token}` }
       });
       if(!getRes.ok) throw new Error(`Couldn't fetch staff-area.html (${getRes.status}). Check the username, repo name, and token.`);
+      setProgress('save-progress', 45);
       const fileData = await getRes.json();
       const currentContent = decodeURIComponent(escape(atob(fileData.content)));
 
@@ -359,6 +367,7 @@
       if(updatedContent === currentContent){
         throw new Error('Could not find the STAFF_USERS list in the file to replace — nothing was changed.');
       }
+      setProgress('save-progress', 65);
 
       const putRes = await fetch(apiUrl, {
         method: 'PUT',
@@ -370,6 +379,7 @@
         })
       });
       if(!putRes.ok) throw new Error(`Save failed (${putRes.status}). Check the token has "repo" write access.`);
+      setProgress('save-progress', 100);
 
       statusEl.textContent = '✓ Saved — live on the site within a couple of minutes.';
       statusEl.className = 'save-status success';
@@ -385,9 +395,11 @@
   async function loadCurrentUsers(){
     const statusEl = document.getElementById('load-status');
     document.getElementById('load-progress').classList.add('active');
+    setProgress('load-progress', 10);
     try{
       const res = await fetch('staff-area.html');
       if(!res.ok) throw new Error('fetch failed');
+      setProgress('load-progress', 50);
       const text = await res.text();
       const match = text.match(/const STAFF_USERS\s*=\s*\[([\s\S]*?)\];/);
       if(!match) throw new Error('pattern not found');
@@ -398,12 +410,14 @@
         addRow({ username: m[1], password: m[2], name: m[3], roles: roles });
         count++;
       }
+      setProgress('load-progress', 100);
       if(count > 0){
         statusEl.textContent = `Loaded ${count} people from the current list.`;
       } else {
         throw new Error('no entries parsed');
       }
     } catch(e){
+      setProgress('load-progress', 100);
       FALLBACK_USERS.forEach(u => addRow(u));
       statusEl.textContent = `Couldn't auto-load from staff-area.html directly (only works once the site's actually hosted) — showing the ${FALLBACK_USERS.length} people already gathered instead. Edits here won't update that fallback list automatically; regenerate and paste the code back in as usual.`;
     } finally {
