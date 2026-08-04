@@ -434,7 +434,8 @@
         if(res.ok){
           const build = await res.json();
           if(build.status === 'built'){
-            statusEl.textContent = `${baseMessage} 🟢 Live now — deployment finished.`;
+            statusEl.textContent = `${baseMessage} 🟢 Live now — refreshing the page…`;
+            setTimeout(() => window.location.reload(), 1800);
             statusEl.className = 'action-status success';
             return;
           }
