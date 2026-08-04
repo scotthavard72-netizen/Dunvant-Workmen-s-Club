@@ -63,6 +63,10 @@
 </style>
 </head>
 <body>
+<div id="maintenance-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:#181614; color:#fff; align-items:center; justify-content:center; text-align:center; padding:24px; flex-direction:column; font-family:'Inter', sans-serif;">
+  <div style="font-family:'Fraunces', serif; font-size:1.6rem; font-weight:600; margin-bottom:12px;">Dunvant Workingmens Club</div>
+  <p id="maintenance-message" style="max-width:400px; color:rgba(255,255,255,0.7); line-height:1.6;"></p>
+</div>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
@@ -81,6 +85,24 @@
 </main>
 
 <script>
+  // Maintenance mode — checks the shared toggle file. A ?preview=1 link
+  // (used automatically from Full Admin Dashboard) bypasses it for Site Admin.
+  (async function checkMaintenanceMode(){
+    const bypass = new URLSearchParams(location.search).get('preview') === '1';
+    if(bypass) return;
+    try{
+      const res = await fetch('maintenance-status.json', { cache: 'no-store' });
+      if(!res.ok) return;
+      const status = await res.json();
+      if(status.active){
+        document.getElementById('maintenance-message').textContent = status.message || "We'll be back shortly.";
+        document.getElementById('maintenance-overlay').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    } catch(e){}
+  })();
+
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
