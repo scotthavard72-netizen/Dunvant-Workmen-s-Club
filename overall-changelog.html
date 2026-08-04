@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Overall Changelog — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#181614;--paper:#faf7f1;--card:#ffffff;--line:#e8e0d2;--muted:#8a7f6b;--brass:#b8873f;--brass-light:#e0b56a;--forest:#2c3f38;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#f0ece2;--paper:#161412;--card:#211e1a;--line:#3a352c;--muted:#a89c85;--brass:#d4a45c;--brass-light:#e8c584;--forest:#4a6b5f;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #181614 0%, #1a2620 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:700px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:28px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  .entry{position:relative; padding-left:26px; padding-bottom:26px; border-left:2px solid var(--line);}
+  .entry:last-child{border-left:2px solid transparent; padding-bottom:0;}
+  .entry-dot{
+    position:absolute; left:-7px; top:2px; width:12px; height:12px; border-radius:50%;
+    background:var(--forest); border:2px solid var(--paper);
+  }
+  .entry-title{font-family:'Fraunces', serif; font-weight:600; font-size:1rem; margin-bottom:6px;}
+  .entry-list{font-size:0.86rem; color:var(--muted); line-height:1.9; padding-left:1.1em;}
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Site Admin</span>
+  <h1>Overall Changelog</h1>
+  <p>The big picture — what's been built, in plain English</p>
+</header>
+<main>
+  <div class="notice">This is different from Site Changelog (the automatic one pulled from GitHub) — that one shows every individual save as a raw commit message. This one is a hand-written summary of the actual milestones, easier to skim if you want the story of how the site came together rather than a technical log. Add a new entry here whenever a significant chunk of work is finished.</div>
+
+  <div class="entry">
+    <div class="entry-dot"></div>
+    <div class="entry-title">Public Site</div>
+    <ul class="entry-list">
+      <li>Homepage built: hero, hours &amp; contact, events, function room booking, gallery, FAQ, map</li>
+      <li>Real details added: phone number, address, email, opening hours, founding year</li>
+      <li>Member vs non-member comparison, to encourage joining</li>
+      <li>Dark mode added across the whole site, remembers your choice</li>
+      <li>Colour theme locked to green, gold, and orange throughout</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="entry-dot"></div>
+    <div class="entry-title">Staff Area &amp; Roles</div>
+    <ul class="entry-list">
+      <li>Personal logins for each person, replacing shared passwords</li>
+      <li>Five roles: Bar Staff, Keyholder, Management, Committee, Site Admin — each stacking sensibly (e.g. Management also sees Bar Staff and Keyholder)</li>
+      <li>Keyholder split into Closing and Opening, plus a troubleshooting section (Alarm Fault, Till Discrepancy, Out-of-Hours Contact)</li>
+      <li>Shift Cover Request: routine via Form, urgent via Teams</li>
+      <li>Staff FAQ/Handbook, New Starter Checklist, Finances &amp; Accounts</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="entry-dot"></div>
+    <div class="entry-title">Tickets &amp; To-Do Tracking</div>
+    <ul class="entry-list">
+      <li>Public "Report an Issue" link and a staff "Submit a Ticket" option</li>
+      <li>Tickets page (Site Admin) showing both, built around live Excel embeds</li>
+      <li>Site To-Do List — a running checklist of every placeholder still needing real content</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="entry-dot"></div>
+    <div class="entry-title">Site Admin Tools</div>
+    <ul class="entry-list">
+      <li>Full Admin Dashboard — every page on the site in one place</li>
+      <li>Manage Staff Logins — form-based editor, with a direct "Save to GitHub" option</li>
+      <li>Face ID / Touch ID lock for Manage Staff Logins on a phone, once added to the home screen</li>
+      <li>Google Analytics setup guide</li>
+      <li>Content Quick-Edit Cheat Sheet — where to make common changes</li>
+      <li>Site Changelog — automatic, pulled from GitHub's own commit history</li>
+      <li>This page</li>
+    </ul>
+  </div>
+
+  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
+</main>
+<script>
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+</body>
+</html>

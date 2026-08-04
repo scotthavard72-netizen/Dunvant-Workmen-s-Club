@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /staff-area.html
+Disallow: /shared/
+Disallow: /bar-staff/
+Disallow: /keyholder/
+Disallow: /management/
+Disallow: /committee/
+Disallow: /admin/
