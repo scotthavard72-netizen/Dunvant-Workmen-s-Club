@@ -53,12 +53,23 @@
   }
   .btn-fetch{background:var(--forest); color:#fff;}
   .btn-publish{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;}
+  .btn-list{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.82rem;
+    background:var(--card); color:var(--forest); border:1px solid var(--line);
+    border-radius:8px; padding:10px 16px; cursor:pointer; margin-top:10px;
+  }
+  .btn-delete{background:#8a2f2f; color:#fff;}
   textarea{
     width:100%; min-height:360px; font-family:'SFMono-Regular', Consolas, monospace; font-size:0.8rem;
     padding:14px 16px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink);
     resize:vertical; line-height:1.6;
   }
   .status{font-size:0.85rem; margin-top:10px; color:var(--muted);}
+  .mini-progress{display:none; align-items:center; gap:10px; margin-top:8px;}
+  .mini-progress.active{display:flex;}
+  .mini-progress-track{flex:1; height:6px; border-radius:4px; background:var(--line); overflow:hidden;}
+  .mini-progress-bar{height:100%; width:0%; background:linear-gradient(90deg, var(--brass-light), var(--pop, var(--brass))); border-radius:4px; transition:width 0.35s ease;}
+  .mini-progress-pct{font-family:'Inter', sans-serif; font-size:0.74rem; font-weight:700; color:var(--muted); min-width:34px; text-align:right;}
   .status.success{color:#3d8f6f; font-weight:600;}
   .status.error{color:#c25a4d; font-weight:600;}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
@@ -100,6 +111,8 @@
     <input type="text" id="file-path" list="known-files" placeholder="Start typing or pick from the list..." autocomplete="off">
     <datalist id="known-files"></datalist>
     <div id="recent-files" class="recent-files"></div>
+    <button class="btn btn-list" onclick="loadFileListFromGitHub()">📋 Load Real File List from GitHub</button>
+    <p class="status" id="list-status"></p>
   </div>
 
   <div class="btn-row">
@@ -110,8 +123,10 @@
 
   <div class="btn-row" style="margin-top:14px;">
     <button class="btn btn-publish" onclick="publishFile()">🚀 Publish This File</button>
+    <button class="btn btn-delete" onclick="deleteFile()">🗑️ Delete This File</button>
   </div>
   <p class="status" id="publish-status"></p>
+  <div class="mini-progress" id="action-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="action-progress-bar"></div></div><span class="mini-progress-pct" id="action-progress-pct">0%</span></div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
@@ -143,6 +158,86 @@
     datalist.innerHTML = KNOWN_FILES.sort().map(f => `<option value="${f}">`).join('');
   }
   populateKnownFiles();
+
+  // Pull the actual, current file list straight from the repo — more reliable
+  // than the guessed list above, since it can't go stale as files are added/removed.
+  async function loadFileListFromGitHub(){
+    const owner = document.getElementById('gh-owner').value.trim();
+    const repo = document.getElementById('gh-repo').value.trim();
+    const token = document.getElementById('gh-token').value.trim();
+    const statusEl = document.getElementById('list-status');
+
+    if(!owner || !repo || !token){
+      statusEl.textContent = 'Fill in your GitHub username, repository name, and token first.';
+      statusEl.className = 'status error';
+      return;
+    }
+    statusEl.textContent = 'Loading real file list…';
+    statusEl.className = 'status';
+    try{
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if(!res.ok) throw new Error(`Couldn't load the file list (${res.status}). Check the username, repo name, and token.`);
+      const files = await res.json();
+      const fileNames = files.filter(f => f.type === 'file').map(f => f.path);
+      const datalist = document.getElementById('known-files');
+      datalist.innerHTML = fileNames.sort().map(f => `<option value="${f}">`).join('');
+      statusEl.textContent = `✓ Loaded ${fileNames.length} real files from the repo.`;
+      statusEl.className = 'status success';
+    } catch(err){
+      statusEl.textContent = err.message;
+      statusEl.className = 'status error';
+    }
+  }
+
+  async function deleteFile(){
+    const { owner, repo, token, path } = getConfig();
+    const statusEl = document.getElementById('publish-status');
+
+    if(!owner || !repo || !token || !path){
+      statusEl.textContent = 'Fill in your GitHub username, repository name, token, and the file path first.';
+      statusEl.className = 'status error';
+      return;
+    }
+    if(!confirm(`Really delete "${path}"? This can't be undone — the file will be gone from the repo entirely.`)) return;
+    if(!confirm(`Absolutely sure? Deleting "${path}" is permanent.`)) return;
+
+    maybeSaveGhConfig();
+    statusEl.textContent = 'Deleting…';
+    statusEl.className = 'status';
+    document.getElementById('action-progress').classList.add('active');
+    setProgress('action-progress', 20);
+    try{
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+      const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
+      if(!getRes.ok) throw new Error(`Couldn't find that file (${getRes.status}). Check the path is exactly right.`);
+      const data = await getRes.json();
+      setProgress('action-progress', 55);
+
+      const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
+      const delRes = await fetch(apiUrl, {
+        method: 'DELETE',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Delete ${path} — by ${loggedInName}`,
+          sha: data.sha
+        })
+      });
+      if(!delRes.ok) throw new Error(`Delete failed (${delRes.status}). Check the token has "repo" write access.`);
+      setProgress('action-progress', 100);
+
+      statusEl.textContent = `✓ Deleted — "${path}" is gone from the live site within a couple of minutes.`;
+      statusEl.className = 'status success';
+      document.getElementById('file-content').value = '';
+      currentSha = null;
+    } catch(err){
+      statusEl.textContent = err.message;
+      statusEl.className = 'status error';
+    } finally {
+      document.getElementById('action-progress').classList.remove('active');
+    }
+  }
 
   // ── Recently used files, remembered on this device ──
   const RECENT_KEY = 'publishRecentFiles';
@@ -194,6 +289,13 @@
     };
   }
 
+  function setProgress(id, percent){
+    const bar = document.getElementById(id + '-bar');
+    const pct = document.getElementById(id + '-pct');
+    if(bar) bar.style.width = percent + '%';
+    if(pct) pct.textContent = percent + '%';
+  }
+
   async function fetchFile(){
     const { owner, repo, token, path } = getConfig();
     const statusEl = document.getElementById('publish-status');
@@ -205,19 +307,25 @@
     maybeSaveGhConfig();
     statusEl.textContent = 'Fetching…';
     statusEl.className = 'status';
+    document.getElementById('action-progress').classList.add('active');
+    setProgress('action-progress', 15);
     try{
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
       const res = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
       if(!res.ok) throw new Error(`Couldn't fetch that file (${res.status}). Check the path is exactly right, including case.`);
+      setProgress('action-progress', 60);
       const data = await res.json();
       currentSha = data.sha;
       document.getElementById('file-content').value = decodeURIComponent(escape(atob(data.content)));
+      setProgress('action-progress', 100);
       statusEl.textContent = '✓ Loaded — edit below, then Publish when ready.';
       addRecentFile(path);
       statusEl.className = 'status success';
     } catch(err){
       statusEl.textContent = err.message;
       statusEl.className = 'status error';
+    } finally {
+      document.getElementById('action-progress').classList.remove('active');
     }
   }
 
@@ -241,17 +349,21 @@
     maybeSaveGhConfig();
     statusEl.textContent = 'Publishing…';
     statusEl.className = 'status';
+    document.getElementById('action-progress').classList.add('active');
+    setProgress('action-progress', 10);
     try{
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
       let sha = currentSha;
       if(!sha){
+        setProgress('action-progress', 25);
         const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
         if(getRes.ok){
           const data = await getRes.json();
           sha = data.sha;
         }
       }
+      setProgress('action-progress', 50);
 
       const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
       const body = {
@@ -260,6 +372,7 @@
       };
       if(sha) body.sha = sha;
 
+      setProgress('action-progress', 70);
       const putRes = await fetch(apiUrl, {
         method: 'PUT',
         headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
@@ -268,12 +381,15 @@
       if(!putRes.ok) throw new Error(`Publish failed (${putRes.status}). Check the token has "repo" write access, and that the file wasn't changed elsewhere since you fetched it.`);
 
       currentSha = (await putRes.json()).content.sha;
+      setProgress('action-progress', 100);
       statusEl.textContent = '✓ Published — live on the site within a couple of minutes.';
       addRecentFile(path);
       statusEl.className = 'status success';
     } catch(err){
       statusEl.textContent = err.message;
       statusEl.className = 'status error';
+    } finally {
+      document.getElementById('action-progress').classList.remove('active');
     }
   }
 
