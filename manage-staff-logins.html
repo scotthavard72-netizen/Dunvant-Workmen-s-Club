@@ -35,13 +35,32 @@
   .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin:26px 0 12px;}
   .section-label:first-of-type{margin-top:0;}
 
-  table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:6px;}
+  .table-scroll{margin-bottom:6px;}
+  table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
   th, td{text-align:left; padding:10px 12px; font-size:0.82rem; border-bottom:1px solid var(--line); vertical-align:middle;}
   th{background:var(--forest); color:#fff; font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.03em;}
   tr:last-child td{border-bottom:none;}
   td input[type="text"]{
-    width:100%; font-family:'Inter', sans-serif; font-size:0.82rem;
-    padding:7px 9px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+    width:100%; font-family:'Inter', sans-serif; font-size:1rem;
+    padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+  }
+  .remove-btn{background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.8rem; font-weight:600; cursor:pointer; padding:8px 12px; border-radius:6px; white-space:nowrap;}
+
+  @media(max-width:680px){
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;}
+    table{border:none; background:none;}
+    tr{
+      background:var(--card); border:1px solid var(--line); border-radius:12px;
+      margin-bottom:14px; padding:14px 16px;
+    }
+    td{border:none; padding:8px 0;}
+    td[data-label]:not([data-label=""])::before{
+      content:attr(data-label);
+      display:block; font-size:0.7rem; font-weight:700; letter-spacing:0.03em;
+      text-transform:uppercase; color:var(--muted); margin-bottom:4px;
+    }
+    .remove-btn{width:100%; margin-top:4px;}
   }
   .roles-cell{display:flex; flex-wrap:wrap; gap:6px;}
   .role-chip{
@@ -49,9 +68,6 @@
     border:1px solid var(--line); background:var(--paper); color:var(--muted); cursor:pointer; user-select:none;
   }
   .role-chip.active{background:var(--brass); color:#fff; border-color:var(--brass);}
-  .remove-btn{
-    background:none; border:none; color:#c25a4d; font-size:1.1rem; cursor:pointer; padding:4px 8px;
-  }
   .add-row-btn, .generate-btn{
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.85rem;
     border:none; border-radius:8px; padding:11px 18px; cursor:pointer; margin-top:10px; margin-right:8px;
@@ -169,12 +185,14 @@
   <div class="load-status" id="load-status">Attempting to load the current list from staff-area.html…</div>
 
   <div class="section-label">Staff</div>
+  <div class="table-scroll">
   <table>
     <thead>
       <tr><th>Name</th><th>Username</th><th>Password</th><th>Roles</th><th></th></tr>
     </thead>
     <tbody id="staff-rows"></tbody>
   </table>
+  </div>
   <button class="add-row-btn" onclick="addRow()">+ Add Person</button>
   <button class="generate-btn" onclick="generateCode()">Generate Code</button>
   <p class="load-status" id="audit-note"></p>
@@ -184,7 +202,7 @@
   <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy Code</button>
   <p class="save-status" id="save-status"></p>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
 </main>
 </div>
 <script>
@@ -205,7 +223,7 @@
     { username: "penny",   password: "ocd",        name: "Penny",   roles: ["bar"] },
     { username: "rach",    password: "theboss",    name: "Rach",    roles: ["mgmt", "committee"] },
     { username: "sally",   password: "smart",      name: "Sally",   roles: ["keyholder"] },
-    { username: "scott",   password: "scotthav88", name: "Site Admin", roles: ["admin"] },
+    { username: "scott",   password: "scotthav88", name: "Scott", roles: ["admin"] },
     { username: "euan",    password: "windup",     name: "Euan",    roles: ["bar"] },
     { username: "kelly",   password: "rosa",       name: "Kelly",   roles: ["keyholder"] }
   ];
@@ -214,13 +232,13 @@
     const tr = document.createElement('tr');
     const roles = user ? user.roles : [];
     tr.innerHTML = `
-      <td><input type="text" class="f-name" value="${user ? user.name : ''}" placeholder="Name"></td>
-      <td><input type="text" class="f-username" value="${user ? user.username : ''}" placeholder="username"></td>
-      <td><input type="text" class="f-password" value="${user ? user.password : ''}" placeholder="password"></td>
-      <td><div class="roles-cell">${ROLE_OPTIONS.map(r =>
+      <td data-label="Name"><input type="text" class="f-name" value="${user ? user.name : ''}" placeholder="Name"></td>
+      <td data-label="Username"><input type="text" class="f-username" value="${user ? user.username : ''}" placeholder="username"></td>
+      <td data-label="Password"><input type="text" class="f-password" value="${user ? user.password : ''}" placeholder="password"></td>
+      <td data-label="Roles"><div class="roles-cell">${ROLE_OPTIONS.map(r =>
         `<span class="role-chip ${roles.includes(r) ? 'active' : ''}" data-role="${r}" onclick="this.classList.toggle('active')">${ROLE_LABELS[r]}</span>`
       ).join('')}</div></td>
-      <td><button class="remove-btn" onclick="removeRow(this)">✕</button></td>
+      <td data-label=""><button class="remove-btn" onclick="removeRow(this)">✕ Remove</button></td>
     `;
     return tr;
   }
@@ -368,7 +386,7 @@
   async function loadCurrentUsers(){
     const statusEl = document.getElementById('load-status');
     try{
-      const res = await fetch('staff-area.html');
+      const res = await fetch('../staff-area.html');
       if(!res.ok) throw new Error('fetch failed');
       const text = await res.text();
       const match = text.match(/const STAFF_USERS\s*=\s*\[([\s\S]*?)\];/);
