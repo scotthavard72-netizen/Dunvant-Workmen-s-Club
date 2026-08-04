@@ -326,6 +326,48 @@
     if(pct) pct.textContent = percent + '%';
   }
 
+  // After a successful save, check GitHub's own Pages build status so we know
+  // when the change is genuinely live, not just committed.
+  async function pollDeployStatus(statusEl, baseMessage){
+    const owner = document.getElementById('gh-owner').value.trim();
+    const repo = document.getElementById('gh-repo').value.trim();
+    const token = document.getElementById('gh-token').value.trim();
+    let attempts = 0;
+    const maxAttempts = 20; // roughly 2 minutes at 6s intervals
+
+    const check = async () => {
+      attempts++;
+      try{
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages/builds/latest`, {
+          headers: { Authorization: `token ${token}` }
+        });
+        if(res.ok){
+          const build = await res.json();
+          if(build.status === 'built'){
+            statusEl.textContent = `${baseMessage} 🟢 Live now — refreshing the page…`;
+            setTimeout(() => window.location.reload(), 1800);
+            statusEl.className = 'save-status success';
+            return;
+          }
+          if(build.status === 'errored'){
+            statusEl.textContent = `${baseMessage} 🔴 GitHub Pages reported a build error — check the repo's Settings → Pages for details.`;
+            statusEl.className = 'save-status error';
+            return;
+          }
+        }
+      } catch(e){
+        // Ignore individual poll failures, just keep trying
+      }
+      if(attempts < maxAttempts){
+        statusEl.textContent = `${baseMessage} 🟡 Deploying… (checking again shortly)`;
+        setTimeout(check, 6000);
+      } else {
+        statusEl.textContent = `${baseMessage} Still deploying after 2 minutes — check Domain / Hosting Status if this seems stuck.`;
+      }
+    };
+    check();
+  }
+
   async function saveToGitHub(){
     const dupes = findDuplicateUsernames();
     if(dupes.size > 0){
@@ -381,7 +423,9 @@
       if(!putRes.ok) throw new Error(`Save failed (${putRes.status}). Check the token has "repo" write access.`);
       setProgress('save-progress', 100);
 
-      statusEl.textContent = '✓ Saved — live on the site within a couple of minutes.';
+      statusEl.textContent = '✓ Saved — checking deployment status…';
+      statusEl.className = 'save-status success';
+      pollDeployStatus(statusEl, '✓ Saved.');
       statusEl.className = 'save-status success';
     } catch(err){
       statusEl.textContent = err.message;
