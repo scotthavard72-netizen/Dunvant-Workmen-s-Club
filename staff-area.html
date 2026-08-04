@@ -216,19 +216,19 @@
   // (from: "bar", "keyholder", "mgmt", "admin", "committee").
   // Most people have one role; a few have more than one.
   const STAFF_USERS = [
-    { username: "carol", password: "lovely", name: "Carol", roles: ["mgmt", "committee"] },
-    { username: "tim", password: "walter", name: "Tim", roles: ["mgmt"] },
-    { username: "hayley", password: "gnome", name: "Hayley", roles: ["bar"] },
-    { username: "mark", password: "angelic", name: "Mark", roles: ["mgmt"] },
-    { username: "amy", password: "old", name: "Amy", roles: ["keyholder"] },
-    { username: "charley", password: "moody", name: "Charley", roles: ["keyholder"] },
-    { username: "jack", password: "spastic", name: "Jack", roles: ["bar"] },
-    { username: "penny", password: "ocd", name: "Penny", roles: ["bar"] },
-    { username: "rach", password: "theboss", name: "Rach", roles: ["mgmt", "committee"] },
-    { username: "sally", password: "smart", name: "Sally", roles: ["keyholder"] },
-    { username: "scott", password: "scotthav88", name: "Scott", roles: ["admin"] },
-    { username: "euan", password: "windup", name: "Euan", roles: ["bar"] },
-    { username: "kelly", password: "rosa", name: "Kelly", roles: ["keyholder"] }
+    { username: "carol",   password: "lovely",     name: "Carol",   roles: ["committee", "mgmt"] },
+    { username: "tim",     password: "walter",     name: "Tim",     roles: ["mgmt"] },
+    { username: "hayley",  password: "gnome",      name: "Hayley",  roles: ["bar"] },
+    { username: "mark",    password: "angelic",    name: "Mark",    roles: ["mgmt"] },
+    { username: "amy",     password: "old",        name: "Amy",     roles: ["keyholder"] },
+    { username: "charley", password: "moody",      name: "Charley", roles: ["keyholder"] },
+    { username: "jack",    password: "spastic",    name: "Jack",    roles: ["bar"] },
+    { username: "penny",   password: "ocd",        name: "Penny",   roles: ["bar"] },
+    { username: "rach",    password: "theboss",    name: "Rach",    roles: ["mgmt", "committee"] },
+    { username: "sally",   password: "smart",      name: "Sally",   roles: ["keyholder"] },
+    { username: "scott",   password: "scotthav88", name: "Scott", roles: ["admin"] },
+    { username: "euan",    password: "windup",     name: "Euan",    roles: ["bar"] },
+    { username: "kelly",   password: "rosa",       name: "Kelly",   roles: ["keyholder"] }
   ];
 
   // ── Menus per role ──
@@ -236,18 +236,18 @@
     bar: {
       label: "Bar Staff",
       items: [
-        ["current-rota.html", "Current Rota", "Bookmark this — always shows the latest week"],
-        ["this-weeks-rota.html", "This Week's Rota", "See your shifts and confirm you've seen them"],
-        ["staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
+        ["bar-staff/current-rota.html", "Current Rota", "Bookmark this — always shows the latest week"],
+        ["bar-staff/this-weeks-rota.html", "This Week's Rota", "See your shifts and confirm you've seen them"],
+        ["shared/staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
         ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
-        ["till-card-lookup.html", "Till &amp; Card Lookup Guide", "How to scan and apply the member discount"],
-        ["closing-checklist.html", "Closing Checklist", "Cleaning down the bar, cellar, bandits &amp; mopping"],
-        ["whats-on-this-week.html", "What's On This Week", "Upcoming bookings and events"],
-        ["shift-cover-request.html", "Shift Cover Request", "Can't make a shift? Flag it here"],
-        ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"],
+        ["bar-staff/till-card-lookup.html", "Till &amp; Card Lookup Guide", "How to scan and apply the member discount"],
+        ["bar-staff/closing-checklist.html", "Closing Checklist", "Cleaning down the bar, cellar, bandits &amp; mopping"],
+        ["bar-staff/whats-on-this-week.html", "What's On This Week", "Upcoming bookings and events"],
+        ["bar-staff/shift-cover-request.html", "Shift Cover Request", "Can't make a shift? Flag it here"],
+        ["shared/staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"],
         ["#staff-ticket-form-link", "Submit a Ticket", "Report a problem or request something from management"],
-        ["price-list.html", "Price List", "Quick reference for drink prices"],
-        ["incident-report.html", "Accident / Incident Report", "For health &amp; safety, not till issues"]
+        ["bar-staff/price-list.html", "Price List", "Quick reference for drink prices"],
+        ["bar-staff/incident-report.html", "Accident / Incident Report", "For health &amp; safety, not till issues"]
       ]
     },
     keyholder: {
@@ -270,17 +270,17 @@
         {
           label: "If Something Goes Wrong",
           items: [
-            ["alarm-fault.html", "Alarm Fault", "Who to call and what to do if the alarm won't set or trips"],
-            ["till-discrepancy.html", "Till Discrepancy", "Steps for a count that doesn't match"],
-            ["out-of-hours-contact.html", "Out-of-Hours Contact", "Emergency keyholder and callout numbers"]
+            ["keyholder/alarm-fault.html", "Alarm Fault", "Who to call and what to do if the alarm won't set or trips"],
+            ["keyholder/till-discrepancy.html", "Till Discrepancy", "Steps for a count that doesn't match"],
+            ["keyholder/out-of-hours-contact.html", "Out-of-Hours Contact", "Emergency keyholder and callout numbers"]
           ]
         },
         {
           label: "Safety",
           items: [
-            ["fire-safety.html", "Fire Safety / Evacuation", "What to do, and where everyone goes"],
-            ["first-aid.html", "First Aid", "Kit location and who's trained"],
-            ["weather-closure.html", "Weather Closure Guide", "Snow days, power cuts, who decides"]
+            ["keyholder/fire-safety.html", "Fire Safety / Evacuation", "What to do, and where everyone goes"],
+            ["keyholder/first-aid.html", "First Aid", "Kit location and who's trained"],
+            ["keyholder/weather-closure.html", "Weather Closure Guide", "Snow days, power cuts, who decides"]
           ]
         }
       ]
@@ -291,34 +291,34 @@
         {
           label: "Rota",
           items: [
-            ["weekly-rota-builder.html", "Weekly Rota Builder", "Build the week, send to Outlook, notify bar staff"],
-            ["staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
+            ["management/weekly-rota-builder.html", "Weekly Rota Builder", "Build the week, send to Outlook, notify bar staff"],
+            ["shared/staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
             ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"]
           ]
         },
         {
           label: "Requests &amp; Bookings",
           items: [
-            ["pending-bookings.html", "Pending Bookings", "Function room requests awaiting approval", "2"],
-            ["shift-cover-requests-mgmt.html", "Shift Cover Requests", "Track cover requests submitted by bar staff", "2"],
-            ["expense-requests.html", "Expense / Petty Cash Requests", "Claiming back costs"]
+            ["management/pending-bookings.html", "Pending Bookings", "Function room requests awaiting approval", "2"],
+            ["management/shift-cover-requests-mgmt.html", "Shift Cover Requests", "Track cover requests submitted by bar staff", "2"],
+            ["management/expense-requests.html", "Expense / Petty Cash Requests", "Claiming back costs"]
           ]
         },
         {
           label: "Reference",
           items: [
-            ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
-            ["supplier-contacts.html", "Supplier Contacts", "Drinks, food, and entertainment suppliers"],
-            ["entertainment-tracker.html", "Entertainment Booking Tracker", "Bands, quiz masters, DJs"],
-            ["licensing-compliance.html", "Licensing / Compliance", "Premises license conditions and renewals"],
-            ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"]
+            ["management/membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
+            ["management/supplier-contacts.html", "Supplier Contacts", "Drinks, food, and entertainment suppliers"],
+            ["management/entertainment-tracker.html", "Entertainment Booking Tracker", "Bands, quiz masters, DJs"],
+            ["management/licensing-compliance.html", "Licensing / Compliance", "Premises license conditions and renewals"],
+            ["shared/staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"]
           ]
         },
         {
           label: "Team",
           items: [
-            ["new-starter-checklist.html", "New Starter Checklist", "Training and setup steps for someone joining the team"],
-            ["manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access"]
+            ["management/new-starter-checklist.html", "New Starter Checklist", "Training and setup steps for someone joining the team"],
+            ["admin/manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access"]
           ]
         }
       ]
@@ -326,35 +326,36 @@
     admin: {
       label: "Site Admin",
       items: [
-        ["full-admin-dashboard.html", "Full Admin Dashboard", "Everything on the site, in one place"],
-        ["edit-site-files.html", "Edit Site Files", "GitHub repo — where the site's files live and get updated"],
+        ["admin/full-admin-dashboard.html", "Full Admin Dashboard", "Everything on the site, in one place"],
+        ["admin/edit-site-files.html", "Edit Site Files", "GitHub repo — where the site's files live and get updated"],
+        ["admin/publish-file-update.html", "Publish File Update", "Update any file directly — no manual GitHub editing"],
         ["https://forms.cloud.microsoft/r/xPbfry03VW", "Booking Form Responses", "View and manage function room booking submissions"],
-        ["shift-cover-form-responses.html", "Shift Cover Form Responses", "View submissions from the routine cover request form"],
+        ["admin/shift-cover-form-responses.html", "Shift Cover Form Responses", "View submissions from the routine cover request form"],
         ["https://outlook.live.com/owa/calendar/bb8f79de-cbbe-4d7b-8e7f-2123ebde7711/c726ef94-949e-4889-9aa2-39f3f93837b8/cid-FC69B5B067121F85/index.html", "Outlook Rota Calendar", "Add, edit, or remove staff shifts"],
-        ["facebook-page-admin.html", "Facebook Page", "Post updates and manage the club's page"],
-        ["manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access and to what"],
-        ["site-todos.html", "Site To-Do List", "Every placeholder still waiting for real content", "23"],
-        ["tickets.html", "Tickets", "Issues and requests from the public and staff"],
-        ["google-analytics.html", "Google Analytics", "See how many people visit, and which pages"],
-        ["content-quick-edit.html", "Content Quick-Edit Cheat Sheet", "Where to make common changes, without hunting"],
-        ["site-changelog.html", "Site Changelog", "Every real change, pulled automatically from GitHub"],
-        ["overall-changelog.html", "Overall Changelog", "The big picture, in plain English"],
-        ["backup-reminder.html", "Backup Reminder", "Keep a fresh copy somewhere safe"],
-        ["hosting-status.html", "Domain / Hosting Status", "Where the site actually lives"]
+        ["admin/facebook-page-admin.html", "Facebook Page", "Post updates and manage the club's page"],
+        ["admin/manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access and to what"],
+        ["admin/site-todos.html", "Site To-Do List", "Every placeholder still waiting for real content", "23"],
+        ["admin/tickets.html", "Tickets", "Issues and requests from the public and staff"],
+        ["admin/google-analytics.html", "Google Analytics", "See how many people visit, and which pages"],
+        ["admin/content-quick-edit.html", "Content Quick-Edit Cheat Sheet", "Where to make common changes, without hunting"],
+        ["admin/site-changelog.html", "Site Changelog", "Every real change, pulled automatically from GitHub"],
+        ["admin/overall-changelog.html", "Overall Changelog", "The big picture, in plain English"],
+        ["admin/backup-reminder.html", "Backup Reminder", "Keep a fresh copy somewhere safe"],
+        ["admin/hosting-status.html", "Domain / Hosting Status", "Where the site actually lives"]
       ]
     },
     committee: {
       label: "Committee",
       items: [
         ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
-        ["pending-bookings.html", "Pending Bookings", "Function room requests, for visibility", "2"],
-        ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
+        ["management/pending-bookings.html", "Pending Bookings", "Function room requests, for visibility", "2"],
+        ["management/membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
         ["#meeting-minutes-link", "Meeting Minutes &amp; Agendas", "Past minutes and upcoming meeting agendas"],
-        ["finances-accounts.html", "Finances &amp; Accounts", "Club accounts and financial oversight"],
-        ["agm-planning.html", "AGM Planning", "Agenda and action tracking"],
-        ["membership-numbers.html", "Membership Numbers", "Joining and lapsing trends"],
-        ["club-constitution.html", "Club Constitution / Rules", "The club's governing document"],
-        ["funding-opportunities.html", "Grant / Funding Opportunities", "Worth tracking as they come up"]
+        ["committee/finances-accounts.html", "Finances &amp; Accounts", "Club accounts and financial oversight"],
+        ["committee/agm-planning.html", "AGM Planning", "Agenda and action tracking"],
+        ["committee/membership-numbers.html", "Membership Numbers", "Joining and lapsing trends"],
+        ["committee/club-constitution.html", "Club Constitution / Rules", "The club's governing document"],
+        ["committee/funding-opportunities.html", "Grant / Funding Opportunities", "Worth tracking as they come up"]
       ]
     }
   };
@@ -373,6 +374,13 @@
   const ROLE_ORDER = ["bar", "keyholder", "mgmt", "admin", "committee"];
 
   function renderMenu(user){
+    // Site Admin's dashboard already covers every role and tool — skip the in-page
+    // menu entirely and go straight there, rather than making it one more tap.
+    if(user.roles.includes('admin')){
+      window.location.href = 'admin/full-admin-dashboard.html';
+      return;
+    }
+
     document.getElementById('welcome-name').textContent = user.name;
     document.getElementById('welcome-role').textContent = user.roles.map(r => MENUS[r].label).join(' · ');
 
