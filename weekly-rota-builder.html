@@ -4,389 +4,589 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Weekly Rota Builder — Dunvant WMC</title>
+<title>Staff Area — Dunvant WMC</title>
+<link rel="manifest" href="staff-manifest.json">
+<meta name="theme-color" content="#2c3f38">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dunvant Staff">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='34' fill='%232c3f38'/%3E%3Ctext x='96' y='132' font-family='Georgia,serif' font-size='112' font-weight='700' fill='%23e0b56a' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--ink:#181614;--paper:#faf7f1;--card:#ffffff;--line:#e8e0d2;--muted:#8a7f6b;--brass:#b8873f;--brass-light:#e0b56a;--forest:#2c3f38;--pop:#ff7a45;}
-  [data-theme="dark"]{--ink:#f0ece2;--paper:#161412;--card:#211e1a;--line:#3a352c;--muted:#a89c85;--brass:#d4a45c;--brass-light:#e8c584;--forest:#4a6b5f;--pop:#ff9166;}
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  :root{
+    --ink:#181614; --paper:#faf7f1; --card:#ffffff; --line:#e8e0d2; --muted:#8a7f6b;
+    --brass:#b8873f; --brass-light:#e0b56a; --forest:#2c3f38;
+  --pop:#ff7a45;
+  }
+  [data-theme="dark"]{
+    --ink:#f0ece2; --paper:#161412; --card:#211e1a; --line:#3a352c; --muted:#a89c85;
+    --brass:#d4a45c; --brass-light:#e8c584; --forest:#4a6b5f;
+  --pop:#ff9166;
+  }
+  body{transition:background 0.25s ease, color 0.25s ease;}
   *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
-  header{background:linear-gradient(160deg, #181614 0%, #1a2620 100%); padding:26px 24px; text-align:center;}
-  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
-  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
-  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(ellipse at top, rgba(184,135,63,0.16), transparent 60%),
+      linear-gradient(160deg, #181614 0%, #241f1c 55%, #1a2620 100%);
+    color:var(--ink); font-family:'Inter', sans-serif; padding:20px; -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Fraunces', serif;}
+  .card{max-width:420px; width:100%; text-align:center;}
+
+  #progress-bar{
+    position:fixed; top:0; left:0; height:3px; width:0%;
+    background:linear-gradient(90deg, var(--brass-light), var(--pop, var(--brass)));
+    z-index:9999; transition:width 0.4s ease, opacity 0.3s ease;
+    opacity:0;
+  }
+  #progress-bar.active{opacity:1;}
+
+  .status-banner{
+    display:none; align-items:center; justify-content:center; gap:14px;
+    padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600;
+    text-align:center; position:sticky; top:0; z-index:300;
+  }
+  .status-banner.offline-style{background:#8a2f2f; color:#fff;}
+  .status-banner.update-style{background:var(--brass); color:#181614;}
+  .status-banner button{
+    font-family:'Inter', sans-serif; font-weight:700; font-size:0.78rem;
+    background:#181614; color:#fff; border:none; border-radius:6px;
+    padding:6px 14px; cursor:pointer;
+  }
+
+  .eyebrow{
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    font-size:0.7rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--brass-light); margin-bottom:14px;
+  }
+  h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.7rem; color:#fff; margin-bottom:8px;}
+  .sub{font-size:0.9rem; color:rgba(255,255,255,0.6); margin-bottom:30px;}
+
+  input[type="text"], input[type="password"]{
+    width:100%; font-family:'Inter', sans-serif; font-size:1rem;
+    padding:15px 18px; border:1px solid rgba(255,255,255,0.15); border-radius:8px;
+    margin-bottom:14px; background:rgba(255,255,255,0.06); color:#fff;
+  }
+  input::placeholder{color:rgba(255,255,255,0.4);}
+  input:focus{outline:none; border-color:var(--brass);}
+  button.enter{
+    width:100%; font-family:'Inter', sans-serif; font-weight:600; font-size:0.95rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;
+    border:none; padding:15px 16px; border-radius:8px; cursor:pointer; transition:transform 0.15s ease;
+  }
+  button.enter:hover{transform:translateY(-2px);}
+  .error{font-size:0.8rem; color:#e08a7d; margin-top:12px; display:none;}
+
+  .menu a{
+    display:block; text-decoration:none; background:var(--card); color:var(--ink);
+    font-weight:600; font-size:0.95rem; padding:18px 20px; border-radius:10px;
+    margin-bottom:12px; border:1px solid var(--line);
+    transition:transform 0.2s ease, border-color 0.2s ease; text-align:left;
+  }
+  .menu a:hover{transform:translateY(-2px); border-color:var(--brass);}
+  .menu a small{display:block; font-weight:400; font-size:0.78rem; color:var(--muted); margin-top:3px;}
+  .item-title-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .item-badge{
+    font-family:'Inter', sans-serif; font-size:0.72rem; font-weight:700;
+    background:var(--pop); color:#fff; border-radius:20px;
+    padding:2px 9px; flex-shrink:0;
+  }
+  .new-rota-flag{
+    font-family:'Inter', sans-serif; font-size:0.68rem; font-weight:700;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;
+    border-radius:20px; padding:2px 9px; flex-shrink:0; margin-left:6px;
+    animation:new-rota-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes new-rota-pulse{
+    0%, 100%{opacity:1;}
+    50%{opacity:0.6;}
+  }
+  .menu-group-label{
+    font-family:'Fraunces', serif; font-size:0.85rem; font-weight:600;
+    color:var(--brass-light); text-transform:uppercase; letter-spacing:0.06em;
+    margin:20px 0 10px; text-align:left;
+  }
+  .menu-group-label:first-child{margin-top:0;}
+
+  .tabs{
+    display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;
+  }
+  .tab-btn{
+    font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600;
+    background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.65);
+    border:1px solid rgba(255,255,255,0.15); border-radius:20px;
+    padding:8px 16px; cursor:pointer; transition:all 0.15s ease;
+  }
+  .tab-btn:hover{border-color:var(--brass-light); color:#fff;}
+  .tab-btn.active{
+    background:linear-gradient(135deg, var(--brass-light), var(--brass));
+    color:#181614; border-color:transparent;
+  }
+  .note{font-size:0.72rem; color:rgba(255,255,255,0.45); margin-top:20px;}
+
+  .welcome-row{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px; text-align:left;
+  }
+  .welcome-row div{display:flex; flex-direction:column;}
+  .welcome-name{font-family:'Fraunces', serif; font-size:1.3rem; font-weight:600; color:#fff;}
+  .welcome-role{font-size:0.78rem; color:var(--brass-light); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px;}
+  .logout-btn{
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);
+    padding:8px 14px; border-radius:20px; cursor:pointer;
+  }
+  .logout-btn:hover{border-color:var(--brass);}
+
+  .summary-bar{
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;
+  }
+  .summary-chip{
+    display:flex; align-items:center; gap:7px;
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    padding:8px 14px; font-size:0.8rem; font-weight:600; color:var(--ink);
+    text-decoration:none; cursor:pointer;
+  }
+  .summary-chip:hover{border-color:var(--brass);}
+  .summary-chip .num{
+    background:var(--pop); color:#fff; font-size:0.72rem; font-weight:700;
+    border-radius:10px; padding:1px 7px;
+  }
+
+  .quick-search{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.88rem;
+    padding:11px 14px; border:1px solid rgba(255,255,255,0.15); border-radius:8px;
+    margin-bottom:16px; background:rgba(255,255,255,0.06); color:#fff;
+  }
+  .quick-search::placeholder{color:rgba(255,255,255,0.4);}
+  .quick-search:focus{outline:none; border-color:var(--brass);}
+  .menu a.hidden, .menu-group-label.hidden{display:none;}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+
   .theme-toggle{
     position:fixed; top:16px; right:16px; z-index:100;
     background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
     border-radius:50%; width:38px; height:38px;
-    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:1.05rem;
   }
   .theme-toggle:hover{border-color:var(--brass-light);}
-  main{max-width:760px; margin:0 auto; padding:30px 20px 60px;}
-  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
-  [data-theme="dark"] .notice{background:#2a2318;}
-
-  .week-picker{display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap;}
-  .week-picker label{font-size:0.85rem; font-weight:600; color:var(--forest);}
-  .week-picker input{
-    font-family:'Inter', sans-serif; font-size:0.88rem; padding:9px 12px;
-    border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink);
-  }
-
-  .day-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:12px;}
-  .day-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
-  .day-name{font-family:'Fraunces', serif; font-weight:600; font-size:1rem; color:var(--forest);}
-  .day-date{font-size:0.76rem; color:var(--muted);}
-  .shift-row{display:grid; grid-template-columns:1.1fr 0.9fr 1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:center;}
-  @media(max-width:620px){ .shift-row{grid-template-columns:1fr 1fr; grid-template-rows:auto auto auto;} }
-  .shift-row input, .shift-row select{
-    font-family:'Inter', sans-serif; font-size:0.82rem; padding:8px 10px;
-    border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
-  }
-  .shift-row select.role-keyholder{border-color:var(--brass); font-weight:600;}
-  .remove-shift{background:none; border:none; color:#c25a4d; font-size:1rem; cursor:pointer; padding:4px 8px;}
-  .add-shift-btn{
-    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
-    background:none; border:1px dashed var(--brass); color:var(--brass);
-    border-radius:6px; padding:7px 12px; cursor:pointer; margin-top:4px;
-  }
-
-  .action-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
-  .action-btn{
-    font-family:'Inter', sans-serif; font-weight:600; font-size:0.88rem;
-    border:none; border-radius:8px; padding:13px 20px; cursor:pointer; text-decoration:none; display:inline-block;
-  }
-  .action-btn.primary{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;}
-  .action-btn.secondary{background:var(--forest); color:#fff;}
-  .action-status{font-size:0.82rem; color:var(--muted); margin-top:10px;}
-  .action-status.success{color:#3d8f6f; font-weight:600;}
-  .action-status.error{color:#c25a4d; font-weight:600;}
-
-  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:12px;}
-  .github-config{
-    background:var(--card); border:1px solid var(--line); border-radius:12px;
-    padding:18px 20px; margin-bottom:14px;
-  }
-  .config-row{margin-bottom:12px;}
-  .config-row label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:5px;}
-  .config-row input{
-    width:100%; font-family:'Inter', sans-serif; font-size:0.85rem;
-    padding:9px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
-  }
-  .remember-row{display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--muted); margin-top:6px;}
-  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
 </style>
 </head>
 <body>
-<div id="offline-banner" style="display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:#8a2f2f; color:#fff;">
-  📡 You're offline — Publish, Notify, and Save won't work until you're back online. Download Calendar File (.ics) still works.
+<div id="progress-bar"></div>
+
+<div class="status-banner offline-style" id="offline-banner">
+  📡 You're offline — viewing cached pages. Submitting forms, saving, or publishing won't work until you're back online.
 </div>
+<div class="status-banner update-style" id="update-banner">
+  <span>🔄 A new version is available.</span>
+  <button onclick="reloadForUpdate()">Refresh</button>
+</div>
+
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
-<header>
-  <span class="eyebrow">Management</span>
-  <h1>Weekly Rota Builder</h1>
-  <p>Build the week, send it to Outlook, and let bar staff know it's out</p>
-</header>
-<main>
-  <div class="notice">Build the week below, then download it as a calendar file — a real .ics file that Outlook (or any calendar app) can import directly, no Microsoft sign-in dance needed. "Notify Bar Staff" opens an email with the week's shifts already written out, ready to send.</div>
 
-  <div class="week-picker">
-    <label>Week starting (Monday)</label>
-    <input type="date" id="week-start" onchange="updateDayDates()">
+<div class="card">
+
+  <!-- Screen: login -->
+  <div class="screen active" id="screen-login">
+    <span class="eyebrow">Restricted access</span>
+    <h1>Staff Area</h1>
+    <p class="sub">Sign in with your staff login</p>
+    <input type="text" id="login-username" placeholder="Username" autocomplete="off">
+    <input type="password" id="login-password" placeholder="Password" autocomplete="off">
+    <button class="enter" onclick="attemptLogin()">Sign In</button>
+    <p class="error" id="login-error">Username or password not recognised</p>
+    <p class="note">Don't have a login? Ask Site Admin to add you.</p>
+    <button class="enter" id="install-btn" style="display:none; margin-top:14px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25);" onclick="installApp()">📲 Install App</button>
+    <p class="note" id="ios-install-note" style="display:none;">On iPhone: tap Share → Add to Home Screen to install.</p>
   </div>
 
-  <div id="days-container"></div>
-
-  <div class="action-row">
-    <button class="action-btn primary" onclick="downloadICS()">📅 Download Calendar File (.ics)</button>
-    <button class="action-btn secondary" onclick="notifyStaff()">✉️ Notify Bar Staff — Rota's Out (Email)</button>
-    <button class="action-btn secondary" onclick="copyForWhatsApp()">💬 Copy Message for WhatsApp</button>
-  </div>
-  <p class="action-status" id="action-status"></p>
-
-  <div class="section-label" style="margin-top:30px;">Publish to Current Rota (permanent link)</div>
-  <div class="notice" style="margin-bottom:16px;">Publishes this week straight onto the site's one permanent bookmarkable link — same GitHub connection as Manage Staff Logins. Set it up once there and it's remembered here too.</div>
-  <div class="github-config">
-    <div class="config-row">
-      <label>GitHub Username</label>
-      <input type="text" id="gh-owner" placeholder="e.g. scott123">
-    </div>
-    <div class="config-row">
-      <label>Repository Name</label>
-      <input type="text" id="gh-repo" placeholder="e.g. dunvant-wmc-site">
-    </div>
-    <div class="config-row">
-      <label>Personal Access Token</label>
-      <input type="password" id="gh-token" placeholder="ghp_...">
-    </div>
-    <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device</label>
-  </div>
-  <p class="action-status" id="audit-note"></p>
-  <button class="action-btn primary" onclick="publishRota()">🚀 Publish This Week's Rota</button>
-  <p class="action-status" id="publish-status"></p>
-
-  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
-</main>
-<script>
-  const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-
-  function buildDayCards(){
-    const container = document.getElementById('days-container');
-    container.innerHTML = DAYS.map((day, i) => `
-      <div class="day-card" data-day-index="${i}">
-        <div class="day-header">
-          <span class="day-name">${day}</span>
-          <span class="day-date" id="date-${i}">—</span>
-        </div>
-        <div class="shifts-list" id="shifts-${i}"></div>
-        <button class="add-shift-btn" onclick="addShiftRow(${i})">+ Add Shift</button>
+  <!-- Screen: menu (shared across roles, content swapped by JS) -->
+  <div class="screen" id="screen-menu">
+    <div class="welcome-row">
+      <div>
+        <span class="welcome-name" id="welcome-name">—</span>
+        <span class="welcome-role" id="welcome-role">—</span>
       </div>
-    `).join('');
-    DAYS.forEach((_, i) => addShiftRow(i));
-  }
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+    <div class="summary-bar" id="summary-bar"></div>
+    <div class="tabs" id="menu-tabs"></div>
+    <input type="text" class="quick-search" id="quick-search" placeholder="Search this menu…" oninput="filterMenu(this.value)">
+    <div class="menu" id="menu-items"></div>
+    <p class="note" id="menu-note"></p>
+  </div>
 
-  function addShiftRow(dayIndex){
-    const list = document.getElementById(`shifts-${dayIndex}`);
-    const row = document.createElement('div');
-    row.className = 'shift-row';
-    row.innerHTML = `
-      <input type="text" class="s-name" placeholder="Name">
-      <select class="s-role" onchange="this.classList.toggle('role-keyholder', this.value === 'Keyholder')">
-        <option value="Bar Staff">Bar Staff</option>
-        <option value="Keyholder">Keyholder</option>
-      </select>
-      <input type="time" class="s-start" value="18:00">
-      <input type="time" class="s-end" value="23:00">
-      <button class="remove-shift" onclick="this.closest('.shift-row').remove()">✕</button>
-    `;
-    list.appendChild(row);
-  }
+</div>
 
-  function updateDayDates(){
-    const startVal = document.getElementById('week-start').value;
-    if(!startVal) return;
-    const start = new Date(startVal + 'T00:00:00');
-    DAYS.forEach((day, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      document.getElementById(`date-${i}`).textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    });
-  }
+<script>
+  // Set to true right before any redirect we trigger ourselves, so the
+  // sign-off-on-close listener further down doesn't treat it as a real close.
+  let intentionalNavigation = false;
 
-  function collectShifts(){
-    const startVal = document.getElementById('week-start').value;
-    if(!startVal){
-      document.getElementById('action-status').textContent = 'Pick a week starting date first.';
-      return null;
+  // ── Staff login list ──
+  // Site Admin: add, remove, or edit people here. Each person needs a unique
+  // username, a password, their display name, and a list of roles
+  // (from: "bar", "keyholder", "mgmt", "admin", "committee").
+  // Most people have one role; a few have more than one.
+  const STAFF_USERS = [
+    { username: "carol",   password: "lovely",     name: "Carol",   roles: ["committee", "mgmt"] },
+    { username: "tim",     password: "walter",     name: "Tim",     roles: ["mgmt"] },
+    { username: "hayley",  password: "gnome",      name: "Hayley",  roles: ["bar"] },
+    { username: "mark",    password: "angelic",    name: "Mark",    roles: ["mgmt"] },
+    { username: "amy",     password: "old",        name: "Amy",     roles: ["keyholder"] },
+    { username: "charley", password: "moody",      name: "Charley", roles: ["keyholder"] },
+    { username: "jack",    password: "spastic",    name: "Jack",    roles: ["bar"] },
+    { username: "penny",   password: "ocd",        name: "Penny",   roles: ["bar"] },
+    { username: "rach",    password: "theboss",    name: "Rach",    roles: ["mgmt", "committee"] },
+    { username: "sally",   password: "smart",      name: "Sally",   roles: ["keyholder"] },
+    { username: "scott",   password: "scotthav88", name: "Scott", roles: ["admin"] },
+    { username: "euan",    password: "windup",     name: "Euan",    roles: ["bar"] },
+    { username: "kelly",   password: "rosa",       name: "Kelly",   roles: ["keyholder"] }
+  ];
+
+  // ── Menus per role ──
+  const MENUS = {
+    bar: {
+      label: "Bar Staff",
+      items: [
+        ["current-rota.html", "Current Rota", "Bookmark this — always shows the latest week"],
+        ["this-weeks-rota.html", "This Week's Rota", "See your shifts and confirm you've seen them"],
+        ["staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
+        ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
+        ["till-card-lookup.html", "Till &amp; Card Lookup Guide", "How to scan and apply the member discount"],
+        ["closing-checklist.html", "Closing Checklist", "Cleaning down the bar, cellar, bandits &amp; mopping"],
+        ["whats-on-this-week.html", "What's On This Week", "Upcoming bookings and events"],
+        ["shift-cover-request.html", "Shift Cover Request", "Can't make a shift? Flag it here"],
+        ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"],
+        ["#staff-ticket-form-link", "Submit a Ticket", "Report a problem or request something from management"],
+        ["price-list.html", "Price List", "Quick reference for drink prices"],
+        ["incident-report.html", "Accident / Incident Report", "For health &amp; safety, not till issues"]
+      ]
+    },
+    keyholder: {
+      label: "Keyholder",
+      groups: [
+        {
+          label: "Closing",
+          items: [
+            ["#cash-up-guide-link", "Cashing Up", "End-of-night till count and drop procedure"],
+            ["#locking-alarm-link", "Locking &amp; Setting the Alarm", "Final lock-up at close"]
+          ]
+        },
+        {
+          label: "Opening",
+          items: [
+            ["#unlocking-alarm-link", "Unlocking &amp; Disarming the Alarm", "First in — opening the building"],
+            ["#opening-checks-link", "Opening Checks", "Float count and other checks before doors open"]
+          ]
+        },
+        {
+          label: "If Something Goes Wrong",
+          items: [
+            ["alarm-fault.html", "Alarm Fault", "Who to call and what to do if the alarm won't set or trips"],
+            ["till-discrepancy.html", "Till Discrepancy", "Steps for a count that doesn't match"],
+            ["out-of-hours-contact.html", "Out-of-Hours Contact", "Emergency keyholder and callout numbers"]
+          ]
+        },
+        {
+          label: "Safety",
+          items: [
+            ["fire-safety.html", "Fire Safety / Evacuation", "What to do, and where everyone goes"],
+            ["first-aid.html", "First Aid", "Kit location and who's trained"],
+            ["weather-closure.html", "Weather Closure Guide", "Snow days, power cuts, who decides"]
+          ]
+        }
+      ]
+    },
+    mgmt: {
+      label: "Management",
+      groups: [
+        {
+          label: "Rota",
+          items: [
+            ["weekly-rota-builder.html", "Weekly Rota Builder", "Build the week, send to Outlook, notify bar staff"],
+            ["staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
+            ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"]
+          ]
+        },
+        {
+          label: "Requests &amp; Bookings",
+          items: [
+            ["pending-bookings.html", "Pending Bookings", "Function room requests awaiting approval", "2"],
+            ["shift-cover-requests-mgmt.html", "Shift Cover Requests", "Track cover requests submitted by bar staff", "2"],
+            ["expense-requests.html", "Expense / Petty Cash Requests", "Claiming back costs"]
+          ]
+        },
+        {
+          label: "Reference",
+          items: [
+            ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
+            ["supplier-contacts.html", "Supplier Contacts", "Drinks, food, and entertainment suppliers"],
+            ["entertainment-tracker.html", "Entertainment Booking Tracker", "Bands, quiz masters, DJs"],
+            ["licensing-compliance.html", "Licensing / Compliance", "Premises license conditions and renewals"],
+            ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"]
+          ]
+        },
+        {
+          label: "Team",
+          items: [
+            ["new-starter-checklist.html", "New Starter Checklist", "Training and setup steps for someone joining the team"],
+            ["manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access"]
+          ]
+        }
+      ]
+    },
+    admin: {
+      label: "Site Admin",
+      items: [
+        ["full-admin-dashboard.html", "Full Admin Dashboard", "Everything on the site, in one place"],
+        ["edit-site-files.html", "Edit Site Files", "GitHub repo — where the site's files live and get updated"],
+        ["publish-file-update.html", "Publish File Update", "Update any file directly — no manual GitHub editing"],
+        ["https://forms.cloud.microsoft/r/xPbfry03VW", "Booking Form Responses", "View and manage function room booking submissions"],
+        ["shift-cover-form-responses.html", "Shift Cover Form Responses", "View submissions from the routine cover request form"],
+        ["https://outlook.live.com/owa/calendar/bb8f79de-cbbe-4d7b-8e7f-2123ebde7711/c726ef94-949e-4889-9aa2-39f3f93837b8/cid-FC69B5B067121F85/index.html", "Outlook Rota Calendar", "Add, edit, or remove staff shifts"],
+        ["facebook-page-admin.html", "Facebook Page", "Post updates and manage the club's page"],
+        ["manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access and to what"],
+        ["site-todos.html", "Site To-Do List", "Every placeholder still waiting for real content", "23"],
+        ["tickets.html", "Tickets", "Issues and requests from the public and staff"],
+        ["google-analytics.html", "Google Analytics", "See how many people visit, and which pages"],
+        ["content-quick-edit.html", "Content Quick-Edit Cheat Sheet", "Where to make common changes, without hunting"],
+        ["site-changelog.html", "Site Changelog", "Every real change, pulled automatically from GitHub"],
+        ["overall-changelog.html", "Overall Changelog", "The big picture, in plain English"],
+        ["backup-reminder.html", "Backup Reminder", "Keep a fresh copy somewhere safe"],
+        ["hosting-status.html", "Domain / Hosting Status", "Where the site actually lives"]
+      ]
+    },
+    committee: {
+      label: "Committee",
+      items: [
+        ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
+        ["pending-bookings.html", "Pending Bookings", "Function room requests, for visibility", "2"],
+        ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
+        ["#meeting-minutes-link", "Meeting Minutes &amp; Agendas", "Past minutes and upcoming meeting agendas"],
+        ["finances-accounts.html", "Finances &amp; Accounts", "Club accounts and financial oversight"],
+        ["agm-planning.html", "AGM Planning", "Agenda and action tracking"],
+        ["membership-numbers.html", "Membership Numbers", "Joining and lapsing trends"],
+        ["club-constitution.html", "Club Constitution / Rules", "The club's governing document"],
+        ["funding-opportunities.html", "Grant / Funding Opportunities", "Worth tracking as they come up"]
+      ]
     }
-    const start = new Date(startVal + 'T00:00:00');
-    const shifts = [];
-    DAYS.forEach((day, i) => {
-      const dayDate = new Date(start);
-      dayDate.setDate(start.getDate() + i);
-      const rows = document.querySelectorAll(`#shifts-${i} .shift-row`);
-      rows.forEach(row => {
-        const name = row.querySelector('.s-name').value.trim();
-        const role = row.querySelector('.s-role').value;
-        const startTime = row.querySelector('.s-start').value;
-        const endTime = row.querySelector('.s-end').value;
-        if(name && startTime && endTime){
-          shifts.push({ day, date: dayDate, name, role, startTime, endTime });
+  };
+
+  // ── Which menus each role sees, beyond its own ──
+  // mgmt also sees bar; keyholder also sees bar; admin sees everything.
+  const ROLE_EXTRAS = {
+    bar: ["bar"],
+    keyholder: ["bar", "keyholder"],
+    mgmt: ["bar", "keyholder", "mgmt"],
+    admin: ["bar", "keyholder", "mgmt", "admin", "committee"],
+    committee: ["committee"]
+  };
+
+  // Canonical display order when someone has more than one role's worth of menus
+  const ROLE_ORDER = ["bar", "keyholder", "mgmt", "admin", "committee"];
+
+  function renderMenu(user){
+    // Site Admin's dashboard already covers every role and tool — skip the in-page
+    // menu entirely and go straight there, rather than making it one more tap.
+    if(user.roles.includes('admin')){
+      intentionalNavigation = true;
+      window.location.href = 'full-admin-dashboard.html';
+      return;
+    }
+
+    document.getElementById('welcome-name').textContent = user.name;
+    document.getElementById('welcome-role').textContent = user.roles.map(r => MENUS[r].label).join(' · ');
+
+    // Union of every menu each of the user's roles grants access to, in a fixed order
+    const accessible = ROLE_ORDER.filter(r =>
+      user.roles.some(userRole => ROLE_EXTRAS[userRole].includes(r))
+    );
+
+    updateAppBadge(accessible);
+
+    const container = document.getElementById('menu-items');
+    const tabsContainer = document.getElementById('menu-tabs');
+
+    if(accessible.length === 1){
+      tabsContainer.innerHTML = '';
+      renderItems(accessible[0]);
+    } else {
+      tabsContainer.innerHTML = accessible.map((roleKey, i) =>
+        `<button class="tab-btn${i === 0 ? ' active' : ''}" data-role="${roleKey}" onclick="switchTab('${roleKey}', this)">${MENUS[roleKey].label}</button>`
+      ).join('');
+      renderItems(accessible[0]);
+    }
+
+    document.getElementById('menu-note').textContent = "Please don't share your login with anyone else.";
+    buildSummaryBar(accessible);
+    document.getElementById('screen-login').classList.remove('active');
+    document.getElementById('screen-menu').classList.add('active');
+  }
+
+  function updateAppBadge(accessibleRoles){
+    if(!('setAppBadge' in navigator)) return;
+    let total = 0;
+    accessibleRoles.forEach(roleKey => {
+      const roleData = MENUS[roleKey];
+      const items = roleData.groups ? roleData.groups.flatMap(g => g.items) : roleData.items;
+      items.forEach(([, , , badge]) => {
+        if(badge) total += parseInt(badge, 10) || 0;
+      });
+    });
+    if(total > 0){
+      navigator.setAppBadge(total).catch(() => {});
+    } else {
+      navigator.clearAppBadge().catch(() => {});
+    }
+  }
+
+  function buildSummaryBar(accessibleRoles){
+    const summaryEl = document.getElementById('summary-bar');
+    const chips = [];
+    accessibleRoles.forEach(roleKey => {
+      const roleData = MENUS[roleKey];
+      const items = roleData.groups ? roleData.groups.flatMap(g => g.items) : roleData.items;
+      items.forEach(([href, title, , badge]) => {
+        if(badge){
+          chips.push(`<a href="${href}" class="summary-chip" target="_blank" rel="noopener">${title} <span class="num">${badge}</span></a>`);
         }
       });
     });
-    return shifts;
+    summaryEl.innerHTML = chips.join('');
   }
 
-  function formatICSDate(date, time){
-    const [h, m] = time.split(':');
-    const d = new Date(date);
-    d.setHours(parseInt(h), parseInt(m), 0, 0);
-    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  function renderMenuItem([href, title, desc, badge]){
+    // Every tile opens in its own new tab now, so the menu itself stays put in the background
+    const opensNewTab = !href.startsWith('mailto:') && !href.startsWith('#');
+    const badgeHtml = badge ? `<span class="item-badge">${badge}</span>` : '';
+    return `<a href="${href}"${opensNewTab ? ' target="_blank" rel="noopener"' : ''}><span class="item-title-row">${title}${badgeHtml}</span><small>${desc}</small></a>`;
   }
 
-  function downloadICS(){
-    const shifts = collectShifts();
-    if(!shifts) return;
-    if(shifts.length === 0){
-      document.getElementById('action-status').textContent = 'Add at least one shift first.';
-      return;
-    }
-    let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Dunvant WMC//Rota//EN\r\n';
-    shifts.forEach((s, idx) => {
-      ics += 'BEGIN:VEVENT\r\n';
-      ics += `UID:${Date.now()}-${idx}@dunvantwmc\r\n`;
-      ics += `DTSTART:${formatICSDate(s.date, s.startTime)}\r\n`;
-      ics += `DTEND:${formatICSDate(s.date, s.endTime)}\r\n`;
-      ics += `SUMMARY:${s.name} — ${s.role}${s.role === 'Keyholder' ? ' 🔑' : ''}\r\n`;
-      ics += 'END:VEVENT\r\n';
-    });
-    ics += 'END:VCALENDAR\r\n';
+  function renderItems(roleKey){
+    const container = document.getElementById('menu-items');
+    const roleData = MENUS[roleKey];
 
-    const blob = new Blob([ics], { type: 'text/calendar' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'dunvant-wmc-rota.ics';
-    a.click();
-    URL.revokeObjectURL(url);
-
-    document.getElementById('action-status').textContent = `Downloaded — ${shifts.length} shifts. In Outlook: File → Open & Export → Import/Export → Import an iCalendar file, and select this file.`;
-  }
-
-  function buildShareableLink(shifts){
-    const compact = shifts.map(s => ({
-      d: s.day.slice(0, 3),
-      dt: s.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-      n: s.name,
-      r: s.role === 'Keyholder' ? 'K' : 'B',
-      st: s.startTime,
-      et: s.endTime
-    }));
-    const encoded = encodeURIComponent(btoa(JSON.stringify(compact)));
-    return `${location.origin}${location.pathname.replace('weekly-rota-builder.html', 'this-weeks-rota.html')}?w=${encoded}`;
-  }
-
-  function buildSummaryText(shifts){
-    let body = "This week's rota is out:\n\n";
-    let currentDay = '';
-    shifts.forEach(s => {
-      if(s.day !== currentDay){
-        currentDay = s.day;
-        body += `\n${s.day} (${s.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}):\n`;
-      }
-      body += `  ${s.name} (${s.role}${s.role === 'Keyholder' ? ' 🔑' : ''}): ${s.startTime}–${s.endTime}\n`;
-    });
-    return body;
-  }
-
-  function notifyStaff(){
-    const shifts = collectShifts();
-    if(!shifts) return;
-    if(shifts.length === 0){
-      document.getElementById('action-status').textContent = 'Add at least one shift first.';
-      return;
-    }
-    const body = buildSummaryText(shifts) + `\nTap here to see your shift and confirm you've seen it:\n${buildShareableLink(shifts)}`;
-    const mailto = `mailto:teamupdates@dunvantclub.example?subject=${encodeURIComponent("This week's rota is out")}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailto;
-    document.getElementById('action-status').textContent = 'Opening your email app with the rota written out — check it and hit send.';
-  }
-
-  function copyForWhatsApp(){
-    const shifts = collectShifts();
-    if(!shifts) return;
-    if(shifts.length === 0){
-      document.getElementById('action-status').textContent = 'Add at least one shift first.';
-      return;
-    }
-    const message = buildSummaryText(shifts) + `\nTap to see your shift and confirm you've seen it:\n${buildShareableLink(shifts)}`;
-    navigator.clipboard.writeText(message);
-    document.getElementById('action-status').textContent = 'Copied! Now open the WhatsApp group and paste it in.';
-  }
-
-  function updateOnlineStatus(){
-    document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'flex';
-  }
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
-  updateOnlineStatus();
-
-  buildDayCards();
-
-  const loggedInName = localStorage.getItem('staffUserName');
-  document.getElementById('audit-note').textContent = loggedInName
-    ? `Publishing here is recorded in Site Changelog as being made by: ${loggedInName}`
-    : "Not logged in via Staff Area — publishes will be recorded as 'unknown user'. Log in through staff-area.html first for proper attribution.";
-
-  // Reuse the same GitHub connection saved by Manage Staff Logins
-  const savedGh = JSON.parse(localStorage.getItem('ghConfig') || 'null');
-  if(savedGh){
-    document.getElementById('gh-owner').value = savedGh.owner || '';
-    document.getElementById('gh-repo').value = savedGh.repo || '';
-    document.getElementById('gh-token').value = savedGh.token || '';
-    document.getElementById('gh-remember').checked = true;
-  }
-
-  function maybeSaveGhConfig(){
-    if(document.getElementById('gh-remember').checked){
-      localStorage.setItem('ghConfig', JSON.stringify({
-        owner: document.getElementById('gh-owner').value.trim(),
-        repo: document.getElementById('gh-repo').value.trim(),
-        token: document.getElementById('gh-token').value.trim()
-      }));
+    if(roleData.groups){
+      // Grouped role (e.g. Keyholder: Closing / Opening) — render each with its own heading
+      container.innerHTML = roleData.groups.map(g => {
+        const items = g.items.map(renderMenuItem).join('');
+        return `<div class="menu-group-label">${g.label}</div>${items}`;
+      }).join('');
     } else {
-      localStorage.removeItem('ghConfig');
+      container.innerHTML = roleData.items.map(renderMenuItem).join('');
     }
+
+    if(roleKey === 'bar') checkForFreshRota();
   }
 
-  async function publishRota(){
-    const shifts = collectShifts();
-    if(!shifts) return;
-    if(shifts.length === 0){
-      document.getElementById('publish-status').textContent = 'Add at least one shift first.';
-      return;
-    }
-    const owner = document.getElementById('gh-owner').value.trim();
-    const repo = document.getElementById('gh-repo').value.trim();
-    const token = document.getElementById('gh-token').value.trim();
-    const statusEl = document.getElementById('publish-status');
-
-    if(!owner || !repo || !token){
-      statusEl.textContent = 'Fill in your GitHub username, repository name, and token first.';
-      statusEl.className = 'action-status error';
-      return;
-    }
-    maybeSaveGhConfig();
-    statusEl.textContent = 'Publishing…';
-    statusEl.className = 'action-status';
-
+  // Makeshift "notification" — since there's no real push notification system,
+  // this checks how recently the rota was published and flags the tile if it's new.
+  async function checkForFreshRota(){
     try{
-      const compact = shifts.map(s => ({
-        d: s.day.slice(0, 3), dt: s.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-        n: s.name, r: s.role === 'Keyholder' ? 'K' : 'B', st: s.startTime, et: s.endTime
-      }));
-      const publishedDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/current-rota.html`;
-      const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
-      if(!getRes.ok) throw new Error(`Couldn't fetch current-rota.html (${getRes.status}). Check the username, repo name, and token.`);
-      const fileData = await getRes.json();
-      const currentContent = decodeURIComponent(escape(atob(fileData.content)));
-
-      let updatedContent = currentContent.replace(
-        /const CURRENT_SHIFTS = \[[\s\S]*?\];/,
-        `const CURRENT_SHIFTS = ${JSON.stringify(compact)};`
-      );
-      updatedContent = updatedContent.replace(
-        /const PUBLISHED_DATE = "[^"]*";/,
-        `const PUBLISHED_DATE = "${publishedDate}";`
-      );
-
-      const putRes = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `Publish rota for week of ${document.getElementById('week-start').value} — by ${localStorage.getItem('staffUserName') || 'unknown user'}`,
-          content: btoa(unescape(encodeURIComponent(updatedContent))),
-          sha: fileData.sha
-        })
-      });
-      if(!putRes.ok) throw new Error(`Publish failed (${putRes.status}). Check the token has "repo" write access.`);
-
-      statusEl.textContent = '✓ Published — Current Rota is live within a couple of minutes.';
-      statusEl.className = 'action-status success';
-    } catch(err){
-      statusEl.textContent = err.message;
-      statusEl.className = 'action-status error';
+      const res = await fetch('current-rota.html');
+      if(!res.ok) return;
+      const text = await res.text();
+      const match = text.match(/const PUBLISHED_TIMESTAMP = "([^"]*)";/);
+      if(!match || !match[1]) return;
+      const hoursSince = (Date.now() - new Date(match[1]).getTime()) / (1000 * 60 * 60);
+      if(hoursSince >= 0 && hoursSince < 48){
+        const tile = [...document.querySelectorAll('#menu-items a')].find(a => a.getAttribute('href') === 'current-rota.html');
+        if(tile && !tile.querySelector('.new-rota-flag')){
+          const titleRow = tile.querySelector('.item-title-row');
+          if(titleRow) titleRow.insertAdjacentHTML('beforeend', '<span class="new-rota-flag">🔔 NEW</span>');
+        }
+      }
+    } catch(e){
+      // Fine if this fails — just no badge, no notification-worthy error to show
     }
   }
 
-  // Dark mode
+  function switchTab(roleKey, btn){
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderItems(roleKey);
+    document.getElementById('quick-search').value = '';
+  }
+
+  function filterMenu(query){
+    const q = query.trim().toLowerCase();
+    document.querySelectorAll('#menu-items a').forEach(a => {
+      const matches = a.textContent.toLowerCase().includes(q);
+      a.classList.toggle('hidden', !matches);
+    });
+    document.querySelectorAll('#menu-items .menu-group-label').forEach(label => {
+      let sib = label.nextElementSibling;
+      let anyVisible = false;
+      while(sib && !sib.classList.contains('menu-group-label')){
+        if(!sib.classList.contains('hidden')) anyVisible = true;
+        sib = sib.nextElementSibling;
+      }
+      label.classList.toggle('hidden', !anyVisible);
+    });
+  }
+
+  function attemptLogin(){
+    const username = document.getElementById('login-username').value.trim().toLowerCase();
+    const password = document.getElementById('login-password').value;
+    const user = STAFF_USERS.find(u => u.username === username && u.password === password);
+    if(user){
+      document.getElementById('login-error').style.display = 'none';
+      localStorage.setItem('staffUser', username);
+      localStorage.setItem('staffUserName', user.name);
+      localStorage.setItem('staffUserRoles', JSON.stringify(user.roles));
+      renderMenu(user);
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  }
+
+  function logout(){
+    localStorage.removeItem('staffUser');
+    localStorage.removeItem('staffUserName');
+    localStorage.removeItem('staffUserRoles');
+    if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+    document.getElementById('screen-menu').classList.remove('active');
+    document.getElementById('screen-login').classList.add('active');
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+  }
+
+  document.getElementById('login-username').addEventListener('keydown', e => {
+    if(e.key === 'Enter') attemptLogin();
+  });
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if(e.key === 'Enter') attemptLogin();
+  });
+
+  // Stay signed in on this device until Log Out is tapped, OR until the tab/browser actually closes
+  const savedUsername = localStorage.getItem('staffUser');
+  if(savedUsername){
+    const user = STAFF_USERS.find(u => u.username === savedUsername);
+    if(user) renderMenu(user);
+  }
+
+  // Sign off automatically when this tab or the browser closes.
+  // Doesn't fire for our own redirects (like Site Admin → Dashboard) — only real closes.
+  window.addEventListener('pagehide', () => {
+    if(intentionalNavigation) return;
+    localStorage.removeItem('staffUser');
+    localStorage.removeItem('staffUserName');
+    localStorage.removeItem('staffUserRoles');
+    if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+  });
+
+  // Dark mode toggle
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
@@ -408,6 +608,69 @@
     applyTheme(newTheme);
     localStorage.setItem('theme', newTheme);
   });
+
+  // ── PWA: service worker for offline access, with update detection ──
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').then((registration) => {
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+            document.getElementById('update-banner').style.display = 'flex';
+          }
+        });
+      });
+    }).catch(() => {
+      // Fine if this fails (e.g. running from a local file) — just no offline support
+    });
+  }
+
+  function reloadForUpdate(){
+    window.location.reload();
+  }
+
+  // ── Offline status banner ──
+  function updateOnlineStatus(){
+    document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'flex';
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // ── PWA: install prompt ──
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    document.getElementById('install-btn').style.display = 'block';
+  });
+
+  function installApp(){
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(() => {
+      deferredInstallPrompt = null;
+      document.getElementById('install-btn').style.display = 'none';
+    });
+  }
+
+  // iOS Safari doesn't support beforeinstallprompt — show manual instructions instead
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isInStandaloneMode = window.navigator.standalone === true;
+  if(isIOS && !isInStandaloneMode){
+    document.getElementById('ios-install-note').style.display = 'block';
+  }  // Top loading bar — gives instant feedback that a tap registered before the page navigates
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if(!link) return;
+    const href = link.getAttribute('href');
+    if(!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    if(link.target === '_blank') return;
+    const bar = document.getElementById('progress-bar');
+    bar.classList.add('active');
+    bar.style.width = '75%';
+  });
 </script>
+
 </body>
 </html>
