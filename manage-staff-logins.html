@@ -105,6 +105,13 @@
     padding:11px 18px; cursor:pointer; margin-top:10px;
   }
   .save-status{font-size:0.82rem; margin-top:10px; color:var(--muted);}
+  .mini-progress{display:none; height:4px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:8px;}
+  .mini-progress.active{display:block;}
+  .mini-progress-bar{height:100%; width:40%; background:linear-gradient(90deg, var(--brass-light), var(--pop, var(--brass))); border-radius:4px; animation:mini-progress-slide 1.1s ease-in-out infinite;}
+  @keyframes mini-progress-slide{
+    0%{transform:translateX(-100%);}
+    100%{transform:translateX(250%);}
+  }
   .save-status.success{color:#3d8f6f; font-weight:600;}
   .save-status.error{color:#c25a4d; font-weight:600;}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
@@ -170,6 +177,7 @@
   </div>
 
   <div class="load-status" id="load-status">Attempting to load the current list from staff-area.html…</div>
+  <div class="mini-progress" id="load-progress"><div class="mini-progress-bar"></div></div>
 
   <div class="section-label">Staff</div>
   <div class="table-scroll">
@@ -188,6 +196,7 @@
   <div class="code-card" id="code-output"></div>
   <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy Code</button>
   <p class="save-status" id="save-status"></p>
+  <div class="mini-progress" id="save-progress"><div class="mini-progress-bar"></div></div>
 
   <a class="back" href="../staff-area.html">← Back to Staff Area</a>
 </main>
@@ -331,6 +340,7 @@
     maybeSaveGitHubConfig();
     statusEl.textContent = 'Saving…';
     statusEl.className = 'save-status';
+    document.getElementById('save-progress').classList.add('active');
 
     try{
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/staff-area.html`;
@@ -366,14 +376,17 @@
     } catch(err){
       statusEl.textContent = err.message;
       statusEl.className = 'save-status error';
+    } finally {
+      document.getElementById('save-progress').classList.remove('active');
     }
   }
 
   // Try to load and parse the current STAFF_USERS list from staff-area.html
   async function loadCurrentUsers(){
     const statusEl = document.getElementById('load-status');
+    document.getElementById('load-progress').classList.add('active');
     try{
-      const res = await fetch('../staff-area.html');
+      const res = await fetch('staff-area.html');
       if(!res.ok) throw new Error('fetch failed');
       const text = await res.text();
       const match = text.match(/const STAFF_USERS\s*=\s*\[([\s\S]*?)\];/);
@@ -393,6 +406,8 @@
     } catch(e){
       FALLBACK_USERS.forEach(u => addRow(u));
       statusEl.textContent = `Couldn't auto-load from staff-area.html directly (only works once the site's actually hosted) — showing the ${FALLBACK_USERS.length} people already gathered instead. Edits here won't update that fallback list automatically; regenerate and paste the code back in as usual.`;
+    } finally {
+      document.getElementById('load-progress').classList.remove('active');
     }
   }
   function updateOnlineStatus(){
