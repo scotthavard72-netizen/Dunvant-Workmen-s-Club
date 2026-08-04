@@ -76,6 +76,7 @@
     width:100%; font-family:'Inter', sans-serif; font-size:0.85rem;
     padding:9px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
   }
+  .remember-row{display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--muted); margin-top:6px;}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
 </style>
 </head>
@@ -122,12 +123,13 @@
       <label>Personal Access Token</label>
       <input type="password" id="gh-token" placeholder="ghp_...">
     </div>
+    <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device</label>
   </div>
   <p class="action-status" id="audit-note"></p>
   <button class="action-btn primary" onclick="publishRota()">🚀 Publish This Week's Rota</button>
   <p class="action-status" id="publish-status"></p>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
 </main>
 <script>
   const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
@@ -307,6 +309,19 @@
     document.getElementById('gh-owner').value = savedGh.owner || '';
     document.getElementById('gh-repo').value = savedGh.repo || '';
     document.getElementById('gh-token').value = savedGh.token || '';
+    document.getElementById('gh-remember').checked = true;
+  }
+
+  function maybeSaveGhConfig(){
+    if(document.getElementById('gh-remember').checked){
+      localStorage.setItem('ghConfig', JSON.stringify({
+        owner: document.getElementById('gh-owner').value.trim(),
+        repo: document.getElementById('gh-repo').value.trim(),
+        token: document.getElementById('gh-token').value.trim()
+      }));
+    } else {
+      localStorage.removeItem('ghConfig');
+    }
   }
 
   async function publishRota(){
@@ -326,6 +341,7 @@
       statusEl.className = 'action-status error';
       return;
     }
+    maybeSaveGhConfig();
     statusEl.textContent = 'Publishing…';
     statusEl.className = 'action-status';
 
