@@ -96,6 +96,16 @@
     background:var(--pop); color:#fff; border-radius:20px;
     padding:2px 9px; flex-shrink:0;
   }
+  .new-rota-flag{
+    font-family:'Inter', sans-serif; font-size:0.68rem; font-weight:700;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;
+    border-radius:20px; padding:2px 9px; flex-shrink:0; margin-left:6px;
+    animation:new-rota-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes new-rota-pulse{
+    0%, 100%{opacity:1;}
+    50%{opacity:0.6;}
+  }
   .menu-group-label{
     font-family:'Fraunces', serif; font-size:0.85rem; font-weight:600;
     color:var(--brass-light); text-transform:uppercase; letter-spacing:0.06em;
@@ -475,6 +485,30 @@
       }).join('');
     } else {
       container.innerHTML = roleData.items.map(renderMenuItem).join('');
+    }
+
+    if(roleKey === 'bar') checkForFreshRota();
+  }
+
+  // Makeshift "notification" — since there's no real push notification system,
+  // this checks how recently the rota was published and flags the tile if it's new.
+  async function checkForFreshRota(){
+    try{
+      const res = await fetch('current-rota.html');
+      if(!res.ok) return;
+      const text = await res.text();
+      const match = text.match(/const PUBLISHED_TIMESTAMP = "([^"]*)";/);
+      if(!match || !match[1]) return;
+      const hoursSince = (Date.now() - new Date(match[1]).getTime()) / (1000 * 60 * 60);
+      if(hoursSince >= 0 && hoursSince < 48){
+        const tile = [...document.querySelectorAll('#menu-items a')].find(a => a.getAttribute('href') === 'current-rota.html');
+        if(tile && !tile.querySelector('.new-rota-flag')){
+          const titleRow = tile.querySelector('.item-title-row');
+          if(titleRow) titleRow.insertAdjacentHTML('beforeend', '<span class="new-rota-flag">🔔 NEW</span>');
+        }
+      }
+    } catch(e){
+      // Fine if this fails — just no badge, no notification-worthy error to show
     }
   }
 
