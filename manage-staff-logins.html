@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Staff Logins">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232c3f38'/%3E%3Ctext x='50' y='68' font-family='Georgia,serif' font-size='58' font-weight='700' fill='%23e0b56a' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232c3f38'/%3E%3Ctext x='50' [...]
 <title>Manage Staff Logins — Dunvant WMC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +28,7 @@
     border-radius:50%; width:38px; height:38px;
     display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
   }
-  .theme-toggle:hover{border-color:var(--brass-light);}
+  .theme-toggle:hover{border-color:var(--brass-light);} 
   main{max-width:800px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
   [data-theme="dark"] .notice{background:#2a2318;}
@@ -134,7 +134,7 @@
 </style>
 </head>
 <body>
-<div id="offline-banner" style="display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:#8a2f2f; color:#fff;">
+<div id="offline-banner" style="display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600; text-al[...]
   📡 You're offline — Save to GitHub won't work until you're back online. Generate Code + copy still works as a fallback.
 </div>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
@@ -159,7 +159,7 @@
   <p>Add, edit, or remove people — then copy the result back into staff-area.html</p>
 </header>
 <main>
-  <div class="notice">This can't save changes on its own by default — there's no backend to write to. But if you set up a free GitHub token below (one-time, two minutes), the Save button can commit changes straight to the live site — no copying, no file hunting. Without a token, use Generate Code + paste as before.</div>
+  <div class="notice">This can't save changes on its own by default — there's no backend to write to. But if you set up a free GitHub token below (one-time, two minutes), the Save button can co[...]
 
   <div class="section-label">GitHub Connection (optional, but saves the copy-paste step)</div>
   <div class="github-config">
@@ -177,8 +177,8 @@
     </div>
     <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device (stored in this browser only)</label>
     <p class="config-hint">
-      One shared token for the club, used by whoever needs to publish — Management and Site Admin. Get it at github.com → Settings → Developer settings → Personal access tokens → Generate new token, scoped to just this one repository with "Contents: Read and write" permission, and set an expiry (90 days is sensible) rather than "no expiration."<br><br>
-      Since it's shared, anyone with it can publish as if they were anyone — the "by [Name]" credit in Site Changelog only works if people stay logged into their own Staff Area account while doing it. Keep the token itself private (a password manager, not a group chat), and if it's ever exposed or someone with access leaves, revoke and regenerate it — that's the one clean-up step that matters here.
+      One shared token for the club, used by whoever needs to publish — Management and Site Admin. Get it at github.com → Settings → Developer settings → Personal access tokens → Genera[...]
+      Since it's shared, anyone with it can publish as if they were anyone — the "by [Name]" credit in Site Changelog only works if people stay logged into their own Staff Area account while do[...]
     </p>
   </div>
 
@@ -202,7 +202,7 @@
   <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy Code</button>
   <p class="save-status" id="save-status"></p>
 
-  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
 </div>
 <script>
@@ -386,7 +386,7 @@
   async function loadCurrentUsers(){
     const statusEl = document.getElementById('load-status');
     try{
-      const res = await fetch('../staff-area.html');
+      const res = await fetch('staff-area.html');
       if(!res.ok) throw new Error('fetch failed');
       const text = await res.text();
       const match = text.match(/const STAFF_USERS\s*=\s*\[([\s\S]*?)\];/);
@@ -405,7 +405,7 @@
       }
     } catch(e){
       FALLBACK_USERS.forEach(u => addRow(u));
-      statusEl.textContent = `Couldn't auto-load from staff-area.html directly (only works once the site's actually hosted) — showing the ${FALLBACK_USERS.length} people already gathered instead. Edits here won't update that fallback list automatically; regenerate and paste the code back in as usual.`;
+      statusEl.textContent = `Couldn't auto-load from staff-area.html directly (only works once the site's actually hosted) — showing the ${FALLBACK_USERS.length} people already gathered instea[...]`;
     }
   }
   function updateOnlineStatus(){
