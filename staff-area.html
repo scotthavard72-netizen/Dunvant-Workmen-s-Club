@@ -38,6 +38,14 @@
   .display{font-family:'Fraunces', serif;}
   .card{max-width:420px; width:100%; text-align:center;}
 
+  #progress-bar{
+    position:fixed; top:0; left:0; height:3px; width:0%;
+    background:linear-gradient(90deg, var(--brass-light), var(--pop, var(--brass)));
+    z-index:9999; transition:width 0.4s ease, opacity 0.3s ease;
+    opacity:0;
+  }
+  #progress-bar.active{opacity:1;}
+
   .status-banner{
     display:none; align-items:center; justify-content:center; gap:14px;
     padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600;
@@ -163,6 +171,7 @@
 </style>
 </head>
 <body>
+<div id="progress-bar"></div>
 
 <div class="status-banner offline-style" id="offline-banner">
   📡 You're offline — viewing cached pages. Submitting forms, saving, or publishing won't work until you're back online.
@@ -598,7 +607,17 @@
   const isInStandaloneMode = window.navigator.standalone === true;
   if(isIOS && !isInStandaloneMode){
     document.getElementById('ios-install-note').style.display = 'block';
-  }
+  }  // Top loading bar — gives instant feedback that a tap registered before the page navigates
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if(!link) return;
+    const href = link.getAttribute('href');
+    if(!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    if(link.target === '_blank') return;
+    const bar = document.getElementById('progress-bar');
+    bar.classList.add('active');
+    bar.style.width = '75%';
+  });
 </script>
 
 </body>
