@@ -31,12 +31,21 @@
   .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:12px;}
   .github-config{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:20px;}
   .config-row{margin-bottom:12px;}
+  .recent-files{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  .recent-files:empty{display:none;}
+  .recent-chip{
+    font-family:'Inter', sans-serif; font-size:0.76rem; font-weight:600;
+    background:var(--card); border:1px solid var(--line); color:var(--forest);
+    padding:5px 10px; border-radius:14px; cursor:pointer;
+  }
+  .recent-chip:hover{border-color:var(--brass);}
   .config-row label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:5px;}
   .config-row input{
     width:100%; font-family:'Inter', sans-serif; font-size:0.9rem;
     padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
   }
   .config-hint{font-size:0.74rem; color:var(--muted); margin-top:8px; line-height:1.6;}
+  .remember-row{display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--muted); margin-top:6px;}
   .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
   .btn{
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.88rem;
@@ -81,13 +90,16 @@
       <label>Personal Access Token</label>
       <input type="password" id="gh-token" placeholder="ghp_... or github_pat_...">
     </div>
+    <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device</label>
     <p class="config-hint">Needs "Contents: Read and write" permission on this repo. See Manage Staff Logins for the full token setup steps if you haven't done this yet.</p>
   </div>
 
   <div class="section-label">File</div>
   <div class="config-row">
-    <label>File path (exactly as it appears in the repo)</label>
-    <input type="text" id="file-path" placeholder="e.g. club-website.html or manage-staff-logins.html">
+    <label>File path</label>
+    <input type="text" id="file-path" list="known-files" placeholder="Start typing or pick from the list..." autocomplete="off">
+    <datalist id="known-files"></datalist>
+    <div id="recent-files" class="recent-files"></div>
   </div>
 
   <div class="btn-row">
@@ -106,11 +118,71 @@
 <script>
   let currentSha = null;
 
+  // ── Every real file on the site, for the searchable dropdown ──
+  const KNOWN_FILES = [
+    "club-website.html", "staff-area.html", "membership-renewal.html", "member-suggestions.html",
+    "staff-rota.html", "staff-faq.html",
+    "till-card-lookup.html", "closing-checklist.html", "whats-on-this-week.html", "shift-cover-request.html",
+    "price-list.html", "incident-report.html", "this-weeks-rota.html", "current-rota.html",
+    "alarm-fault.html", "till-discrepancy.html", "out-of-hours-contact.html", "fire-safety.html",
+    "first-aid.html", "weather-closure.html",
+    "pending-bookings.html", "shift-cover-requests-mgmt.html", "membership-till-system.html",
+    "new-starter-checklist.html", "supplier-contacts.html", "expense-requests.html",
+    "entertainment-tracker.html", "licensing-compliance.html", "weekly-rota-builder.html",
+    "finances-accounts.html", "agm-planning.html", "membership-numbers.html",
+    "club-constitution.html", "funding-opportunities.html",
+    "edit-site-files.html", "publish-file-update.html", "manage-staff-logins.html",
+    "site-todos.html", "tickets.html", "google-analytics.html", "content-quick-edit.html",
+    "site-changelog.html", "overall-changelog.html", "backup-reminder.html", "hosting-status.html",
+    "full-admin-dashboard.html", "shift-cover-form-responses.html", "facebook-page-admin.html",
+    "sw.js", "staff-manifest.json", "site-manifest.json", "robots.txt", "staff-logins.md"
+  ];
+
+  function populateKnownFiles(){
+    const datalist = document.getElementById('known-files');
+    datalist.innerHTML = KNOWN_FILES.sort().map(f => `<option value="${f}">`).join('');
+  }
+  populateKnownFiles();
+
+  // ── Recently used files, remembered on this device ──
+  const RECENT_KEY = 'publishRecentFiles';
+  function getRecentFiles(){
+    return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+  }
+  function addRecentFile(path){
+    let recent = getRecentFiles().filter(f => f !== path);
+    recent.unshift(path);
+    recent = recent.slice(0, 6);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+    renderRecentFiles();
+  }
+  function renderRecentFiles(){
+    const container = document.getElementById('recent-files');
+    const recent = getRecentFiles();
+    container.innerHTML = recent.map(f =>
+      `<span class="recent-chip" onclick="document.getElementById('file-path').value='${f}'">${f}</span>`
+    ).join('');
+  }
+  renderRecentFiles();
+
   const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
   if(saved){
     document.getElementById('gh-owner').value = saved.owner || '';
     document.getElementById('gh-repo').value = saved.repo || '';
     document.getElementById('gh-token').value = saved.token || '';
+    document.getElementById('gh-remember').checked = true;
+  }
+
+  function maybeSaveGhConfig(){
+    if(document.getElementById('gh-remember').checked){
+      localStorage.setItem('ghConfig', JSON.stringify({
+        owner: document.getElementById('gh-owner').value.trim(),
+        repo: document.getElementById('gh-repo').value.trim(),
+        token: document.getElementById('gh-token').value.trim()
+      }));
+    } else {
+      localStorage.removeItem('ghConfig');
+    }
   }
 
   function getConfig(){
@@ -130,6 +202,7 @@
       statusEl.className = 'status error';
       return;
     }
+    maybeSaveGhConfig();
     statusEl.textContent = 'Fetching…';
     statusEl.className = 'status';
     try{
@@ -140,6 +213,7 @@
       currentSha = data.sha;
       document.getElementById('file-content').value = decodeURIComponent(escape(atob(data.content)));
       statusEl.textContent = '✓ Loaded — edit below, then Publish when ready.';
+      addRecentFile(path);
       statusEl.className = 'status success';
     } catch(err){
       statusEl.textContent = err.message;
@@ -164,6 +238,7 @@
     }
     if(!confirm(`Publish changes to "${path}"? This overwrites the live file immediately.`)) return;
 
+    maybeSaveGhConfig();
     statusEl.textContent = 'Publishing…';
     statusEl.className = 'status';
     try{
@@ -194,6 +269,7 @@
 
       currentSha = (await putRes.json()).content.sha;
       statusEl.textContent = '✓ Published — live on the site within a couple of minutes.';
+      addRecentFile(path);
       statusEl.className = 'status success';
     } catch(err){
       statusEl.textContent = err.message;
