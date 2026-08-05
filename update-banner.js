@@ -40,12 +40,49 @@
           const newWorker = registration.installing;
           newWorker.addEventListener('statechange', () => {
             if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
-              document.getElementById('shared-update-banner').style.display = 'flex';
+              showBanner('🔄 A new version is available.');
             }
           });
         });
       }).catch(() => {});
     }
+
+    startDeploymentPolling();
+  }
+
+  function showBanner(message){
+    const banner = document.getElementById('shared-update-banner');
+    banner.querySelector('span').textContent = message;
+    banner.style.display = 'flex';
+  }
+
+  // Separately, poll GitHub's actual deployment status directly — this catches
+  // a publish finishing even if it wasn't triggered from this device, since it's
+  // checking the real, ground-truth state rather than just this browser's cache.
+  function startDeploymentPolling(){
+    const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
+    if(!saved || !saved.owner || !saved.repo) return;
+
+    const check = async () => {
+      try{
+        const headers = saved.token ? { Authorization: `token ${saved.token}` } : {};
+        const res = await fetch(`https://api.github.com/repos/${saved.owner}/${saved.repo}/pages/builds/latest`, { headers });
+        if(!res.ok) return;
+        const build = await res.json();
+        if(build.status !== 'built') return;
+
+        const lastSeen = localStorage.getItem('lastSeenDeployId');
+        const currentId = String(build.id || build.updated_at);
+        if(lastSeen && lastSeen !== currentId){
+          showBanner('🟢 The site was just updated — tap to see the latest.');
+        }
+        localStorage.setItem('lastSeenDeployId', currentId);
+      } catch(e){
+        // Quietly skip this round — not worth surfacing a network hiccup as an error
+      }
+    };
+    check();
+    setInterval(check, 45000);
   }
 
   if(document.readyState === 'loading'){
