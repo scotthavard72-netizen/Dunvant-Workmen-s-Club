@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Site Health Check — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#181614;--paper:#faf7f1;--card:#ffffff;--line:#e8e0d2;--muted:#8a7f6b;--brass:#b8873f;--brass-light:#e0b56a;--forest:#2c3f38;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#f0ece2;--paper:#161412;--card:#211e1a;--line:#3a352c;--muted:#a89c85;--brass:#d4a45c;--brass-light:#e8c584;--forest:#4a6b5f;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #181614 0%, #1a2620 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  main{max-width:760px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:12px;}
+  .github-config{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:20px;}
+  .config-row{margin-bottom:12px;}
+  .config-row label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:5px;}
+  .config-row input{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.9rem;
+    padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+  }
+  .remember-row{display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--muted); margin-top:6px;}
+  .run-btn{
+    display:block; width:100%; font-family:'Inter', sans-serif; font-weight:600; font-size:0.92rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;
+    border:none; border-radius:10px; padding:15px 20px; cursor:pointer; margin-bottom:16px;
+  }
+  .scan-status{font-size:0.84rem; color:var(--muted); margin-bottom:16px;}
+  .mini-progress{display:none; align-items:center; gap:10px; margin-bottom:20px;}
+  .mini-progress.active{display:flex;}
+  .mini-progress-track{flex:1; height:6px; border-radius:4px; background:var(--line); overflow:hidden;}
+  .mini-progress-bar{height:100%; width:0%; background:linear-gradient(90deg, var(--brass-light), var(--pop, var(--brass))); border-radius:4px; transition:width 0.35s ease;}
+  .mini-progress-pct{font-family:'Inter', sans-serif; font-size:0.74rem; font-weight:700; color:var(--muted); min-width:34px; text-align:right;}
+
+  .result-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:14px;}
+  .result-card.all-clear{border-color:#3d8f6f; background:#e4ece9;}
+  [data-theme="dark"] .result-card.all-clear{background:#1c2e26;}
+  .result-card.has-issues{border-color:#c25a4d;}
+  .result-title{font-family:'Fraunces', serif; font-weight:600; font-size:1rem; margin-bottom:6px;}
+  .issue-item{
+    background:var(--paper); border-radius:8px; padding:12px 14px; margin-top:10px; font-size:0.82rem;
+  }
+  .issue-file{font-weight:700; color:var(--forest);}
+  .issue-detail{color:var(--muted); margin-top:4px; word-break:break-all;}
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Site Admin</span>
+  <h1>Site Health Check</h1>
+  <p>Scans every real file on the live site for broken or wrong-folder links</p>
+</header>
+<main>
+  <div class="notice">Pulls the actual files from your repo and checks every link inside each one — catching things like a link pointing to a folder that doesn't exist on the flat site (the exact bug that caused the 404s earlier), or a link to a file that's since been renamed or deleted. Takes a minute or two depending on how many files there are.</div>
+
+  <div class="section-label">GitHub Connection</div>
+  <div class="github-config">
+    <div class="config-row">
+      <label>GitHub Username</label>
+      <input type="text" id="gh-owner" placeholder="e.g. scott123">
+    </div>
+    <div class="config-row">
+      <label>Repository Name</label>
+      <input type="text" id="gh-repo" placeholder="e.g. dunvant-wmc-site">
+    </div>
+    <div class="config-row">
+      <label>Personal Access Token</label>
+      <input type="password" id="gh-token" placeholder="ghp_... or github_pat_...">
+    </div>
+    <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device</label>
+  </div>
+
+  <button class="run-btn" onclick="runHealthCheck()">🩺 Run Health Check</button>
+  <p class="scan-status" id="scan-status"></p>
+  <div class="mini-progress" id="scan-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="scan-progress-bar"></div></div><span class="mini-progress-pct" id="scan-progress-pct">0%</span></div>
+
+  <div id="results"></div>
+
+  <a class="back" href="full-admin-dashboard.html">← Back to Full Admin Dashboard</a>
+</main>
+<script>
+  const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
+  if(saved){
+    document.getElementById('gh-owner').value = saved.owner || '';
+    document.getElementById('gh-repo').value = saved.repo || '';
+    document.getElementById('gh-token').value = saved.token || '';
+    document.getElementById('gh-remember').checked = true;
+  }
+
+  function maybeSaveGhConfig(){
+    if(document.getElementById('gh-remember').checked){
+      localStorage.setItem('ghConfig', JSON.stringify({
+        owner: document.getElementById('gh-owner').value.trim(),
+        repo: document.getElementById('gh-repo').value.trim(),
+        token: document.getElementById('gh-token').value.trim()
+      }));
+    } else {
+      localStorage.removeItem('ghConfig');
+    }
+  }
+
+  function setProgress(percent){
+    document.getElementById('scan-progress-bar').style.width = percent + '%';
+    document.getElementById('scan-progress-pct').textContent = percent + '%';
+  }
+
+  // Folder names that should NOT appear anywhere in a link on the flat live site
+  const FORBIDDEN_PREFIXES = ['admin/', 'bar-staff/', 'keyholder/', 'management/', 'committee/', 'shared/'];
+
+  async function runHealthCheck(){
+    const owner = document.getElementById('gh-owner').value.trim();
+    const repo = document.getElementById('gh-repo').value.trim();
+    const token = document.getElementById('gh-token').value.trim();
+    const statusEl = document.getElementById('scan-status');
+    const resultsEl = document.getElementById('results');
+
+    if(!owner || !repo || !token){
+      statusEl.textContent = 'Fill in your GitHub username, repository name, and token first.';
+      return;
+    }
+    maybeSaveGhConfig();
+    resultsEl.innerHTML = '';
+    statusEl.textContent = 'Getting the real file list…';
+    document.getElementById('scan-progress').classList.add('active');
+    setProgress(5);
+
+    try{
+      const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if(!listRes.ok) throw new Error(`Couldn't get the file list (${listRes.status}). Check the username, repo name, and token.`);
+      const allFiles = await listRes.json();
+      const htmlFiles = allFiles.filter(f => f.type === 'file' && f.name.endsWith('.html')).map(f => f.name);
+      const knownFileNames = new Set(allFiles.filter(f => f.type === 'file').map(f => f.name));
+
+      const allIssues = [];
+      for(let i = 0; i < htmlFiles.length; i++){
+        const fname = htmlFiles[i];
+        setProgress(5 + Math.round((i / htmlFiles.length) * 90));
+        statusEl.textContent = `Checking ${fname}… (${i + 1} of ${htmlFiles.length})`;
+
+        const fileRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fname}`, {
+          headers: { Authorization: `token ${token}` }
+        });
+        if(!fileRes.ok) continue;
+        const fileData = await fileRes.json();
+        const content = decodeURIComponent(escape(atob(fileData.content)));
+
+        // Check 1: any link pointing to a folder that shouldn't exist on a flat site
+        FORBIDDEN_PREFIXES.forEach(prefix => {
+          const regex = new RegExp(`["']${prefix}[a-zA-Z0-9_-]+\\.html`, 'g');
+          const matches = content.match(regex);
+          if(matches){
+            [...new Set(matches)].forEach(m => {
+              allIssues.push({ file: fname, type: 'Wrong-folder link', detail: `Points to ${m.replace(/["']/g, '')}, but that folder doesn't exist on the live site` });
+            });
+          }
+        });
+
+        // Check 2: links to flat filenames that don't actually exist in the repo
+        const linkMatches = content.match(/href=["']([a-zA-Z0-9_.-]+\.html)["']/g) || [];
+        linkMatches.forEach(m => {
+          const target = m.match(/href=["']([a-zA-Z0-9_.-]+\.html)["']/)[1];
+          if(!knownFileNames.has(target)){
+            allIssues.push({ file: fname, type: 'Broken link', detail: `Links to "${target}", which doesn't exist in the repo` });
+          }
+        });
+      }
+
+      setProgress(100);
+      statusEl.textContent = `✓ Checked ${htmlFiles.length} files.`;
+
+      if(allIssues.length === 0){
+        resultsEl.innerHTML = `<div class="result-card all-clear"><div class="result-title">✓ All clear</div>No wrong-folder or broken links found across ${htmlFiles.length} files.</div>`;
+      } else {
+        const grouped = {};
+        allIssues.forEach(issue => {
+          if(!grouped[issue.file]) grouped[issue.file] = [];
+          grouped[issue.file].push(issue);
+        });
+        resultsEl.innerHTML = `<div class="result-card has-issues"><div class="result-title">⚠️ ${allIssues.length} issue(s) found in ${Object.keys(grouped).length} file(s)</div>` +
+          Object.entries(grouped).map(([file, issues]) => `
+            <div class="issue-item">
+              <div class="issue-file">${file}</div>
+              ${issues.map(i => `<div class="issue-detail">${i.type}: ${i.detail}</div>`).join('')}
+            </div>
+          `).join('') + `</div>`;
+      }
+    } catch(err){
+      statusEl.textContent = err.message;
+    } finally {
+      document.getElementById('scan-progress').classList.remove('active');
+    }
+  }
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>

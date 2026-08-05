@@ -193,10 +193,6 @@
 <div class="status-banner offline-style" id="offline-banner">
   📡 You're offline — viewing cached pages. Submitting forms, saving, or publishing won't work until you're back online.
 </div>
-<div class="status-banner update-style" id="update-banner">
-  <span>🔄 A new version is available.</span>
-  <button onclick="reloadForUpdate()">Refresh</button>
-</div>
 
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
@@ -655,26 +651,6 @@
     localStorage.setItem('theme', newTheme);
   });
 
-  // ── PWA: service worker for offline access, with update detection ──
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').then((registration) => {
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        newWorker.addEventListener('statechange', () => {
-          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
-            document.getElementById('update-banner').style.display = 'flex';
-          }
-        });
-      });
-    }).catch(() => {
-      // Fine if this fails (e.g. running from a local file) — just no offline support
-    });
-  }
-
-  function reloadForUpdate(){
-    window.location.reload();
-  }
-
   // ── Offline status banner ──
   function updateOnlineStatus(){
     document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'flex';
@@ -718,5 +694,6 @@
   });
 </script>
 
+<script src="update-banner.js"></script>
 </body>
 </html>

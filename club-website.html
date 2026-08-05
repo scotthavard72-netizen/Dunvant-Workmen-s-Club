@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dunvant Workingmens Club</title>
-<link rel="manifest" href="site-manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#181614">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -155,7 +155,7 @@
   /* hero */
   .hero{
     position:relative;
-    padding:110px 24px 90px;
+    padding:70px 24px 56px;
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -207,7 +207,7 @@
     font-size:1.05rem;
     color:rgba(255,255,255,0.68);
     max-width:460px;
-    margin:0 auto 36px;
+    margin:0 auto 24px;
   }
   .hero .history-blurb{
     font-family:'Fraunces', serif;
@@ -215,7 +215,7 @@
     font-size:0.92rem;
     color:rgba(255,255,255,0.5);
     max-width:440px;
-    margin:32px auto 0;
+    margin:20px auto 0;
     line-height:1.6;
   }
   .btn{
@@ -595,6 +595,10 @@
 </style>
 </head>
 <body>
+<div id="maintenance-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:#181614; color:#fff; align-items:center; justify-content:center; text-align:center; padding:24px; flex-direction:column; font-family:'Inter', sans-serif;">
+  <div style="font-family:'Fraunces', serif; font-size:1.6rem; font-weight:600; margin-bottom:12px;">Dunvant Workingmens Club</div>
+  <p id="maintenance-message" style="max-width:400px; color:rgba(255,255,255,0.7); line-height:1.6;"></p>
+</div>
 
 <header>
   <div class="brand">Dunvant WMC</div>
@@ -862,10 +866,24 @@
 </footer>
 
 <script>
-  // PWA: offline access for the public site
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
+  // Maintenance mode — checks the shared toggle file. A ?preview=1 link (used
+  // automatically from Full Admin Dashboard) bypasses it for Site Admin.
+  (async function checkMaintenanceMode(){
+    const bypass = new URLSearchParams(location.search).get('preview') === '1';
+    if(bypass) return;
+    try{
+      const res = await fetch('maintenance-status.json', { cache: 'no-store' });
+      if(!res.ok) return;
+      const status = await res.json();
+      if(status.active){
+        document.getElementById('maintenance-message').textContent = status.message || "We'll be back shortly.";
+        document.getElementById('maintenance-overlay').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    } catch(e){
+      // If the check fails, fail open — show the real site rather than lock everyone out by accident
+    }
+  })();
 
   // FAQ accordion
   function toggleFaq(btn){
@@ -930,5 +948,6 @@
   revealEls.forEach(el => observer.observe(el));
 </script>
 
+<script src="update-banner.js"></script>
 </body>
 </html>

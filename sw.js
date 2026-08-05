@@ -1,11 +1,10 @@
-const CACHE_NAME = 'dunvant-site-v3';
+const CACHE_NAME = 'dunvant-site-v4';
 const URLS_TO_CACHE = [
   "agm-planning.html",
   "alarm-fault.html",
   "backup-reminder.html",
   "closing-checklist.html",
   "club-constitution.html",
-  "club-website.html",
   "content-quick-edit.html",
   "current-rota.html",
   "edit-site-files.html",
@@ -22,9 +21,7 @@ const URLS_TO_CACHE = [
   "incident-report.html",
   "licensing-compliance.html",
   "manage-staff-logins.html",
-  "member-suggestions.html",
   "membership-numbers.html",
-  "membership-renewal.html",
   "membership-till-system.html",
   "new-starter-checklist.html",
   "out-of-hours-contact.html",
@@ -36,6 +33,7 @@ const URLS_TO_CACHE = [
   "shift-cover-request.html",
   "shift-cover-requests-mgmt.html",
   "site-changelog.html",
+  "site-health-check.html",
   "site-todos.html",
   "staff-area.html",
   "staff-faq.html",
