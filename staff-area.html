@@ -469,7 +469,7 @@
       const items = roleData.groups ? roleData.groups.flatMap(g => g.items) : roleData.items;
       items.forEach(([href, title, , badge]) => {
         if(badge){
-          chips.push(`<a href="${href}" class="summary-chip" target="_blank" rel="noopener">${title} <span class="num">${badge}</span></a>`);
+          chips.push(`<a href="${href}" class="summary-chip">${title} <span class="num">${badge}</span></a>`);
         }
       });
     });
@@ -477,10 +477,9 @@
   }
 
   function renderMenuItem([href, title, desc, badge]){
-    // Every tile opens in its own new tab now, so the menu itself stays put in the background
-    const opensNewTab = !href.startsWith('mailto:') && !href.startsWith('#');
+    const external = href.startsWith('http');
     const badgeHtml = badge ? `<span class="item-badge">${badge}</span>` : '';
-    return `<a href="${href}"${opensNewTab ? ' target="_blank" rel="noopener"' : ''}><span class="item-title-row">${title}${badgeHtml}</span><small>${desc}</small></a>`;
+    return `<a href="${href}"${external ? ' target="_blank" rel="noopener"' : ''}><span class="item-title-row">${title}${badgeHtml}</span><small>${desc}</small></a>`;
   }
 
   function renderItems(roleKey){
