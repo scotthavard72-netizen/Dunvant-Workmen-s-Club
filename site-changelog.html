@@ -38,7 +38,13 @@
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.85rem;
     background:var(--forest); color:#fff; border:none; border-radius:6px; padding:9px 16px; cursor:pointer;
   }
+  .load-btn.refresh-btn{background:var(--card); color:var(--forest); border:1px solid var(--line);}
+  .auto-refresh-row{display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--muted); margin-bottom:14px;}
   .load-status{font-size:0.82rem; color:var(--muted); margin-bottom:20px;}
+  .new-tag{
+    font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
+    background:var(--pop); color:#fff; border-radius:10px; padding:2px 8px; margin-left:8px;
+  }
 
   .commit{
     display:flex; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:10px;
@@ -65,12 +71,14 @@
     <input type="text" id="gh-owner" placeholder="GitHub username">
     <input type="text" id="gh-repo" placeholder="Repository name">
     <button class="load-btn" onclick="loadCommits()">Load</button>
+    <button class="load-btn refresh-btn" onclick="loadCommits()">🔄 Refresh</button>
   </div>
+  <label class="auto-refresh-row"><input type="checkbox" id="auto-refresh-toggle" checked onchange="toggleAutoRefresh()"> Auto-refresh every minute</label>
   <p class="load-status" id="load-status">Checking for a saved GitHub connection…</p>
 
   <div id="commit-list"></div>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
 </main>
 <script>
   // Reuse the same GitHub connection saved by Manage Staff Logins, if present
@@ -103,21 +111,28 @@
         return;
       }
       statusEl.textContent = `Showing the last ${commits.length} changes.`;
+
+      const lastSeenSha = localStorage.getItem('changelogLastSeenSha');
+      const newestSha = commits[0].sha;
+
       commits.forEach(c => {
         const date = new Date(c.commit.author.date);
         const dateStr = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const isNew = lastSeenSha && c.sha !== lastSeenSha && commits.findIndex(x => x.sha === lastSeenSha) > commits.indexOf(c);
         const div = document.createElement('div');
         div.className = 'commit';
         div.innerHTML = `
           <div class="commit-dot"></div>
           <div>
-            <div class="commit-msg">${c.commit.message.split('\n')[0]}</div>
+            <div class="commit-msg">${c.commit.message.split('\n')[0]}${isNew ? '<span class="new-tag">New</span>' : ''}</div>
             <div class="commit-meta">${c.commit.author.name} — ${dateStr}, ${timeStr}</div>
           </div>
         `;
         listEl.appendChild(div);
       });
+
+      localStorage.setItem('changelogLastSeenSha', newestSha);
     } catch(err){
       statusEl.textContent = err.message;
     }
@@ -128,6 +143,22 @@
   } else {
     document.getElementById('load-status').textContent = 'No saved connection found — enter your GitHub username and repo above, then tap Load.';
   }
+
+  let autoRefreshInterval = null;
+  function startAutoRefresh(){
+    if(autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(loadCommits, 60000);
+  }
+  function toggleAutoRefresh(){
+    const enabled = document.getElementById('auto-refresh-toggle').checked;
+    if(enabled){
+      startAutoRefresh();
+    } else if(autoRefreshInterval){
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+    }
+  }
+  startAutoRefresh();
 
   // Dark mode
   const themeToggle = document.getElementById('theme-toggle');
