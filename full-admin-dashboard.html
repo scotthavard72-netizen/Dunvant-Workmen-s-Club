@@ -255,10 +255,10 @@
   <div class="group" id="group-public-site">
     <div class="group-label">Public Site</div>
     <div class="grid">
-      <a href="../club-website.html">Homepage<small>Live view of the public site</small></a>
-      <a href="../staff-area.html">Staff Area Login<small>Back to the normal role-based menu</small></a>
-      <a href="../membership-renewal.html">Membership Renewal<small>What to do if it lapses</small></a>
-      <a href="../member-suggestions.html">Member Suggestions<small>Ideas from members specifically</small></a>
+      <a href="club-website.html">Homepage<small>Live view of the public site</small></a>
+      <a href="staff-area.html">Staff Area Login<small>Back to the normal role-based menu</small></a>
+      <a href="membership-renewal.html">Membership Renewal<small>What to do if it lapses</small></a>
+      <a href="member-suggestions.html">Member Suggestions<small>Ideas from members specifically</small></a>
     </div>
   </div>
 
@@ -419,7 +419,7 @@
     localStorage.removeItem('staffUserName');
     localStorage.removeItem('staffUserRoles');
     if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
-    window.location.href = '../staff-area.html';
+    window.location.href = 'staff-area.html';
   }
 
   function filterDashboard(query){
