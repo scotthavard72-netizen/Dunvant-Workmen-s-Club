@@ -48,7 +48,8 @@
     --band-forest:#1c2620;
     --band-brass:#2a2318;
   }
-  body{transition:background 0.25s ease, color 0.25s ease;}
+  body{transition:background 0.25s ease, color 0.25s ease, opacity 0.2s ease; opacity:0;}
+  body.loaded{opacity:1;}
   * , *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
   *{box-sizing:border-box; margin:0; padding:0;}
   html{scroll-behavior:smooth;}
@@ -361,6 +362,26 @@
     margin-bottom:12px;
     transition:border-color 0.2s ease, transform 0.2s ease;
   }
+  .event-featured{
+    background:linear-gradient(135deg, var(--brass-light), var(--brass));
+    border:none;
+    border-radius:14px;
+    padding:26px 24px;
+    margin-bottom:20px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .event-featured .featured-tag{
+    font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;
+    color:#181614; opacity:0.7;
+  }
+  .event-featured .featured-title{
+    font-family:'Fraunces', serif; font-weight:600; font-size:1.3rem; color:#181614;
+  }
+  .event-featured .featured-date{
+    font-size:0.88rem; color:#181614; opacity:0.75;
+  }
   .event:hover{border-color:var(--brass); transform:translateX(4px);}
   .event .date{
     font-family:'Fraunces', serif;
@@ -528,6 +549,20 @@
     flex-shrink:0;
   }
 
+  .committee-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .committee-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:20px 16px; text-align:center;
+  }
+  .committee-avatar{
+    width:52px; height:52px; border-radius:50%; margin:0 auto 12px;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass));
+    color:#181614; display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:700; font-size:1.2rem;
+  }
+  .committee-role{font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--brass);}
+  .committee-name{font-family:'Fraunces', serif; font-weight:600; font-size:1rem; margin-top:4px;}
+
   .compare-card{
     background:var(--card);
     border:1px solid var(--line);
@@ -606,8 +641,9 @@
     <a href="#events">Events</a>
     <a href="#book">Book</a>
     <a href="#gallery">Gallery</a>
+    <a href="#committee">Committee</a>
     <a href="#members">Members</a>
-    <a href="staff-area.html" class="staff-link">Staff</a>
+    <a href="staff-area.html" class="staff-link" id="staff-nav-link">Staff</a>
   </nav>
   <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
     <span class="theme-icon" id="theme-icon">☀️</span>
@@ -688,9 +724,10 @@
     <h2>What's On</h2>
     <div class="rule"></div>
   </div>
-  <div class="event">
-    <span class="date">[Date]</span>
-    <span class="title">🎤 [Event name — e.g. Live music night]<span class="pop-tag">This Week</span></span>
+  <div class="event-featured">
+    <span class="featured-tag">🎤 This Week</span>
+    <span class="featured-title">[Event name — e.g. Live music night]</span>
+    <span class="featured-date">[Date]</span>
   </div>
   <div class="event">
     <span class="date">[Date]</span>
@@ -813,9 +850,39 @@
   </div>
 </section>
 
-<section id="members">
+<section id="committee">
   <div class="section-head">
     <span class="section-num">08</span>
+    <h2>Committee</h2>
+    <div class="rule"></div>
+  </div>
+  <div class="committee-grid">
+    <div class="committee-card">
+      <div class="committee-avatar">[?]</div>
+      <div class="committee-role">Chairman</div>
+      <div class="committee-name">[Name]</div>
+    </div>
+    <div class="committee-card">
+      <div class="committee-avatar">[?]</div>
+      <div class="committee-role">Vice-Chairman</div>
+      <div class="committee-name">[Name]</div>
+    </div>
+    <div class="committee-card">
+      <div class="committee-avatar">[?]</div>
+      <div class="committee-role">Secretary</div>
+      <div class="committee-name">[Name]</div>
+    </div>
+    <div class="committee-card">
+      <div class="committee-avatar">[?]</div>
+      <div class="committee-role">Treasurer</div>
+      <div class="committee-name">[Name]</div>
+    </div>
+  </div>
+</section>
+
+<section id="members">
+  <div class="section-head">
+    <span class="section-num">09</span>
     <h2>Members</h2>
     <div class="rule"></div>
   </div>
@@ -866,6 +933,19 @@
 </footer>
 
 <script>
+  // Smooth fade in/out when moving between the public homepage and Staff Area
+  requestAnimationFrame(() => document.body.classList.add('loaded'));
+  document.addEventListener('DOMContentLoaded', () => {
+    const staffLink = document.getElementById('staff-nav-link');
+    if(staffLink){
+      staffLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.body.classList.remove('loaded');
+        setTimeout(() => { window.location.href = staffLink.href; }, 200);
+      });
+    }
+  });
+
   // Maintenance mode — checks the shared toggle file. A ?preview=1 link (used
   // automatically from Full Admin Dashboard) bypasses it for Site Admin.
   (async function checkMaintenanceMode(){
