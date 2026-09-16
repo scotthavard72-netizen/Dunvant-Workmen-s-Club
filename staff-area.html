@@ -25,7 +25,8 @@
     --brass:#d4a45c; --brass-light:#e8c584; --forest:#4a6b5f;
   --pop:#ff9166;
   }
-  body{transition:background 0.25s ease, color 0.25s ease;}
+  body{transition:background 0.25s ease, color 0.25s ease, opacity 0.2s ease; opacity:0;}
+  body.loaded{opacity:1;}
   *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
@@ -37,6 +38,11 @@
   }
   .display{font-family:'Fraunces', serif;}
   .card{max-width:420px; width:100%; text-align:center;}
+  .homepage-link{
+    display:block; text-align:center; font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600;
+    color:rgba(255,255,255,0.6); text-decoration:none; margin-bottom:16px;
+  }
+  .homepage-link:hover{color:var(--brass-light);}
 
   #progress-bar{
     position:fixed; top:0; left:0; height:3px; width:0%;
@@ -197,6 +203,7 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 
+<a class="homepage-link" href="club-website.html" id="homepage-link">← Back to Homepage</a>
 <div class="card">
 
   <!-- Screen: login -->
@@ -236,6 +243,20 @@
   // Set to true right before any redirect we trigger ourselves, so the
   // sign-off-on-close listener further down doesn't treat it as a real close.
   let intentionalNavigation = false;
+
+  // Smooth fade in/out when moving between Staff Area and the public homepage
+  requestAnimationFrame(() => document.body.classList.add('loaded'));
+  document.addEventListener('DOMContentLoaded', () => {
+    const homepageLink = document.getElementById('homepage-link');
+    if(homepageLink){
+      homepageLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        intentionalNavigation = true;
+        document.body.classList.remove('loaded');
+        setTimeout(() => { window.location.href = homepageLink.href; }, 200);
+      });
+    }
+  });
 
   // ── Staff login list ──
   // Site Admin: add, remove, or edit people here. Each person needs a unique
@@ -361,7 +382,7 @@
         ["https://outlook.live.com/owa/calendar/bb8f79de-cbbe-4d7b-8e7f-2123ebde7711/c726ef94-949e-4889-9aa2-39f3f93837b8/cid-FC69B5B067121F85/index.html", "Outlook Rota Calendar", "Add, edit, or remove staff shifts"],
         ["facebook-page-admin.html", "Facebook Page", "Post updates and manage the club's page"],
         ["manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access and to what"],
-        ["site-todos.html", "Site To-Do List", "Every placeholder still waiting for real content", "23"],
+        ["site-todos.html", "Site To-Do List", "Every placeholder still waiting for real content", "24"],
         ["tickets.html", "Tickets", "Issues and requests from the public and staff"],
         ["google-analytics.html", "Google Analytics", "See how many people visit, and which pages"],
         ["content-quick-edit.html", "Content Quick-Edit Cheat Sheet", "Where to make common changes, without hunting"],
