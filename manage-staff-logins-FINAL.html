@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Manage Staff Logins — Dunvant WMC</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#181614;--paper:#faf7f1;--card:#ffffff;--line:#e8e0d2;--muted:#8a7f6b;--brass:#b8873f;--brass-light:#e0b56a;--forest:#2c3f38;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#f0ece2;--paper:#161412;--card:#211e1a;--line:#3a352c;--muted:#a89c85;--brass:#d4a45c;--brass-light:#e8c584;--forest:#4a6b5f;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  #offline-banner{display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:#8a2f2f; color:#fff;}
+  header{background:linear-gradient(160deg, #181614 0%, #1a2620 100%); padding:26px 24px; text-align:center; position:relative;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  main{max-width:820px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:12px;}
+  .load-status{font-size:0.82rem; color:var(--muted); margin-bottom:16px;}
+
+  .table-scroll{margin-bottom:6px;}
+  table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  th, td{text-align:left; padding:10px 12px; font-size:0.82rem; border-bottom:1px solid var(--line); vertical-align:middle;}
+  th{background:var(--forest); color:#fff; font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.03em;}
+  tr:last-child td{border-bottom:none;}
+  td input[type="text"], td input[type="email"]{
+    width:100%; font-family:'Inter', sans-serif; font-size:1rem;
+    padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+  }
+  td input[disabled]{opacity:0.6; cursor:not-allowed;}
+  .roles-cell{display:flex; flex-wrap:wrap; gap:6px;}
+  .role-chip{
+    font-family:'Inter', sans-serif; font-size:0.74rem; font-weight:600; padding:6px 12px; border-radius:14px; cursor:pointer;
+    border:1px solid var(--line); background:var(--paper); color:var(--muted); user-select:none;
+  }
+  .role-chip.active{background:var(--brass); color:#fff; border-color:var(--brass);}
+  .row-actions{display:flex; gap:6px; flex-wrap:wrap;}
+  .remove-btn{background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.78rem; font-weight:600; cursor:pointer; padding:8px 10px; border-radius:6px; white-space:nowrap;}
+  .reset-btn{background:none; border:1px solid var(--line); color:var(--forest); font-size:0.78rem; font-weight:600; cursor:pointer; padding:8px 10px; border-radius:6px; white-space:nowrap;}
+
+  @media(max-width:720px){
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;}
+    table{border:none; background:none;}
+    tr{background:var(--card); border:1px solid var(--line); border-radius:12px; margin-bottom:14px; padding:14px 16px;}
+    td{border:none; padding:8px 0;}
+    td[data-label]:not([data-label=""])::before{
+      content:attr(data-label); display:block; font-size:0.7rem; font-weight:700; letter-spacing:0.03em;
+      text-transform:uppercase; color:var(--muted); margin-bottom:4px;
+    }
+    .row-actions{margin-top:4px;}
+    .remove-btn, .reset-btn{flex:1;}
+  }
+
+  .add-person-card{background:var(--card); border:1px dashed var(--brass); border-radius:12px; padding:20px; margin-top:16px; margin-bottom:24px;}
+  .add-person-card.hidden{display:none;}
+  .add-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;}
+  @media(max-width:560px){ .add-row{grid-template-columns:1fr;} }
+  .add-row label{display:block; font-size:0.76rem; font-weight:600; color:var(--forest); margin-bottom:4px;}
+  .add-row input{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.9rem;
+    padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+  }
+
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+  .btn{font-family:'Inter', sans-serif; font-weight:600; font-size:0.88rem; border:none; border-radius:8px; padding:13px 20px; cursor:pointer;}
+  .btn-add{background:var(--forest); color:#fff;}
+  .btn-save{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;}
+  .btn-create{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614;}
+  .btn-cancel{background:none; color:var(--muted); border:1px solid var(--line);}
+
+  .mini-progress{display:none; align-items:center; gap:10px; margin-top:12px;}
+  .mini-progress.active{display:flex;}
+  .mini-progress-track{flex:1; height:6px; border-radius:4px; background:var(--line); overflow:hidden;}
+  .mini-progress-bar{height:100%; width:0%; background:linear-gradient(90deg, var(--brass-light), var(--pop)); border-radius:4px; transition:width 0.35s ease;}
+  .mini-progress-pct{font-family:'Inter', sans-serif; font-size:0.74rem; font-weight:700; color:var(--muted); min-width:34px; text-align:right;}
+
+  .status{font-size:0.85rem; margin-top:10px; color:var(--muted);}
+  .status.success{color:#3d8f6f; font-weight:600;}
+  .status.error{color:#c25a4d; font-weight:600;}
+  a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<div id="offline-banner">📡 You're offline — nothing here will work until you're back online.</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Site Admin</span>
+  <h1>Manage Staff Logins</h1>
+  <p>Real accounts, real passwords — no code editing, no GitHub</p>
+</header>
+<main>
+  <div class="notice">Add, edit, or remove staff directly here. Adding someone creates a real login for them with their own email and password, and "Send Password Reset" lets them set their own password by email — nobody needs to give you their password to log in.</div>
+
+  <div class="section-label">Current Staff</div>
+  <p class="load-status" id="load-status">Loading…</p>
+  <div class="table-scroll">
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Roles</th><th></th></tr>
+    </thead>
+    <tbody id="staff-rows"></tbody>
+  </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-add" onclick="showAddForm()">+ Add Person</button>
+    <button class="btn btn-save" onclick="saveAllChanges()">💾 Save All Changes</button>
+  </div>
+  <div class="mini-progress" id="save-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="save-progress-bar"></div></div><span class="mini-progress-pct" id="save-progress-pct">0%</span></div>
+  <p class="status" id="save-status"></p>
+
+  <div class="add-person-card hidden" id="add-person-card">
+    <div class="section-label">Add New Person</div>
+    <div class="add-row">
+      <div><label>Name</label><input type="text" id="new-name" placeholder="Full name"></div>
+      <div><label>Email</label><input type="email" id="new-email" placeholder="their.email@example.com"></div>
+    </div>
+    <div class="add-row">
+      <div><label>Initial Password</label><input type="text" id="new-password" placeholder="At least 6 characters"></div>
+    </div>
+    <label style="font-size:0.76rem; font-weight:600; color:var(--forest); display:block; margin-bottom:6px;">Roles</label>
+    <div class="roles-cell" id="new-roles-cell"></div>
+    <div class="btn-row">
+      <button class="btn btn-create" onclick="createPerson()">Create Login</button>
+      <button class="btn btn-cancel" onclick="hideAddForm()">Cancel</button>
+    </div>
+    <div class="mini-progress" id="create-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="create-progress-bar"></div></div><span class="mini-progress-pct" id="create-progress-pct">0%</span></div>
+    <p class="status" id="create-status"></p>
+  </div>
+
+  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
+</main>
+<script>
+  const ROLE_OPTIONS = ["bar", "keyholder", "mgmt", "admin", "committee"];
+  const ROLE_LABELS = {bar:"Bar", keyholder:"Keyholder", mgmt:"Mgmt", admin:"Admin", committee:"Committee"};
+
+  function setProgress(id, percent){
+    const bar = document.getElementById(id + '-bar');
+    const pct = document.getElementById(id + '-pct');
+    if(bar) bar.style.width = percent + '%';
+    if(pct) pct.textContent = percent + '%';
+  }
+
+  function roleChipsHtml(cellIdPrefix, activeRoles){
+    return ROLE_OPTIONS.map(r =>
+      `<span class="role-chip ${activeRoles.includes(r) ? 'active' : ''}" data-role="${r}" onclick="this.classList.toggle('active')">${ROLE_LABELS[r]}</span>`
+    ).join('');
+  }
+
+  function makeRow(id, data){
+    const tr = document.createElement('tr');
+    tr.dataset.docId = id;
+    tr.innerHTML = `
+      <td data-label="Name"><input type="text" class="f-name" value="${data.name || ''}"></td>
+      <td data-label="Email"><input type="email" class="f-email" value="${data.email || ''}" disabled></td>
+      <td data-label="Roles"><div class="roles-cell">${roleChipsHtml(id, data.roles || [])}</div></td>
+      <td data-label="">
+        <div class="row-actions">
+          <button class="reset-btn" onclick="sendReset('${data.email}')">Reset PW</button>
+          <button class="remove-btn" onclick="removePerson('${id}', this)">✕ Remove</button>
+        </div>
+      </td>
+    `;
+    return tr;
+  }
+
+  async function loadStaff(){
+    const statusEl = document.getElementById('load-status');
+    const tbody = document.getElementById('staff-rows');
+    tbody.innerHTML = '';
+    try{
+      const snapshot = await db.collection('staff').orderBy('name').get();
+      if(snapshot.empty){
+        statusEl.textContent = 'No staff added yet — use "+ Add Person" below to add the first one.';
+        return;
+      }
+      snapshot.forEach(doc => {
+        tbody.appendChild(makeRow(doc.id, doc.data()));
+      });
+      statusEl.textContent = `Loaded ${snapshot.size} ${snapshot.size === 1 ? 'person' : 'people'}.`;
+    } catch(e){
+      statusEl.textContent = "Couldn't load the staff list — " + e.message;
+    }
+  }
+
+  async function saveAllChanges(){
+    const statusEl = document.getElementById('save-status');
+    const rows = document.querySelectorAll('#staff-rows tr');
+    if(rows.length === 0){
+      statusEl.textContent = 'Nothing to save.';
+      return;
+    }
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'status';
+    document.getElementById('save-progress').classList.add('active');
+    setProgress('save-progress', 10);
+
+    try{
+      const batch = db.batch();
+      rows.forEach(row => {
+        const docId = row.dataset.docId;
+        const name = row.querySelector('.f-name').value.trim();
+        const activeRoles = [...row.querySelectorAll('.role-chip.active')].map(c => c.dataset.role);
+        batch.update(db.collection('staff').doc(docId), { name, roles: activeRoles });
+      });
+      setProgress('save-progress', 60);
+      await batch.commit();
+      setProgress('save-progress', 100);
+      statusEl.textContent = '✓ Saved — changes are live immediately, no deploy needed.';
+      statusEl.className = 'status success';
+    } catch(e){
+      statusEl.textContent = "Couldn't save — " + e.message;
+      statusEl.className = 'status error';
+    } finally {
+      setTimeout(() => document.getElementById('save-progress').classList.remove('active'), 1200);
+    }
+  }
+
+  async function removePerson(docId, btn){
+    const row = btn.closest('tr');
+    const name = row.querySelector('.f-name').value.trim() || 'this person';
+    if(!confirm(`Remove ${name}'s access? This removes their role immediately — they'll no longer be able to get into Staff Area. This can't be undone from here.`)) return;
+    try{
+      await db.collection('staff').doc(docId).delete();
+      row.remove();
+    } catch(e){
+      alert("Couldn't remove them — " + e.message);
+    }
+  }
+
+  function sendReset(email){
+    if(!email) return;
+    if(!confirm(`Send a password reset email to ${email}?`)) return;
+    auth.sendPasswordResetEmail(email)
+      .then(() => alert(`Reset email sent to ${email}.`))
+      .catch(e => alert("Couldn't send it — " + e.message));
+  }
+
+  function showAddForm(){
+    document.getElementById('add-person-card').classList.remove('hidden');
+    document.getElementById('new-roles-cell').innerHTML = roleChipsHtml('new', []);
+    document.getElementById('add-person-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function hideAddForm(){
+    document.getElementById('add-person-card').classList.add('hidden');
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-email').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('create-status').textContent = '';
+  }
+
+  // Creating a new login uses a SEPARATE, temporary Firebase app instance.
+  // Firebase's normal behaviour is to sign you in as whoever you just created —
+  // doing it through a second instance means your own admin session never gets touched.
+  async function createPerson(){
+    const name = document.getElementById('new-name').value.trim();
+    const email = document.getElementById('new-email').value.trim();
+    const password = document.getElementById('new-password').value;
+    const roles = [...document.querySelectorAll('#new-roles-cell .role-chip.active')].map(c => c.dataset.role);
+    const statusEl = document.getElementById('create-status');
+
+    if(!name || !email || !password){
+      statusEl.textContent = 'Fill in name, email, and a password first.';
+      statusEl.className = 'status error';
+      return;
+    }
+    if(password.length < 6){
+      statusEl.textContent = 'Password needs to be at least 6 characters.';
+      statusEl.className = 'status error';
+      return;
+    }
+    if(roles.length === 0){
+      statusEl.textContent = 'Pick at least one role.';
+      statusEl.className = 'status error';
+      return;
+    }
+
+    statusEl.textContent = 'Creating…';
+    statusEl.className = 'status';
+    document.getElementById('create-progress').classList.add('active');
+    setProgress('create-progress', 15);
+
+    const tempApp = firebase.initializeApp(firebaseConfig, 'temp-create-' + Date.now());
+    try{
+      setProgress('create-progress', 40);
+      const cred = await tempApp.auth().createUserWithEmailAndPassword(email, password);
+      setProgress('create-progress', 70);
+      await db.collection('staff').doc(cred.user.uid).set({ name, email, roles });
+      setProgress('create-progress', 100);
+      await tempApp.auth().signOut();
+      await tempApp.delete();
+
+      statusEl.textContent = `✓ Created — ${name} can log in right away with that email and password.`;
+      statusEl.className = 'status success';
+      loadStaff();
+      setTimeout(hideAddForm, 1800);
+    } catch(e){
+      let msg = e.message;
+      if(e.code === 'auth/email-already-in-use') msg = 'That email already has a login — use Reset PW on their existing row instead.';
+      statusEl.textContent = "Couldn't create that login — " + msg;
+      statusEl.className = 'status error';
+      try{ await tempApp.delete(); } catch(_){}
+    } finally {
+      setTimeout(() => document.getElementById('create-progress').classList.remove('active'), 1200);
+    }
+  }
+
+  function updateOnlineStatus(){
+    document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'flex';
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // Only Site Admins should be doing this — check the signed-in person's own role first.
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      document.getElementById('load-status').textContent = 'You need to be signed in as Site Admin to use this page — go to Staff Area and log in first.';
+      return;
+    }
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      const roles = doc.exists ? (doc.data().roles || []) : [];
+      if(!roles.includes('admin')){
+        document.getElementById('load-status').textContent = "You're signed in, but this page is for Site Admins only.";
+        return;
+      }
+      loadStaff();
+    } catch(e){
+      document.getElementById('load-status').textContent = "Couldn't check your access — " + e.message;
+    }
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+</body>
+</html>
