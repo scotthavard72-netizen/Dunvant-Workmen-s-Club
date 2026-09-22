@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Site Health Check — Dunvant WMC</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const githubProxy = firebase.functions().httpsCallable("githubProxy");
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -70,24 +86,7 @@
   <p>Scans every real file on the live site for broken or wrong-folder links</p>
 </header>
 <main>
-  <div class="notice">Pulls the actual files from your repo and checks every link inside each one — catching things like a link pointing to a folder that doesn't exist on the flat site (the exact bug that caused the 404s earlier), or a link to a file that's since been renamed or deleted. Takes a minute or two depending on how many files there are.</div>
-
-  <div class="section-label">GitHub Connection</div>
-  <div class="github-config">
-    <div class="config-row">
-      <label>GitHub Username</label>
-      <input type="text" id="gh-owner" placeholder="e.g. scott123">
-    </div>
-    <div class="config-row">
-      <label>Repository Name</label>
-      <input type="text" id="gh-repo" placeholder="e.g. dunvant-wmc-site">
-    </div>
-    <div class="config-row">
-      <label>Personal Access Token</label>
-      <input type="password" id="gh-token" placeholder="ghp_... or github_pat_...">
-    </div>
-    <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device</label>
-  </div>
+  <div class="notice">Pulls the actual files from your repo and checks every link inside each one — catching things like a link pointing to a folder that doesn't exist on the flat site (the exact bug that caused the 404s earlier), or a link to a file that's since been renamed or deleted. Takes a minute or two depending on how many files there are. Goes through a secure server-side connection now — no token to set up here.</div>
 
   <button class="run-btn" onclick="runHealthCheck()">🩺 Run Health Check</button>
   <p class="scan-status" id="scan-status"></p>
@@ -98,26 +97,6 @@
   <a class="back" href="full-admin-dashboard.html">← Back to Full Admin Dashboard</a>
 </main>
 <script>
-  const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
-  if(saved){
-    document.getElementById('gh-owner').value = saved.owner || '';
-    document.getElementById('gh-repo').value = saved.repo || '';
-    document.getElementById('gh-token').value = saved.token || '';
-    document.getElementById('gh-remember').checked = true;
-  }
-
-  function maybeSaveGhConfig(){
-    if(document.getElementById('gh-remember').checked){
-      localStorage.setItem('ghConfig', JSON.stringify({
-        owner: document.getElementById('gh-owner').value.trim(),
-        repo: document.getElementById('gh-repo').value.trim(),
-        token: document.getElementById('gh-token').value.trim()
-      }));
-    } else {
-      localStorage.removeItem('ghConfig');
-    }
-  }
-
   function setProgress(percent){
     document.getElementById('scan-progress-bar').style.width = percent + '%';
     document.getElementById('scan-progress-pct').textContent = percent + '%';
@@ -127,28 +106,17 @@
   const FORBIDDEN_PREFIXES = ['admin/', 'bar-staff/', 'keyholder/', 'management/', 'committee/', 'shared/'];
 
   async function runHealthCheck(){
-    const owner = document.getElementById('gh-owner').value.trim();
-    const repo = document.getElementById('gh-repo').value.trim();
-    const token = document.getElementById('gh-token').value.trim();
     const statusEl = document.getElementById('scan-status');
     const resultsEl = document.getElementById('results');
 
-    if(!owner || !repo || !token){
-      statusEl.textContent = 'Fill in your GitHub username, repository name, and token first.';
-      return;
-    }
-    maybeSaveGhConfig();
     resultsEl.innerHTML = '';
     statusEl.textContent = 'Getting the real file list…';
     document.getElementById('scan-progress').classList.add('active');
     setProgress(5);
 
     try{
-      const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`, {
-        headers: { Authorization: `token ${token}` }
-      });
-      if(!listRes.ok) throw new Error(`Couldn't get the file list (${listRes.status}). Check the username, repo name, and token.`);
-      const allFiles = await listRes.json();
+      const listResult = await githubProxy({ action: 'list' });
+      const allFiles = listResult.data;
       const htmlFiles = allFiles.filter(f => f.type === 'file' && f.name.endsWith('.html')).map(f => f.name);
       const knownFileNames = new Set(allFiles.filter(f => f.type === 'file').map(f => f.name));
 
@@ -158,11 +126,11 @@
         setProgress(5 + Math.round((i / htmlFiles.length) * 90));
         statusEl.textContent = `Checking ${fname}… (${i + 1} of ${htmlFiles.length})`;
 
-        const fileRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fname}`, {
-          headers: { Authorization: `token ${token}` }
-        });
-        if(!fileRes.ok) continue;
-        const fileData = await fileRes.json();
+        let fileData;
+        try{
+          const fileResult = await githubProxy({ action: 'get', path: fname });
+          fileData = fileResult.data;
+        } catch(e){ continue; }
         const content = decodeURIComponent(escape(atob(fileData.content)));
 
         // Check 1: any link pointing to a folder that shouldn't exist on a flat site
