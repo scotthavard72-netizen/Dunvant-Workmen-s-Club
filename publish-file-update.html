@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Publish File Update — Dunvant WMC</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const githubProxy = firebase.functions().httpsCallable("githubProxy");
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -85,25 +101,7 @@
   <p>Update any file on the site directly — no manual GitHub editing needed</p>
 </header>
 <main>
-  <div class="notice">Works for any file in the repo, not just staff logins. Fetch pulls the current content so you're editing the real thing, not overwriting blind. Same GitHub connection as Manage Staff Logins and Weekly Rota Builder — set it up once, it's remembered everywhere.</div>
-
-  <div class="section-label">GitHub Connection</div>
-  <div class="github-config">
-    <div class="config-row">
-      <label>GitHub Username</label>
-      <input type="text" id="gh-owner" placeholder="e.g. scotthavard72-netizen">
-    </div>
-    <div class="config-row">
-      <label>Repository Name</label>
-      <input type="text" id="gh-repo" placeholder="e.g. Dunvant-Workmen-s-Club">
-    </div>
-    <div class="config-row">
-      <label>Personal Access Token</label>
-      <input type="password" id="gh-token" placeholder="ghp_... or github_pat_...">
-    </div>
-    <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device</label>
-    <p class="config-hint">Needs "Contents: Read and write" permission on this repo. See Manage Staff Logins for the full token setup steps if you haven't done this yet.</p>
-  </div>
+  <div class="notice">Works for any file in the repo, not just staff logins. Fetch pulls the current content so you're editing the real thing, not overwriting blind. Publishing and deleting go through a secure server-side connection now — no token to set up here at all, and only Site Admin can actually save or delete a file.</div>
 
   <div class="section-label">File</div>
   <div class="config-row">
@@ -162,24 +160,12 @@
   // Pull the actual, current file list straight from the repo — more reliable
   // than the guessed list above, since it can't go stale as files are added/removed.
   async function loadFileListFromGitHub(){
-    const owner = document.getElementById('gh-owner').value.trim();
-    const repo = document.getElementById('gh-repo').value.trim();
-    const token = document.getElementById('gh-token').value.trim();
     const statusEl = document.getElementById('list-status');
-
-    if(!owner || !repo || !token){
-      statusEl.textContent = 'Fill in your GitHub username, repository name, and token first.';
-      statusEl.className = 'status error';
-      return;
-    }
     statusEl.textContent = 'Loading real file list…';
     statusEl.className = 'status';
     try{
-      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`, {
-        headers: { Authorization: `token ${token}` }
-      });
-      if(!res.ok) throw new Error(`Couldn't load the file list (${res.status}). Check the username, repo name, and token.`);
-      const files = await res.json();
+      const result = await githubProxy({ action: 'list' });
+      const files = result.data;
       const fileNames = files.filter(f => f.type === 'file').map(f => f.path);
       const datalist = document.getElementById('known-files');
       datalist.innerHTML = fileNames.sort().map(f => `<option value="${f}">`).join('');
@@ -192,39 +178,27 @@
   }
 
   async function deleteFile(){
-    const { owner, repo, token, path } = getConfig();
+    const { path } = getConfig();
     const statusEl = document.getElementById('publish-status');
 
-    if(!owner || !repo || !token || !path){
-      statusEl.textContent = 'Fill in your GitHub username, repository name, token, and the file path first.';
+    if(!path){
+      statusEl.textContent = 'Fill in the file path first.';
       statusEl.className = 'status error';
       return;
     }
     if(!confirm(`Really delete "${path}"? This can't be undone — the file will be gone from the repo entirely.`)) return;
     if(!confirm(`Absolutely sure? Deleting "${path}" is permanent.`)) return;
 
-    maybeSaveGhConfig();
     statusEl.textContent = 'Deleting…';
     statusEl.className = 'status';
     document.getElementById('action-progress').classList.add('active');
     setProgress('action-progress', 20);
     try{
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-      const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
-      if(!getRes.ok) throw new Error(`Couldn't find that file (${getRes.status}). Check the path is exactly right.`);
-      const data = await getRes.json();
+      const getResult = await githubProxy({ action: 'get', path });
       setProgress('action-progress', 55);
 
       const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
-      const delRes = await fetch(apiUrl, {
-        method: 'DELETE',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `Delete ${path} — by ${loggedInName}`,
-          sha: data.sha
-        })
-      });
-      if(!delRes.ok) throw new Error(`Delete failed (${delRes.status}). Check the token has "repo" write access.`);
+      await githubProxy({ action: 'delete', path, sha: getResult.data.sha, message: `Delete ${path} — by ${loggedInName}` });
       setProgress('action-progress', 100);
 
       statusEl.textContent = `✓ Deleted — checking deployment status…`;
@@ -261,31 +235,8 @@
   }
   renderRecentFiles();
 
-  const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
-  if(saved){
-    document.getElementById('gh-owner').value = saved.owner || '';
-    document.getElementById('gh-repo').value = saved.repo || '';
-    document.getElementById('gh-token').value = saved.token || '';
-    document.getElementById('gh-remember').checked = true;
-  }
-
-  function maybeSaveGhConfig(){
-    if(document.getElementById('gh-remember').checked){
-      localStorage.setItem('ghConfig', JSON.stringify({
-        owner: document.getElementById('gh-owner').value.trim(),
-        repo: document.getElementById('gh-repo').value.trim(),
-        token: document.getElementById('gh-token').value.trim()
-      }));
-    } else {
-      localStorage.removeItem('ghConfig');
-    }
-  }
-
   function getConfig(){
     return {
-      owner: document.getElementById('gh-owner').value.trim(),
-      repo: document.getElementById('gh-repo').value.trim(),
-      token: document.getElementById('gh-token').value.trim(),
       path: document.getElementById('file-path').value.trim().replace(/^\//, '')
     };
   }
@@ -298,31 +249,24 @@
   }
 
   async function pollDeployStatus(statusEl, baseMessage){
-    const owner = document.getElementById('gh-owner').value.trim();
-    const repo = document.getElementById('gh-repo').value.trim();
-    const token = document.getElementById('gh-token').value.trim();
     let attempts = 0;
     const maxAttempts = 20;
 
     const check = async () => {
       attempts++;
       try{
-        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages/builds/latest`, {
-          headers: { Authorization: `token ${token}` }
-        });
-        if(res.ok){
-          const build = await res.json();
-          if(build.status === 'built'){
-            statusEl.textContent = `${baseMessage} 🟢 Live now — refreshing the page…`;
-            setTimeout(() => window.location.reload(), 1800);
-            statusEl.className = 'status success';
-            return;
-          }
-          if(build.status === 'errored'){
-            statusEl.textContent = `${baseMessage} 🔴 GitHub Pages reported a build error — check the repo's Settings → Pages for details.`;
-            statusEl.className = 'status error';
-            return;
-          }
+        const result = await githubProxy({ action: 'pagesStatus' });
+        const build = result.data;
+        if(build.status === 'built'){
+          statusEl.textContent = `${baseMessage} 🟢 Live now — refreshing the page…`;
+          setTimeout(() => window.location.reload(), 1800);
+          statusEl.className = 'status success';
+          return;
+        }
+        if(build.status === 'errored'){
+          statusEl.textContent = `${baseMessage} 🔴 GitHub Pages reported a build error — check the repo's Settings → Pages for details.`;
+          statusEl.className = 'status error';
+          return;
         }
       } catch(e){}
       if(attempts < maxAttempts){
@@ -336,24 +280,21 @@
   }
 
   async function fetchFile(){
-    const { owner, repo, token, path } = getConfig();
+    const { path } = getConfig();
     const statusEl = document.getElementById('publish-status');
-    if(!owner || !repo || !token || !path){
-      statusEl.textContent = 'Fill in your GitHub username, repository name, token, and the file path first.';
+    if(!path){
+      statusEl.textContent = 'Fill in the file path first.';
       statusEl.className = 'status error';
       return;
     }
-    maybeSaveGhConfig();
     statusEl.textContent = 'Fetching…';
     statusEl.className = 'status';
     document.getElementById('action-progress').classList.add('active');
     setProgress('action-progress', 15);
     try{
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-      const res = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
-      if(!res.ok) throw new Error(`Couldn't fetch that file (${res.status}). Check the path is exactly right, including case.`);
+      const result = await githubProxy({ action: 'get', path });
       setProgress('action-progress', 60);
-      const data = await res.json();
+      const data = result.data;
       currentSha = data.sha;
       document.getElementById('file-content').value = decodeURIComponent(escape(atob(data.content)));
       setProgress('action-progress', 100);
@@ -369,12 +310,12 @@
   }
 
   async function publishFile(){
-    const { owner, repo, token, path } = getConfig();
+    const { path } = getConfig();
     const statusEl = document.getElementById('publish-status');
     const newContent = document.getElementById('file-content').value;
 
-    if(!owner || !repo || !token || !path){
-      statusEl.textContent = 'Fill in your GitHub username, repository name, token, and the file path first.';
+    if(!path){
+      statusEl.textContent = 'Fill in the file path first.';
       statusEl.className = 'status error';
       return;
     }
@@ -385,41 +326,28 @@
     }
     if(!confirm(`Publish changes to "${path}"? This overwrites the live file immediately.`)) return;
 
-    maybeSaveGhConfig();
     statusEl.textContent = 'Publishing…';
     statusEl.className = 'status';
     document.getElementById('action-progress').classList.add('active');
     setProgress('action-progress', 10);
     try{
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-
       let sha = currentSha;
       if(!sha){
         setProgress('action-progress', 25);
-        const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
-        if(getRes.ok){
-          const data = await getRes.json();
-          sha = data.sha;
-        }
+        try{
+          const getResult = await githubProxy({ action: 'get', path });
+          sha = getResult.data.sha;
+        } catch(e){ /* fine — file might be genuinely new */ }
       }
       setProgress('action-progress', 50);
 
       const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
-      const body = {
-        message: `Update ${path} — by ${loggedInName}`,
-        content: btoa(unescape(encodeURIComponent(newContent)))
-      };
-      if(sha) body.sha = sha;
+      const content = btoa(unescape(encodeURIComponent(newContent)));
 
       setProgress('action-progress', 70);
-      const putRes = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if(!putRes.ok) throw new Error(`Publish failed (${putRes.status}). Check the token has "repo" write access, and that the file wasn't changed elsewhere since you fetched it.`);
+      const putResult = await githubProxy({ action: 'put', path, content, sha, message: `Update ${path} — by ${loggedInName}` });
 
-      currentSha = (await putRes.json()).content.sha;
+      currentSha = putResult.data.content.sha;
       setProgress('action-progress', 100);
       statusEl.textContent = '✓ Published — checking deployment status…';
       statusEl.className = 'status success';
