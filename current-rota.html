@@ -96,13 +96,28 @@
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
-  // ── This block is overwritten automatically each time Management publishes ──
-  // Do not edit by hand — use Weekly Rota Builder's "Publish This Week's Rota" button.
-  const CURRENT_SHIFTS = [];
-  const PUBLISHED_DATE = "";
-  const PUBLISHED_TIMESTAMP = "";
-  // ── End auto-updated block ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  // ── Rota data now comes live from Firestore, not a hardcoded block ──
+  // Weekly Rota Builder writes to the same document; this just reads it.
+  let CURRENT_SHIFTS = [];
+  let PUBLISHED_DATE = "";
+  let PUBLISHED_TIMESTAMP = "";
 
   function formatTime12h(t){
     const [h, m] = t.split(':').map(Number);
@@ -164,7 +179,30 @@
     }
   }
 
-  renderRota();
+  async function loadAndRenderRota(){
+    const container = document.getElementById('rota-content');
+    try{
+      const doc = await db.collection('rota').doc('current').get();
+      if(doc.exists){
+        const data = doc.data();
+        CURRENT_SHIFTS = data.shifts || [];
+        PUBLISHED_DATE = data.publishedDate || "";
+        PUBLISHED_TIMESTAMP = data.publishedTimestamp || "";
+      }
+    } catch(e){
+      container.innerHTML = '<p style="text-align:center; color:var(--muted); font-size:0.88rem; padding:20px 0;">Couldn\'t load the rota right now — try refreshing in a moment.</p>';
+      return;
+    }
+    renderRota();
+  }
+
+  auth.onAuthStateChanged((user) => {
+    if(user){
+      loadAndRenderRota();
+    } else {
+      window.location.href = 'staff-area.html';
+    }
+  });
 
   // Dark mode
   const themeToggle = document.getElementById('theme-toggle');
