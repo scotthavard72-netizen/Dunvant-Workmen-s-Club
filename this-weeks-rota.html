@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>This Week's Rota — Dunvant WMC</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 <meta property="og:title" content="This Week's Rota — Dunvant WMC">
 <meta property="og:description" content="Tap to see your shift and confirm you've seen the rota.">
 <meta property="og:type" content="website">
@@ -90,7 +104,8 @@
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
 <script>
-  // Example data, shown only if no real rota link data is present
+  // Reads the same live rota everyone else sees — no more encoding data into
+  // a shareable link, the page itself is always the current, correct one.
   const EXAMPLE_SHIFTS = [
     { d: 'Fri', dt: '8 Aug', n: 'Jack', r: 'K', st: '18:00', et: '23:00' },
     { d: 'Fri', dt: '8 Aug', n: 'Penny', r: 'B', st: '18:00', et: '23:00' },
@@ -128,23 +143,25 @@
     }).join('');
 
     if(isReal){
-      document.getElementById('page-notice').textContent = "This week's real rota, sent by management. Tapping a shift marks it as seen on this device only — use \"Confirm You've Seen the Rota\" below to actually notify them.";
+      document.getElementById('page-notice').textContent = "This week's real rota, published by management. Tapping a shift marks it as seen on this device only — use \"Confirm You've Seen the Rota\" below to actually notify them.";
+    } else {
+      document.getElementById('page-notice').textContent = "No rota has been published yet — showing example data.";
     }
   }
 
-  // Check for real rota data in the URL, fall back to example
-  const params = new URLSearchParams(location.search);
-  const wParam = params.get('w');
-  if(wParam){
+  (async function loadRota(){
     try{
-      const decoded = JSON.parse(atob(decodeURIComponent(wParam)));
-      renderRota(decoded, true);
+      const doc = await db.collection('rota').doc('current').get();
+      const shifts = doc.exists ? (doc.data().shifts || []) : [];
+      if(shifts.length > 0){
+        renderRota(shifts, true);
+      } else {
+        renderRota(EXAMPLE_SHIFTS, false);
+      }
     } catch(e){
       renderRota(EXAMPLE_SHIFTS, false);
     }
-  } else {
-    renderRota(EXAMPLE_SHIFTS, false);
-  }
+  })();
 
   function toggleSeen(el){
     el.classList.toggle('seen');
