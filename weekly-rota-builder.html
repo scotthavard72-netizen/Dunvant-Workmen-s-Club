@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Weekly Rota Builder — Dunvant WMC</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -117,31 +133,14 @@
 
   <div class="action-row">
     <button class="action-btn primary" onclick="downloadICS()">📅 Download Calendar File (.ics)</button>
-    <button class="action-btn secondary" onclick="notifyStaff()">✉️ Notify Bar Staff — Rota's Out (Email)</button>
     <button class="action-btn secondary" onclick="copyForWhatsApp()">💬 Copy Message for WhatsApp</button>
   </div>
   <p class="action-status" id="action-status"></p>
 
   <div class="section-label" style="margin-top:30px;">Publish to Current Rota (permanent link)</div>
-  <div class="notice" style="margin-bottom:16px;">Publishes this week straight onto the site's one permanent bookmarkable link — same GitHub connection as Manage Staff Logins. Set it up once there and it's remembered here too.</div>
-  <div class="github-config">
-    <div class="config-row">
-      <label>GitHub Username</label>
-      <input type="text" id="gh-owner" placeholder="e.g. scott123">
-    </div>
-    <div class="config-row">
-      <label>Repository Name</label>
-      <input type="text" id="gh-repo" placeholder="e.g. dunvant-wmc-site">
-    </div>
-    <div class="config-row">
-      <label>Personal Access Token</label>
-      <input type="password" id="gh-token" placeholder="ghp_...">
-    </div>
-    <label class="remember-row"><input type="checkbox" id="gh-remember"> Remember these on this device</label>
-  </div>
+  <div class="notice" style="margin-bottom:16px;">Publishes this week straight onto the site's one permanent bookmarkable link — live immediately, no deploy wait and no GitHub connection needed. Anyone who's opted into rota notifications in Staff Area gets pinged automatically once this goes live. Only Management and Site Admin can publish.</div>
   <p class="action-status" id="audit-note"></p>
-  <button class="action-btn primary" onclick="publishAndNotify()">🚀✉️ Publish &amp; Notify Team</button>
-  <button class="action-btn primary" onclick="publishRota()" style="opacity:0.75;">🚀 Just Publish (no email)</button>
+  <button class="action-btn primary" onclick="publishRota()">🚀 Publish Rota</button>
   <p class="action-status" id="publish-status"></p>
   <div class="mini-progress" id="publish-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="publish-progress-bar"></div></div><span class="mini-progress-pct" id="publish-progress-pct">0%</span></div>
 
@@ -158,12 +157,13 @@
     statusEl.textContent = 'Loading the current rota…';
     statusEl.className = 'action-status';
     try{
-      const res = await fetch('current-rota.html');
-      if(!res.ok) throw new Error('Could not reach current-rota.html.');
-      const text = await res.text();
-      const match = text.match(/const CURRENT_SHIFTS = (\[[\s\S]*?\]);/);
-      if(!match) throw new Error('Could not find the shift data in current-rota.html.');
-      const shifts = JSON.parse(match[1]);
+      const doc = await db.collection('rota').doc('current').get();
+      if(!doc.exists){
+        statusEl.textContent = 'Nothing is currently published to load.';
+        statusEl.className = 'action-status error';
+        return;
+      }
+      const shifts = doc.data().shifts || [];
       if(shifts.length === 0){
         statusEl.textContent = 'Nothing is currently published to load.';
         statusEl.className = 'action-status error';
@@ -318,16 +318,9 @@
   }
 
   function buildShareableLink(shifts){
-    const compact = shifts.map(s => ({
-      d: s.day.slice(0, 3),
-      dt: s.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-      n: s.name,
-      r: s.role === 'Keyholder' ? 'K' : 'B',
-      st: s.startTime,
-      et: s.endTime
-    }));
-    const encoded = encodeURIComponent(btoa(JSON.stringify(compact)));
-    return `${location.origin}${location.pathname.replace('weekly-rota-builder.html', 'this-weeks-rota.html')}?w=${encoded}`;
+    // The page reads the live rota straight from Firestore now, so the link
+    // itself needs no data encoded into it — it's always current for whoever opens it.
+    return `${location.origin}${location.pathname.replace('weekly-rota-builder.html', 'this-weeks-rota.html')}`;
   }
 
   function buildSummaryText(shifts){
@@ -341,19 +334,6 @@
       body += `  ${s.name} (${s.role}${s.role === 'Keyholder' ? ' 🔑' : ''}): ${s.startTime}–${s.endTime}\n`;
     });
     return body;
-  }
-
-  function notifyStaff(){
-    const shifts = collectShifts();
-    if(!shifts) return;
-    if(shifts.length === 0){
-      document.getElementById('action-status').textContent = 'Add at least one shift first.';
-      return;
-    }
-    const body = buildSummaryText(shifts) + `\nTap here to see your shift and confirm you've seen it:\n${buildShareableLink(shifts)}`;
-    const mailto = `mailto:teamupdates@dunvantclub.example?subject=${encodeURIComponent("This week's rota is out")}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailto;
-    document.getElementById('action-status').textContent = 'Opening your email app with the rota written out — check it and hit send.';
   }
 
   function copyForWhatsApp(){
@@ -382,78 +362,11 @@
     ? `Publishing here is recorded in Site Changelog as being made by: ${loggedInName}`
     : "Not logged in via Staff Area — publishes will be recorded as 'unknown user'. Log in through staff-area.html first for proper attribution.";
 
-  // Reuse the same GitHub connection saved by Manage Staff Logins
-  const savedGh = JSON.parse(localStorage.getItem('ghConfig') || 'null');
-  if(savedGh){
-    document.getElementById('gh-owner').value = savedGh.owner || '';
-    document.getElementById('gh-repo').value = savedGh.repo || '';
-    document.getElementById('gh-token').value = savedGh.token || '';
-    document.getElementById('gh-remember').checked = true;
-  }
-
-  function maybeSaveGhConfig(){
-    if(document.getElementById('gh-remember').checked){
-      localStorage.setItem('ghConfig', JSON.stringify({
-        owner: document.getElementById('gh-owner').value.trim(),
-        repo: document.getElementById('gh-repo').value.trim(),
-        token: document.getElementById('gh-token').value.trim()
-      }));
-    } else {
-      localStorage.removeItem('ghConfig');
-    }
-  }
-
-  async function publishAndNotify(){
-    const published = await publishRota();
-    if(published){
-      // Small pause so the success message is visible before the email app takes over
-      setTimeout(() => notifyStaff(), 600);
-    }
-  }
-
   function setProgress(id, percent){
     const bar = document.getElementById(id + '-bar');
     const pct = document.getElementById(id + '-pct');
     if(bar) bar.style.width = percent + '%';
     if(pct) pct.textContent = percent + '%';
-  }
-
-  async function pollDeployStatus(statusEl, baseMessage){
-    const owner = document.getElementById('gh-owner').value.trim();
-    const repo = document.getElementById('gh-repo').value.trim();
-    const token = document.getElementById('gh-token').value.trim();
-    let attempts = 0;
-    const maxAttempts = 20;
-
-    const check = async () => {
-      attempts++;
-      try{
-        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages/builds/latest`, {
-          headers: { Authorization: `token ${token}` }
-        });
-        if(res.ok){
-          const build = await res.json();
-          if(build.status === 'built'){
-            statusEl.textContent = `${baseMessage} 🟢 Live now — refreshing the page…`;
-            setTimeout(() => window.location.reload(), 1800);
-            statusEl.className = 'action-status success';
-            return;
-          }
-          if(build.status === 'errored'){
-            statusEl.textContent = `${baseMessage} 🔴 GitHub Pages reported a build error — check the repo's Settings → Pages for details.`;
-            statusEl.className = 'action-status error';
-            return;
-          }
-        }
-      } catch(e){}
-      if(attempts < maxAttempts){
-        statusEl.textContent = `${baseMessage} 🟡 Deploying… (checking again shortly)`;
-        setTimeout(check, 6000);
-      } else {
-        statusEl.textContent = `${baseMessage} Still deploying after 2 minutes — check Domain / Hosting Status if this seems stuck.`;
-      }
-    };
-    check();
   }
 
   async function publishRota(){
@@ -463,21 +376,11 @@
       document.getElementById('publish-status').textContent = 'Add at least one shift first.';
       return false;
     }
-    const owner = document.getElementById('gh-owner').value.trim();
-    const repo = document.getElementById('gh-repo').value.trim();
-    const token = document.getElementById('gh-token').value.trim();
     const statusEl = document.getElementById('publish-status');
-
-    if(!owner || !repo || !token){
-      statusEl.textContent = 'Fill in your GitHub username, repository name, and token first.';
-      statusEl.className = 'action-status error';
-      return false;
-    }
-    maybeSaveGhConfig();
     statusEl.textContent = 'Publishing…';
     statusEl.className = 'action-status';
     document.getElementById('publish-progress').classList.add('active');
-    setProgress('publish-progress', 5);
+    setProgress('publish-progress', 20);
 
     try{
       const compact = shifts.map(s => ({
@@ -488,50 +391,26 @@
       const publishedDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       const publishedTimestamp = new Date().toISOString();
 
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/current-rota.html`;
-      setProgress('publish-progress', 20);
-      const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
-      if(!getRes.ok) throw new Error(`Couldn't fetch current-rota.html (${getRes.status}). Check the username, repo name, and token.`);
-      setProgress('publish-progress', 45);
-      const fileData = await getRes.json();
-      const currentContent = decodeURIComponent(escape(atob(fileData.content)));
-
-      let updatedContent = currentContent.replace(
-        /const CURRENT_SHIFTS = \[[\s\S]*?\];/,
-        `const CURRENT_SHIFTS = ${JSON.stringify(compact)};`
-      );
-      updatedContent = updatedContent.replace(
-        /const PUBLISHED_DATE = "[^"]*";/,
-        `const PUBLISHED_DATE = "${publishedDate}";`
-      );
-      updatedContent = updatedContent.replace(
-        /const PUBLISHED_TIMESTAMP = "[^"]*";/,
-        `const PUBLISHED_TIMESTAMP = "${publishedTimestamp}";`
-      );
-      setProgress('publish-progress', 65);
-
-      const putRes = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `Publish rota for week of ${document.getElementById('week-start').value} — by ${localStorage.getItem('staffUserName') || 'unknown user'}`,
-          content: btoa(unescape(encodeURIComponent(updatedContent))),
-          sha: fileData.sha
-        })
+      setProgress('publish-progress', 60);
+      await db.collection('rota').doc('current').set({
+        shifts: compact,
+        publishedDate,
+        publishedTimestamp,
+        publishedBy: localStorage.getItem('staffUserName') || 'unknown user'
       });
-      if(!putRes.ok) throw new Error(`Publish failed (${putRes.status}). Check the token has "repo" write access.`);
 
       setProgress('publish-progress', 100);
-      statusEl.textContent = '✓ Published — checking deployment status…';
+      statusEl.textContent = '✓ Published — live immediately, no deploy wait.';
       statusEl.className = 'action-status success';
-      pollDeployStatus(statusEl, '✓ Published.');
       return true;
     } catch(err){
-      statusEl.textContent = err.message;
+      statusEl.textContent = err.code === 'permission-denied'
+        ? "You don't have permission to publish — Management or Site Admin only."
+        : err.message;
       statusEl.className = 'action-status error';
       return false;
     } finally {
-      document.getElementById('publish-progress').classList.remove('active');
+      setTimeout(() => document.getElementById('publish-progress').classList.remove('active'), 1000);
     }
   }
 
