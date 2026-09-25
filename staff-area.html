@@ -207,11 +207,32 @@
 
   .quick-search{
     width:100%; font-family:'Inter', sans-serif; font-size:0.88rem;
-    padding:13px 16px; margin-bottom:16px; border-radius:12px;
+    padding:13px 16px; margin-bottom:0; border-radius:12px;
     background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff;
   }
   .quick-search::placeholder{color:rgba(255,255,255,0.4);}
   .quick-search:focus{outline:none; border-color:var(--brass-light);}
+
+  .search-row{display:flex; gap:8px; margin-bottom:16px;}
+  .search-row .quick-search{flex:1;}
+  .edit-layout-btn{
+    flex-shrink:0; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600;
+    background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.85);
+    border:1px solid rgba(255,255,255,0.14); border-radius:12px; padding:0 16px; cursor:pointer; transition:all 0.15s ease;
+  }
+  .edit-layout-btn:hover{border-color:var(--brass-light);}
+  .edit-layout-btn.active{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614; border-color:transparent;}
+
+  .quick-row-wrap{margin-bottom:14px;}
+  .quick-row-title{font-family:'Fraunces', serif; font-size:0.72rem; font-weight:600; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;}
+  .quick-row{display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
+  .quick-row::-webkit-scrollbar{display:none;}
+  .quick-chip{
+    display:block; flex-shrink:0; text-decoration:none; color:#fff;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px;
+    padding:9px 14px; font-weight:600; font-size:0.8rem; white-space:nowrap; transition:all 0.15s ease;
+  }
+  .quick-chip:hover{border-color:var(--brass-light); transform:translateY(-2px);}
 
   .menu-group-label{
     font-family:'Fraunces', serif; font-size:0.8rem; font-weight:600; color:var(--brass-light);
@@ -221,8 +242,8 @@
 
   .menu a{
     display:block; background:rgba(255,255,255,0.045); border:1px solid rgba(255,255,255,0.08);
-    border-radius:14px; padding:16px 18px; margin-bottom:9px; text-decoration:none; color:#fff;
-    transition:all 0.15s ease;
+    border-radius:14px; padding:16px 84px 16px 18px; margin-bottom:9px; text-decoration:none; color:#fff;
+    transition:all 0.15s ease; position:relative;
   }
   .menu a:hover{background:rgba(255,255,255,0.08); border-color:var(--brass-light); transform:translateX(3px);}
   .item-title-row{display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:600; font-size:0.94rem;}
@@ -234,6 +255,25 @@
   @keyframes new-rota-pulse{0%,100%{opacity:1;} 50%{opacity:0.55;}}
   .menu a small{display:block; font-size:0.78rem; color:rgba(255,255,255,0.45); margin-top:3px; font-weight:400;}
   #menu-note{font-size:0.8rem; color:rgba(255,255,255,0.4); text-align:center; margin-top:14px;}
+
+  .pin-btn, .copy-btn{
+    position:absolute; top:12px; width:24px; height:24px; border-radius:50%;
+    background:rgba(255,255,255,0.06); border:none; display:flex; align-items:center; justify-content:center;
+    font-size:0.78rem; cursor:pointer; opacity:0.5; transition:all 0.15s ease; line-height:1;
+  }
+  .pin-btn{right:12px;}
+  .copy-btn{right:42px;}
+  .pin-btn:hover, .copy-btn:hover{opacity:1; background:rgba(230,189,119,0.2);}
+  .pin-btn.pinned{opacity:1; color:var(--brass-light);}
+
+  .reorder-controls{display:none; position:absolute; bottom:10px; right:12px; flex-direction:column; gap:2px;}
+  .layout-edit-mode .reorder-controls{display:flex;}
+  .layout-edit-mode .menu a{padding-bottom:40px;}
+  .reorder-btn{
+    width:20px; height:16px; border-radius:5px; background:rgba(255,255,255,0.08); border:none;
+    display:flex; align-items:center; justify-content:center; font-size:0.62rem; cursor:pointer; opacity:0.7; transition:all 0.15s ease;
+  }
+  .reorder-btn:hover{opacity:1; background:rgba(230,189,119,0.22);}
 </style>
 
 </head>
@@ -280,8 +320,21 @@
     </div>
     <div class="summary-bar" id="summary-bar"></div>
     <button class="notify-permission-btn" id="notify-permission-btn" onclick="requestRotaNotifications()">🔔 Get notified when the rota's out</button>
+
+    <div class="quick-row-wrap" id="pinned-wrap" style="display:none;">
+      <div class="quick-row-title">📌 Pinned</div>
+      <div class="quick-row" id="pinned-row"></div>
+    </div>
+    <div class="quick-row-wrap" id="recent-wrap" style="display:none;">
+      <div class="quick-row-title">🕘 Recently Used</div>
+      <div class="quick-row" id="recent-row"></div>
+    </div>
+
     <div class="tabs" id="menu-tabs"></div>
-    <input type="text" class="quick-search" id="quick-search" placeholder="Search this menu…" oninput="filterMenu(this.value)">
+    <div class="search-row">
+      <input type="text" class="quick-search" id="quick-search" placeholder="Search this menu…" oninput="filterMenu(this.value)">
+      <button class="edit-layout-btn" id="edit-layout-btn" onclick="toggleEditMode()">✥ Rearrange</button>
+    </div>
     <div class="menu" id="menu-items"></div>
     <p class="note" id="menu-note"></p>
   </div>
@@ -489,6 +542,8 @@
 
     document.getElementById('menu-note').textContent = "Please don't share your login with anyone else.";
     buildSummaryBar(accessible);
+    renderPinnedRow();
+    renderRecentRow();
     updateNotifyButtonState();
     document.getElementById('screen-login').classList.remove('active');
     document.getElementById('screen-menu').classList.add('active');
@@ -526,11 +581,134 @@
     summaryEl.innerHTML = chips.join('');
   }
 
-  function renderMenuItem([href, title, desc, badge]){
+  function renderMenuItem(item, orderKey){
+    const [href, title, desc, badge] = item;
     const external = href.startsWith('http');
     const badgeHtml = badge ? `<span class="item-badge">${badge}</span>` : '';
-    return `<a href="${href}"${external ? ' target="_blank" rel="noopener"' : ''}><span class="item-title-row">${title}${badgeHtml}</span><small>${desc}</small></a>`;
+    const plainTitle = title.replace(/&amp;/g, '&').replace(/"/g, '&quot;');
+    const pinned = getPinnedTools().some(p => p.href === href);
+    return `<a href="${href}"${external ? ' target="_blank" rel="noopener"' : ''} data-href="${href}" data-title="${plainTitle}" data-order-key="${orderKey}">
+      <span class="item-title-row">${title}${badgeHtml}</span>
+      <small>${desc}</small>
+      <button type="button" class="pin-btn${pinned ? ' pinned' : ''}" data-action="pin" title="${pinned ? 'Unpin' : 'Pin to top'}">${pinned ? '★' : '☆'}</button>
+      <button type="button" class="copy-btn" data-action="copy" title="Copy link">🔗</button>
+      <span class="reorder-controls">
+        <button type="button" class="reorder-btn" data-action="up" title="Move earlier">↑</button>
+        <button type="button" class="reorder-btn" data-action="down" title="Move later">↓</button>
+      </span>
+    </a>`;
   }
+
+  // ---- Per-tab item order, shared pinned/recent tools (same storage as the Full Admin Dashboard) ----
+  const PIN_KEY = 'dashboardPinnedTools';
+  const RECENT_KEY = 'dashboardRecentTools';
+  let editMode = false;
+
+  function getPinnedTools(){ try{ return JSON.parse(localStorage.getItem(PIN_KEY) || '[]'); }catch(_){ return []; } }
+  function setPinnedTools(arr){ localStorage.setItem(PIN_KEY, JSON.stringify(arr)); }
+  function getRecentTools(){ try{ return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }catch(_){ return []; } }
+  function setRecentTools(arr){ localStorage.setItem(RECENT_KEY, JSON.stringify(arr)); }
+
+  function loadOrder(key){ try{ return JSON.parse(localStorage.getItem('staffMenuOrder:' + key) || 'null'); }catch(_){ return null; } }
+  function saveOrder(key, hrefs){ localStorage.setItem('staffMenuOrder:' + key, JSON.stringify(hrefs)); }
+  function orderedItems(key, items){
+    const order = loadOrder(key);
+    if(!order) return items;
+    const byHref = new Map(items.map(it => [it[0], it]));
+    const result = [];
+    order.forEach(href => { if(byHref.has(href)){ result.push(byHref.get(href)); byHref.delete(href); } });
+    byHref.forEach(it => result.push(it));
+    return result;
+  }
+
+  function renderPinnedRow(){
+    const pinned = getPinnedTools();
+    const wrap = document.getElementById('pinned-wrap');
+    const row = document.getElementById('pinned-row');
+    if(pinned.length === 0){ wrap.style.display = 'none'; row.innerHTML = ''; return; }
+    wrap.style.display = 'block';
+    row.innerHTML = pinned.map(p => `<a class="quick-chip" href="${p.href}">${p.title}</a>`).join('');
+  }
+  function renderRecentRow(){
+    const recent = getRecentTools();
+    const wrap = document.getElementById('recent-wrap');
+    const row = document.getElementById('recent-row');
+    if(recent.length === 0){ wrap.style.display = 'none'; row.innerHTML = ''; return; }
+    wrap.style.display = 'block';
+    row.innerHTML = recent.map(p => `<a class="quick-chip" href="${p.href}">${p.title}</a>`).join('');
+  }
+  function togglePinItem(meta, btn){
+    let pinned = getPinnedTools();
+    const idx = pinned.findIndex(p => p.href === meta.href);
+    if(idx === -1){
+      pinned.unshift(meta);
+      btn.classList.add('pinned'); btn.textContent = '★'; btn.title = 'Unpin';
+    } else {
+      pinned.splice(idx, 1);
+      btn.classList.remove('pinned'); btn.textContent = '☆'; btn.title = 'Pin to top';
+    }
+    setPinnedTools(pinned);
+    renderPinnedRow();
+  }
+  function recordRecentItem(meta){
+    let recent = getRecentTools().filter(r => r.href !== meta.href);
+    recent.unshift(meta);
+    recent = recent.slice(0, 6);
+    setRecentTools(recent);
+    renderRecentRow();
+  }
+  function copyItemLink(href, btn){
+    const url = new URL(href, window.location.href).href;
+    (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
+      .then(() => { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '🔗'; }, 1200); })
+      .catch(() => {});
+  }
+  function moveMenuItem(a, dir){
+    const orderKey = a.dataset.orderKey;
+    const sibling = dir < 0 ? a.previousElementSibling : a.nextElementSibling;
+    if(!sibling || sibling.tagName !== 'A' || sibling.dataset.orderKey !== orderKey) return;
+    if(dir < 0){ a.parentElement.insertBefore(a, sibling); } else { a.parentElement.insertBefore(sibling, a); }
+    const items = Array.from(document.querySelectorAll(`a[data-order-key="${orderKey}"]`));
+    saveOrder(orderKey, items.map(el => el.dataset.href));
+  }
+  function toggleEditMode(){
+    editMode = !editMode;
+    document.body.classList.toggle('layout-edit-mode', editMode);
+    const btn = document.getElementById('edit-layout-btn');
+    btn.textContent = editMode ? '✓ Done' : '✥ Rearrange';
+    btn.classList.toggle('active', editMode);
+  }
+
+  document.getElementById('menu-items').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if(btn){
+      e.preventDefault();
+      e.stopPropagation();
+      const a = btn.closest('a');
+      const meta = { href: a.dataset.href, title: a.dataset.title };
+      const action = btn.dataset.action;
+      if(action === 'pin') togglePinItem(meta, btn);
+      else if(action === 'copy') copyItemLink(meta.href, btn);
+      else if(action === 'up') moveMenuItem(a, -1);
+      else if(action === 'down') moveMenuItem(a, 1);
+      return;
+    }
+    const a = e.target.closest('a');
+    if(!a || !a.dataset.href) return;
+    if(editMode){ e.preventDefault(); return; }
+    recordRecentItem({ href: a.dataset.href, title: a.dataset.title });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key !== '/') return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+    const searchBox = document.getElementById('quick-search');
+    if(searchBox && document.getElementById('screen-menu').classList.contains('active')){
+      e.preventDefault();
+      searchBox.focus();
+    }
+  });
 
   function renderItems(roleKey){
     const container = document.getElementById('menu-items');
@@ -539,11 +717,12 @@
     if(roleData.groups){
       // Grouped role (e.g. Keyholder: Closing / Opening) — render each with its own heading
       container.innerHTML = roleData.groups.map(g => {
-        const items = g.items.map(renderMenuItem).join('');
+        const key = roleKey + ':' + g.label;
+        const items = orderedItems(key, g.items).map(it => renderMenuItem(it, key)).join('');
         return `<div class="menu-group-label">${g.label}</div>${items}`;
       }).join('');
     } else {
-      container.innerHTML = roleData.items.map(renderMenuItem).join('');
+      container.innerHTML = orderedItems(roleKey, roleData.items).map(it => renderMenuItem(it, roleKey)).join('');
     }
 
     if(roleKey === 'bar') checkForFreshRota();
