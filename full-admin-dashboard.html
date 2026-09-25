@@ -171,6 +171,32 @@
   .pin-btn.pinned{opacity:1; color:var(--brass);}
   .grid a{position:relative;}
 
+  .search-row{display:flex; gap:8px; margin-bottom:14px;}
+  .search-row .dash-search{margin-bottom:0; flex:1;}
+  .edit-layout-btn{
+    flex-shrink:0; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600;
+    background:var(--card); color:var(--forest); border:1px solid var(--line);
+    border-radius:12px; padding:0 16px; cursor:pointer; transition:all 0.15s ease;
+  }
+  [data-theme="dark"] .edit-layout-btn{color:var(--brass-light);}
+  .edit-layout-btn:hover{border-color:var(--brass);}
+  .edit-layout-btn.active{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#181614; border-color:transparent;}
+
+  .layout-edit-mode .grid a{cursor:grab; padding-right:34px; user-select:none;}
+  .layout-edit-mode .grid a.dragging{opacity:0.4;}
+  .layout-edit-mode .group-label::after{content:'Drag cards, or use the arrows, to reorder'; font-family:'Inter', sans-serif; font-size:0.68rem; font-weight:400; color:var(--muted); margin-left:4px;}
+  .reorder-controls{
+    display:none; position:absolute; bottom:6px; right:6px; flex-direction:column; gap:2px;
+  }
+  .layout-edit-mode .reorder-controls{display:flex;}
+  .reorder-btn{
+    width:20px; height:16px; border-radius:5px; background:rgba(0,0,0,0.06); border:none;
+    display:flex; align-items:center; justify-content:center; font-size:0.62rem; cursor:pointer;
+    opacity:0.6; transition:all 0.15s ease; line-height:1;
+  }
+  [data-theme="dark"] .reorder-btn{background:rgba(255,255,255,0.1);}
+  .reorder-btn:hover{opacity:1; background:rgba(166,124,61,0.18);}
+
   .dash-tabs-wrap{
     position:sticky; top:0; z-index:80; background:var(--paper);
     padding:8px 0; margin:0 -20px 16px; padding-left:20px; padding-right:20px;
@@ -305,7 +331,10 @@
     <div class="quick-row" id="recent-row"></div>
   </div>
 
-  <input type="text" class="dash-search" id="dash-search" placeholder="Search everything…" oninput="filterDashboard(this.value)">
+  <div class="search-row">
+    <input type="text" class="dash-search" id="dash-search" placeholder="Search everything…" oninput="filterDashboard(this.value)">
+    <button class="edit-layout-btn" id="edit-layout-btn" onclick="toggleEditMode()">✥ Rearrange</button>
+  </div>
 
   <div class="dash-tabs-wrap">
     <div class="dash-tabs" id="dash-tabs">
@@ -654,6 +683,8 @@
     const clone = a.cloneNode(true);
     const pinBtn = clone.querySelector('.pin-btn');
     if(pinBtn) pinBtn.remove();
+    const controls = clone.querySelector('.reorder-controls');
+    if(controls) controls.remove();
     const small = clone.querySelector('small');
     if(small) small.remove();
     const badge = clone.querySelector('.badge');
@@ -745,13 +776,97 @@
         togglePin(meta, btn);
       });
       a.appendChild(btn);
+
+      const controls = document.createElement('span');
+      controls.className = 'reorder-controls';
+      const upBtn = document.createElement('button');
+      upBtn.type = 'button'; upBtn.className = 'reorder-btn'; upBtn.title = 'Move earlier'; upBtn.textContent = '↑';
+      const downBtn = document.createElement('button');
+      downBtn.type = 'button'; downBtn.className = 'reorder-btn'; downBtn.title = 'Move later'; downBtn.textContent = '↓';
+      upBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); moveCard(a, -1); });
+      downBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); moveCard(a, 1); });
+      controls.appendChild(upBtn);
+      controls.appendChild(downBtn);
+      a.appendChild(controls);
+
       a.addEventListener('click', (e) => {
-        if(e.target === btn) return;
+        if(editMode){ e.preventDefault(); return; }
+        if(e.target === btn || upBtn.contains(e.target) || downBtn.contains(e.target)) return;
         recordRecent(meta);
       });
     });
   }
 
+  // ---- Rearranging tools within a tab ----
+  let editMode = false;
+
+  function loadGroupOrder(groupId){
+    try{ return JSON.parse(localStorage.getItem('dashboardOrder:' + groupId) || 'null'); }catch(_){ return null; }
+  }
+  function saveGroupOrder(grid){
+    const groupId = grid.closest('.group').id;
+    const hrefs = Array.from(grid.children).map(c => c.getAttribute('href'));
+    localStorage.setItem('dashboardOrder:' + groupId, JSON.stringify(hrefs));
+  }
+  function applyStoredOrder(){
+    document.querySelectorAll('.group').forEach(group => {
+      const grid = group.querySelector('.grid');
+      if(!grid) return;
+      const order = loadGroupOrder(group.id);
+      if(!order) return;
+      const byHref = new Map(Array.from(grid.children).map(c => [c.getAttribute('href'), c]));
+      order.forEach(href => { const c = byHref.get(href); if(c){ grid.appendChild(c); byHref.delete(href); } });
+      byHref.forEach(c => grid.appendChild(c));
+    });
+  }
+  function moveCard(a, dir){
+    const sibling = dir < 0 ? a.previousElementSibling : a.nextElementSibling;
+    if(!sibling) return;
+    const grid = a.parentElement;
+    if(dir < 0){ grid.insertBefore(a, sibling); }
+    else { grid.insertBefore(sibling, a); }
+    saveGroupOrder(grid);
+  }
+  function toggleEditMode(){
+    editMode = !editMode;
+    document.body.classList.toggle('layout-edit-mode', editMode);
+    document.querySelectorAll('.grid a').forEach(a => { a.draggable = editMode; });
+    const btn = document.getElementById('edit-layout-btn');
+    btn.textContent = editMode ? '✓ Done' : '✥ Rearrange';
+    btn.classList.toggle('active', editMode);
+  }
+
+  let draggedCard = null;
+  document.querySelectorAll('.grid').forEach(grid => {
+    grid.addEventListener('dragstart', (e) => {
+      const a = e.target.closest('a');
+      if(!a || !editMode) return;
+      draggedCard = a;
+      a.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    grid.addEventListener('dragend', () => {
+      if(draggedCard){
+        draggedCard.classList.remove('dragging');
+        saveGroupOrder(grid);
+      }
+      draggedCard = null;
+    });
+    grid.addEventListener('dragover', (e) => {
+      if(!editMode || !draggedCard) return;
+      e.preventDefault();
+      const target = e.target.closest('a');
+      if(!target || target === draggedCard || target.parentElement !== grid) return;
+      const cards = Array.from(grid.children);
+      if(cards.indexOf(draggedCard) < cards.indexOf(target)){
+        grid.insertBefore(draggedCard, target.nextSibling);
+      } else {
+        grid.insertBefore(draggedCard, target);
+      }
+    });
+  });
+
+  applyStoredOrder();
   enhanceToolCards();
   renderPinned();
   renderRecent();
