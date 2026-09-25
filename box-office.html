@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Box Office — Dunvant WMC</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a1512; --paper:#f0e6d6; --card:#faf4e8; --line:#ded0b8; --muted:#6b6152;
+    --brass:#a67c3d; --brass-light:#c9a05e; --forest:#2d4a35; --forest-light:#3d5a50; --pop:#ff7a45;
+  }
+  [data-theme="dark"]{
+    --ink:#ece2d0; --paper:#161210; --card:#211b16; --line:#3a3128; --muted:#a8977f;
+    --brass:#c9a05e; --brass-light:#e0bd82; --forest:#4a7a5c; --forest-light:#3d5a50; --pop:#ff9166;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+
+  header{
+    background:linear-gradient(160deg, #1a1512 0%, #16211a 100%);
+    padding:56px 24px 44px; text-align:center; position:relative;
+  }
+  .eyebrow{display:block; font-size:0.72rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--brass-light); margin-bottom:10px;}
+  header h1{font-family:'Fraunces', serif; font-weight:700; font-size:2.4rem; color:#fff;}
+  header p{font-size:0.95rem; color:rgba(255,255,255,0.6); margin-top:8px; max-width:480px; margin-left:auto; margin-right:auto;}
+  .theme-toggle{
+    position:fixed; top:18px; right:18px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:40px; height:40px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  a.back{position:fixed; top:22px; left:22px; z-index:100; font-size:0.82rem; color:rgba(255,255,255,0.7); text-decoration:none; font-weight:600;}
+  a.back:hover{color:var(--brass-light);}
+
+  main{max-width:900px; margin:0 auto; padding:40px 20px 70px;}
+  .load-status{text-align:center; font-size:0.9rem; color:var(--muted); padding:40px 0;}
+
+  .show-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:22px;}
+  .show-card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+    box-shadow:0 2px 10px rgba(45,74,53,0.05); transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  [data-theme="dark"] .show-card{box-shadow:0 2px 10px rgba(0,0,0,0.25);}
+  .show-card:hover{transform:translateY(-4px); box-shadow:0 12px 28px rgba(166,124,61,0.15);}
+  .show-poster{
+    width:100%; aspect-ratio:3/4; object-fit:cover; background:var(--line);
+    display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.8rem;
+  }
+  .show-body{padding:18px 20px 20px;}
+  .show-date{font-size:0.74rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--brass);}
+  .show-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.15rem; margin:5px 0 8px;}
+  .show-desc{font-size:0.85rem; color:var(--muted); line-height:1.5; margin-bottom:14px;}
+  .show-tickets{
+    display:inline-block; font-size:0.82rem; font-weight:600; color:var(--forest);
+    background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:8px 16px;
+  }
+  [data-theme="dark"] .show-tickets{color:var(--brass-light);}
+
+  .empty-state{text-align:center; padding:60px 20px; color:var(--muted);}
+  .empty-state h2{font-family:'Fraunces', serif; font-size:1.3rem; color:var(--ink); margin-bottom:8px;}
+</style>
+</head>
+<body>
+<a class="back" href="club-website.html">← Back to Homepage</a>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Dunvant WMC</span>
+  <h1>Box Office</h1>
+  <p>What's on at the club — live music, comedy nights, and everything in between</p>
+</header>
+<main>
+  <p class="load-status" id="load-status">Loading shows…</p>
+  <div class="show-grid" id="show-grid"></div>
+</main>
+<script>
+  async function loadShows(){
+    const statusEl = document.getElementById('load-status');
+    const grid = document.getElementById('show-grid');
+    try{
+      const snapshot = await db.collection('shows').orderBy('date').get();
+      const now = new Date().toISOString().slice(0, 10);
+      const upcoming = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if(data.date >= now) upcoming.push(data);
+      });
+
+      if(upcoming.length === 0){
+        statusEl.style.display = 'none';
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h2>Nothing on the calendar just yet</h2>Check back soon, or follow the club's Facebook page for announcements.</div>`;
+        return;
+      }
+
+      statusEl.style.display = 'none';
+      grid.innerHTML = upcoming.map(show => {
+        const dateObj = new Date(show.date + 'T00:00:00');
+        const dateStr = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+        const posterHtml = show.posterUrl
+          ? `<img class="show-poster" src="${show.posterUrl}" alt="${show.title}">`
+          : `<div class="show-poster">No poster yet</div>`;
+        return `
+          <div class="show-card">
+            ${posterHtml}
+            <div class="show-body">
+              <div class="show-date">${dateStr}${show.time ? ' · ' + show.time : ''}</div>
+              <div class="show-title">${show.title}</div>
+              <div class="show-desc">${show.description || ''}</div>
+              <div class="show-tickets">🎟️ ${show.ticketInfo || 'Ask at the bar for details'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch(e){
+      statusEl.textContent = "Couldn't load shows right now — try again shortly.";
+    }
+  }
+  loadShows();
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+</body>
+</html>
