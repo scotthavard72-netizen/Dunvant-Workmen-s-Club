@@ -59,6 +59,15 @@
     padding:7px 16px; border-radius:20px; cursor:pointer; transition:all 0.15s ease;
   }
   .logout-btn:hover{border-color:var(--brass-light); background:rgba(255,255,255,0.12);}
+  .header-actions{display:flex; gap:10px; justify-content:center; margin-top:12px;}
+  .header-actions .logout-btn{margin-top:0;}
+  .site-link-btn{
+    margin-top:0; font-family:'Inter', sans-serif; font-size:0.76rem; font-weight:600;
+    background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18);
+    padding:7px 16px; border-radius:20px; cursor:pointer; transition:all 0.15s ease;
+    text-decoration:none; display:inline-block;
+  }
+  .site-link-btn:hover{border-color:var(--brass-light); background:rgba(255,255,255,0.12);}
   .theme-toggle{
     position:fixed; top:16px; right:16px; z-index:150;
     background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18);
@@ -210,7 +219,10 @@
   <span class="eyebrow">Full Admin</span>
   <h1>Full Admin Dashboard</h1>
   <p>Everything on the site, in one place</p>
-  <button class="logout-btn" onclick="logoutFromDashboard()">Log Out</button>
+  <div class="header-actions">
+    <a class="site-link-btn" href="club-website.html">View Main Site</a>
+    <button class="logout-btn" onclick="logoutFromDashboard()">Log Out</button>
+  </div>
 </header>
 <main>
   <div class="notice">Every tool and page across the whole site, laid out flat so you don't need to switch roles or tabs to get to something. This is a convenience view — nothing here works differently than reaching it through the normal Staff Area menus.</div>
