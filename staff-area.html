@@ -22,6 +22,8 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+  const OWNER = 'scotthavard72-netizen';
+  const REPO = 'Dunvant-Workmen-s-Club';
 </script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c3f38">
@@ -274,6 +276,27 @@
     display:flex; align-items:center; justify-content:center; font-size:0.62rem; cursor:pointer; opacity:0.7; transition:all 0.15s ease;
   }
   .reorder-btn:hover{opacity:1; background:rgba(230,189,119,0.22);}
+
+  .whats-new-wrap{margin-bottom:14px;}
+  .whats-new-btn{
+    display:inline-flex; align-items:center; gap:7px; font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.85); border:1px solid rgba(255,255,255,0.14);
+    border-radius:20px; padding:8px 14px; cursor:pointer; transition:all 0.15s ease;
+  }
+  .whats-new-btn:hover{border-color:var(--brass-light);}
+  .whats-new-dot{width:7px; height:7px; border-radius:50%; background:var(--pop); display:none;}
+  .whats-new-btn.has-new .whats-new-dot{display:inline-block;}
+  .whats-new-panel{
+    display:none; margin-top:10px; background:rgba(255,255,255,0.045); border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px; padding:14px 16px;
+  }
+  .whats-new-panel.open{display:block;}
+  .whats-new-item{display:flex; gap:10px; padding:8px 0; border-top:1px solid rgba(255,255,255,0.08); font-size:0.82rem;}
+  .whats-new-item:first-child{border-top:none; padding-top:0;}
+  .whats-new-dot-item{width:6px; height:6px; border-radius:50%; background:var(--pop); margin-top:6px; flex-shrink:0;}
+  .whats-new-msg{font-weight:600; color:#fff;}
+  .whats-new-meta{font-size:0.72rem; color:rgba(255,255,255,0.45); margin-top:2px;}
+  .whats-new-empty{font-size:0.82rem; color:rgba(255,255,255,0.45);}
 </style>
 
 </head>
@@ -317,6 +340,10 @@
         </div>
       </div>
       <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+    <div class="whats-new-wrap">
+      <button class="whats-new-btn" id="whats-new-btn" onclick="toggleWhatsNew()">🆕 What's New <span class="whats-new-dot"></span></button>
+      <div class="whats-new-panel" id="whats-new-panel"></div>
     </div>
     <div class="summary-bar" id="summary-bar"></div>
     <button class="notify-permission-btn" id="notify-permission-btn" onclick="requestRotaNotifications()">🔔 Get notified when the rota's out</button>
@@ -544,6 +571,7 @@
     buildSummaryBar(accessible);
     renderPinnedRow();
     renderRecentRow();
+    loadWhatsNew();
     updateNotifyButtonState();
     document.getElementById('screen-login').classList.remove('active');
     document.getElementById('screen-menu').classList.add('active');
@@ -637,6 +665,57 @@
     wrap.style.display = 'block';
     row.innerHTML = recent.map(p => `<a class="quick-chip" href="${p.href}">${p.title}</a>`).join('');
   }
+
+  // ---- "What's New": recent site changes, pulled from GitHub — same public
+  // read-only API and cache the Full Admin Dashboard uses, so it works for
+  // every role without needing a token. ----
+  function renderWhatsNew(commits, cached){
+    const panel = document.getElementById('whats-new-panel');
+    const btn = document.getElementById('whats-new-btn');
+    if(commits.length === 0){
+      panel.innerHTML = '<p class="whats-new-empty">No changes yet.</p>';
+      return;
+    }
+    const lastSeenSha = localStorage.getItem('dashboardLastSeenSha');
+    const hasNew = !cached && commits[0].sha !== lastSeenSha;
+    btn.classList.toggle('has-new', hasNew);
+    panel.innerHTML = commits.map(c => {
+      const date = new Date(c.commit.author.date);
+      const when = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      return `<div class="whats-new-item"><div class="whats-new-dot-item"></div><div><div class="whats-new-msg">${c.commit.message.split('\n')[0]}</div><div class="whats-new-meta">${when}</div></div></div>`;
+    }).join('') + (cached ? '<p class="whats-new-empty" style="margin-top:8px;">Showing cached — offline or GitHub is rate-limited right now.</p>' : '');
+  }
+  async function loadWhatsNew(){
+    try{
+      const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=3`);
+      if(!res.ok) throw new Error();
+      const commits = await res.json();
+      localStorage.setItem('dashboardActivityCache', JSON.stringify({ commits, cachedAt: Date.now() }));
+      renderWhatsNew(commits, false);
+    } catch(e){
+      let cache = null;
+      try{ cache = JSON.parse(localStorage.getItem('dashboardActivityCache') || 'null'); }catch(_){}
+      if(cache && cache.commits && cache.commits.length){
+        renderWhatsNew(cache.commits, true);
+      } else {
+        document.getElementById('whats-new-panel').innerHTML = '<p class="whats-new-empty">Couldn\'t load recent changes right now.</p>';
+      }
+    }
+  }
+  function toggleWhatsNew(){
+    const panel = document.getElementById('whats-new-panel');
+    const btn = document.getElementById('whats-new-btn');
+    const open = panel.classList.toggle('open');
+    if(open){
+      btn.classList.remove('has-new');
+      let cache = null;
+      try{ cache = JSON.parse(localStorage.getItem('dashboardActivityCache') || 'null'); }catch(_){}
+      if(cache && cache.commits && cache.commits.length){
+        localStorage.setItem('dashboardLastSeenSha', cache.commits[0].sha);
+      }
+    }
+  }
+
   function togglePinItem(meta, btn){
     let pinned = getPinnedTools();
     const idx = pinned.findIndex(p => p.href === meta.href);
