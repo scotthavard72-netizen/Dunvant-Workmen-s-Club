@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
@@ -20,6 +21,9 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+  const githubProxy = firebase.functions().httpsCallable('githubProxy');
+  const OWNER = 'scotthavard72-netizen';
+  const REPO = 'Dunvant-Workmen-s-Club';
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,88 +40,103 @@
   *{box-sizing:border-box; margin:0; padding:0;}
   body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.3s ease, color 0.3s ease;}
   *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
- 
+
   header{
     background:
       radial-gradient(ellipse 600px 300px at 20% -30%, rgba(184,135,63,0.25), transparent 60%),
       linear-gradient(160deg, #181614 0%, #1a2620 100%);
-    padding:32px 24px 30px; text-align:center; position:relative;
+    padding:22px 24px 20px; text-align:center; position:relative;
   }
-  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px; opacity:0.9;}
-  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.7rem; color:#fff;}
-  header p{font-size:0.82rem; color:rgba(255,255,255,0.55); margin-top:5px;}
+  .eyebrow{display:block; font-size:0.66rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--brass-light); margin-bottom:6px; opacity:0.9;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.78rem; color:rgba(255,255,255,0.55); margin-top:4px;}
   .logout-btn{
-    margin-top:18px; font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    margin-top:12px; font-family:'Inter', sans-serif; font-size:0.76rem; font-weight:600;
     background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18);
-    padding:9px 18px; border-radius:20px; cursor:pointer; transition:all 0.15s ease;
+    padding:7px 16px; border-radius:20px; cursor:pointer; transition:all 0.15s ease;
   }
   .logout-btn:hover{border-color:var(--brass-light); background:rgba(255,255,255,0.12);}
   .theme-toggle{
-    position:fixed; top:20px; right:20px; z-index:100;
+    position:fixed; top:16px; right:16px; z-index:150;
     background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18);
-    border-radius:50%; width:40px; height:40px;
+    border-radius:50%; width:38px; height:38px;
     display:flex; align-items:center; justify-content:center;
-    cursor:pointer; font-size:1.05rem; backdrop-filter:blur(6px); transition:transform 0.2s ease;
+    cursor:pointer; font-size:1.02rem; backdrop-filter:blur(6px); transition:transform 0.2s ease;
   }
   .theme-toggle:hover{transform:scale(1.08) rotate(12deg); border-color:var(--brass-light);}
-  main{max-width:860px; margin:0 auto; padding:28px 20px 60px;}
-  .notice{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--brass-light); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
- 
-  .activity-widget{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px 22px; margin-bottom:16px; box-shadow:0 2px 10px rgba(44,63,56,0.04);}
-  [data-theme="dark"] .activity-widget{box-shadow:0 2px 10px rgba(0,0,0,0.2);}
-  .activity-header{font-family:'Fraunces', serif; font-size:0.92rem; font-weight:600; color:var(--forest); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;}
-  .widget-refresh-btn{background:var(--paper); border:1px solid var(--line); border-radius:8px; font-size:0.85rem; cursor:pointer; padding:5px 9px; opacity:0.8; transition:all 0.15s ease;}
+  main{max-width:980px; margin:0 auto; padding:18px 20px 60px;}
+  .notice{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--brass-light); border-radius:10px; padding:12px 16px; font-size:0.8rem; color:var(--muted); margin-bottom:16px;}
+
+  /* Compact status bar — collapses the three old full-height widgets into one row */
+  .status-bar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:10px 14px; margin-bottom:10px; box-shadow:0 1px 6px rgba(44,63,56,0.04);
+  }
+  [data-theme="dark"] .status-bar{box-shadow:0 1px 6px rgba(0,0,0,0.2);}
+  .status-pill{
+    display:flex; align-items:center; gap:6px; font-size:0.78rem; font-weight:600;
+    background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:6px 12px;
+    white-space:nowrap;
+  }
+  .status-dot{width:7px; height:7px; border-radius:50%; background:var(--muted); flex-shrink:0;}
+  .status-dot.ok{background:#3d8f6f;}
+  .status-dot.warn{background:var(--brass);}
+  .status-dot.bad{background:#c25a4d;}
+  .status-bar .status-expand-btn{
+    margin-left:auto; font-family:'Inter', sans-serif; font-size:0.76rem; font-weight:600;
+    background:none; color:var(--brass); border:none; cursor:pointer; padding:4px 6px;
+  }
+  .status-details{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:16px 18px; margin-bottom:16px; display:none; box-shadow:0 1px 6px rgba(44,63,56,0.04);
+  }
+  .status-details.open{display:block;}
+  .status-section{margin-bottom:18px;}
+  .status-section:last-child{margin-bottom:0;}
+  .status-section-title{font-family:'Fraunces', serif; font-size:0.88rem; font-weight:600; color:var(--forest); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;}
+  .widget-refresh-btn{background:var(--paper); border:1px solid var(--line); border-radius:8px; font-size:0.82rem; cursor:pointer; padding:4px 8px; opacity:0.8; transition:all 0.15s ease;}
   .widget-refresh-btn:hover{opacity:1; border-color:var(--brass);}
   .new-tag{
-    font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
+    font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
     background:var(--pop); color:#fff; border-radius:10px; padding:2px 7px; margin-left:8px;
   }
-  .activity-item{display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--line); font-size:0.84rem;}
+  .activity-item{display:flex; gap:10px; padding:8px 0; border-top:1px solid var(--line); font-size:0.82rem;}
   .activity-item:first-child{border-top:none; padding-top:0;}
-  .activity-dot{width:7px; height:7px; border-radius:50%; background:var(--pop); margin-top:6px; flex-shrink:0;}
+  .activity-dot{width:6px; height:6px; border-radius:50%; background:var(--pop); margin-top:6px; flex-shrink:0;}
   .activity-msg{font-weight:600;}
-  .activity-meta{font-size:0.75rem; color:var(--muted); margin-top:2px;}
-  .activity-empty{font-size:0.84rem; color:var(--muted);}
-  .activity-link{font-size:0.78rem; color:var(--brass); text-decoration:none; font-weight:600; display:block; margin-top:12px;}
-  .deploy-refresh-btn{
+  .activity-meta{font-size:0.72rem; color:var(--muted); margin-top:2px;}
+  .activity-empty{font-size:0.82rem; color:var(--muted);}
+  .activity-link{font-size:0.76rem; color:var(--brass); text-decoration:none; font-weight:600; display:block; margin-top:10px;}
+  .maintenance-btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  .maintenance-btn{
     font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
     background:var(--paper); color:var(--forest); border:1px solid var(--line);
-    border-radius:10px; padding:8px 16px; cursor:pointer; margin-top:10px; transition:all 0.15s ease;
+    border-radius:10px; padding:8px 14px; cursor:pointer; transition:all 0.15s ease;
   }
-  .deploy-refresh-btn:hover{border-color:var(--brass);}
-  .maintenance-btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
-  .maintenance-btn{
-    font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600;
-    border-radius:10px; padding:10px 16px; cursor:pointer; transition:all 0.15s ease;
-  }
-  .live-status-badge{
-    display:inline-block; font-family:'Fraunces', serif; font-weight:700; font-size:1.15rem;
-    padding:11px 24px; border-radius:12px; margin-bottom:12px; letter-spacing:0.02em;
-  }
-  .live-status-badge.status-open{background:linear-gradient(135deg, #3d8f6f, #2d6b52); color:#fff;}
-  .live-status-badge.status-closed{background:linear-gradient(135deg, #a24339, #8a2f2f); color:#fff;}
-  .live-status-badge.status-unknown{background:var(--line); color:var(--muted);}
-  .maintenance-btn.on{background:var(--paper); color:var(--forest); border:1px solid var(--line);}
-  .maintenance-btn.off{background:var(--paper); color:var(--forest); border:1px solid var(--line);}
-  .maintenance-btn.on:hover, .maintenance-btn.off:hover{border-color:var(--brass);}
-  #deploy-status.status-live{color:#3d8f6f; font-weight:600;}
-  #deploy-status.status-building{color:var(--brass); font-weight:600;}
-  #deploy-status.status-error{color:#c25a4d; font-weight:600;}
- 
+  .maintenance-btn:hover{border-color:var(--brass);}
+
   .dash-search{
-    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
-    padding:14px 18px; border:1px solid var(--line); border-radius:12px;
-    margin-bottom:22px; background:var(--card); color:var(--ink);
+    width:100%; font-family:'Inter', sans-serif; font-size:0.9rem;
+    padding:12px 16px; border:1px solid var(--line); border-radius:12px;
+    margin-bottom:14px; background:var(--card); color:var(--ink);
     box-shadow:0 2px 8px rgba(44,63,56,0.04);
   }
   [data-theme="dark"] .dash-search{box-shadow:0 2px 8px rgba(0,0,0,0.2);}
   .dash-search:focus{outline:none; border-color:var(--brass);}
- 
-  .dash-tabs{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:24px;}
+
+  .dash-tabs-wrap{
+    position:sticky; top:0; z-index:80; background:var(--paper);
+    padding:8px 0; margin:0 -20px 16px; padding-left:20px; padding-right:20px;
+    border-bottom:1px solid var(--line);
+  }
+  .dash-tabs{display:flex; gap:6px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+  .dash-tabs::-webkit-scrollbar{display:none;}
   .dash-tab-btn{
-    font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600;
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
     background:var(--card); color:var(--muted); border:1px solid var(--line);
-    border-radius:20px; padding:9px 17px; cursor:pointer; transition:all 0.15s ease;
+    border-radius:20px; padding:8px 15px; cursor:pointer; transition:all 0.15s ease;
+    white-space:nowrap; flex-shrink:0;
   }
   .dash-tab-btn:hover{border-color:var(--brass); color:var(--forest);}
   .dash-tab-btn.active{
@@ -130,38 +149,39 @@
   .group.no-match{display:none !important;}
   .grid a.hidden{display:none;}
   .group.hidden{display:none;}
- 
-  .group{margin-bottom:32px;}
+
+  .group{margin-bottom:24px;}
   .group-label{
-    font-family:'Fraunces', serif; font-size:1.05rem; font-weight:600; color:var(--forest);
-    display:flex; align-items:center; gap:10px; margin-bottom:14px;
+    font-family:'Fraunces', serif; font-size:0.98rem; font-weight:600; color:var(--forest);
+    display:flex; align-items:center; gap:10px; margin-bottom:10px;
   }
   .group-count{
-    font-family:'Inter', sans-serif; font-size:0.7rem; font-weight:700; color:var(--muted);
+    font-family:'Inter', sans-serif; font-size:0.68rem; font-weight:700; color:var(--muted);
     background:var(--card); border:1px solid var(--line); padding:2px 9px; border-radius:10px;
   }
-  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  @media(max-width:600px){ .grid{grid-template-columns:1fr;} }
+  .grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;}
+  @media(max-width:820px){ .grid{grid-template-columns:1fr 1fr;} }
+  @media(max-width:520px){ .grid{grid-template-columns:1fr;} }
   .grid a{
     display:block; text-decoration:none; background:var(--card); color:var(--ink);
-    border:1px solid var(--line); border-radius:12px; padding:15px 17px;
-    font-weight:600; font-size:0.9rem; transition:all 0.15s ease;
+    border:1px solid var(--line); border-radius:10px; padding:11px 13px;
+    font-weight:600; font-size:0.84rem; transition:all 0.15s ease;
     box-shadow:0 1px 4px rgba(44,63,56,0.03);
   }
   [data-theme="dark"] .grid a{box-shadow:0 1px 4px rgba(0,0,0,0.15);}
-  .grid a:hover{transform:translateY(-3px); border-color:var(--brass); box-shadow:0 8px 20px rgba(184,135,63,0.15);}
-  .grid a small{display:block; font-weight:400; font-size:0.76rem; color:var(--muted); margin-top:4px;}
+  .grid a:hover{transform:translateY(-2px); border-color:var(--brass); box-shadow:0 6px 16px rgba(184,135,63,0.15);}
+  .grid a small{display:block; font-weight:400; font-size:0.72rem; color:var(--muted); margin-top:3px; line-height:1.35;}
   .badge{
-    display:inline-block; font-size:0.68rem; font-weight:700; color:#fff;
-    background:var(--pop); border-radius:20px; padding:1px 8px; margin-left:6px;
+    display:inline-block; font-size:0.66rem; font-weight:700; color:#fff;
+    background:var(--pop); border-radius:20px; padding:1px 8px; margin-left:5px;
   }
   a.back{display:inline-block; margin-top:14px; font-size:0.84rem; color:var(--brass); text-decoration:none; font-weight:600;}
 </style>
- 
+
 </head>
 <body>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
- 
+
 <header>
   <span class="eyebrow">Full Admin</span>
   <h1>Full Admin Dashboard</h1>
@@ -170,42 +190,52 @@
 </header>
 <main>
   <div class="notice">Every tool and page across the whole site, laid out flat so you don't need to switch roles or tabs to get to something. This is a convenience view — nothing here works differently than reaching it through the normal Staff Area menus.</div>
- 
-  <div class="activity-widget">
-    <div class="activity-header">Recent Activity <button class="widget-refresh-btn" onclick="loadRecentActivity()">🔄</button></div>
-    <div id="activity-list" class="activity-list">
-      <p class="activity-empty" id="activity-status">Loading…</p>
+
+  <div class="status-bar">
+    <span class="status-pill"><span class="status-dot" id="activity-dot"></span><span id="activity-pill-text">Checking activity…</span></span>
+    <span class="status-pill"><span class="status-dot" id="deploy-dot"></span><span id="deploy-pill-text">Checking deploy…</span></span>
+    <span class="status-pill"><span class="status-dot" id="maint-dot"></span><span id="maint-pill-text">Checking site…</span></span>
+    <button class="status-expand-btn" id="status-expand-btn" onclick="toggleStatusDetails()">Details ▾</button>
+  </div>
+
+  <div class="status-details" id="status-details">
+    <div class="status-section">
+      <div class="status-section-title">Recent Activity <button class="widget-refresh-btn" onclick="loadRecentActivity()">🔄</button></div>
+      <div id="activity-list" class="activity-list">
+        <p class="activity-empty" id="activity-status">Loading…</p>
+      </div>
+    </div>
+
+    <div class="status-section">
+      <div class="status-section-title">Deployment Status <button class="widget-refresh-btn" onclick="checkDeployStatus()">🔄</button></div>
+      <p class="activity-empty" id="deploy-status">Checking…</p>
+    </div>
+
+    <div class="status-section">
+      <div class="status-section-title">Public Site Maintenance Mode</div>
+      <div class="live-status-badge" id="live-status-badge" style="display:inline-block; font-family:'Fraunces', serif; font-weight:700; font-size:1rem; padding:9px 20px; border-radius:12px; margin-bottom:10px;">Checking…</div>
+      <p class="activity-empty" id="maintenance-status-text"></p>
+      <div class="maintenance-btn-row">
+        <button class="maintenance-btn" onclick="toggleMaintenanceMode(true)">Close public site</button>
+        <button class="maintenance-btn" onclick="toggleMaintenanceMode(false)">Reopen public site</button>
+      </div>
+      <p class="activity-empty" style="margin-top:6px; font-size:0.72rem;">Only affects the public site — Staff Area and all internal tools stay working either way. This link always previews the real site regardless: <a href="club-website.html?preview=1">club-website.html?preview=1</a></p>
     </div>
   </div>
- 
-  <div class="activity-widget">
-    <div class="activity-header">Deployment Status</div>
-    <p class="activity-empty" id="deploy-status">Checking…</p>
-    <button class="deploy-refresh-btn" onclick="checkDeployStatus()">🔄 Check Again</button>
-  </div>
- 
-  <div class="activity-widget">
-    <div class="activity-header">Public Site Maintenance Mode</div>
-    <div class="live-status-badge" id="live-status-badge">Checking…</div>
-    <p class="activity-empty" id="maintenance-status-text"></p>
-    <div class="maintenance-btn-row">
-      <button class="maintenance-btn on" onclick="toggleMaintenanceMode(true)">Close public site</button>
-      <button class="maintenance-btn off" onclick="toggleMaintenanceMode(false)">Reopen public site</button>
-    </div>
-    <p class="activity-empty" style="margin-top:6px; font-size:0.72rem;">Only affects the public site — Staff Area and all internal tools stay working either way. This link always previews the real site regardless: <a href="club-website.html?preview=1">club-website.html?preview=1</a></p>
-  </div>
- 
+
   <input type="text" class="dash-search" id="dash-search" placeholder="Search everything…" oninput="filterDashboard(this.value)">
- 
-  <div class="dash-tabs" id="dash-tabs">
-    <button class="dash-tab-btn active" onclick="switchDashTab('site-admin', this)">Site Admin</button>
-    <button class="dash-tab-btn" onclick="switchDashTab('management', this)">Management</button>
-    <button class="dash-tab-btn" onclick="switchDashTab('keyholder', this)">Keyholder</button>
-    <button class="dash-tab-btn" onclick="switchDashTab('bar-staff', this)">Bar Staff</button>
-    <button class="dash-tab-btn" onclick="switchDashTab('committee', this)">Committee</button>
-    <button class="dash-tab-btn" onclick="switchDashTab('public-site', this)">Public Site</button>
+
+  <div class="dash-tabs-wrap">
+    <div class="dash-tabs" id="dash-tabs">
+      <button class="dash-tab-btn active" onclick="switchDashTab('site-admin', this)">Site Admin</button>
+      <button class="dash-tab-btn" onclick="switchDashTab('management', this)">Management</button>
+      <button class="dash-tab-btn" onclick="switchDashTab('keyholder', this)">Keyholder</button>
+      <button class="dash-tab-btn" onclick="switchDashTab('bar-staff', this)">Bar Staff</button>
+      <button class="dash-tab-btn" onclick="switchDashTab('committee', this)">Committee</button>
+      <button class="dash-tab-btn" onclick="switchDashTab('public-site', this)">Public Site</button>
+    </div>
   </div>
- 
+
   <div class="group tab-active" id="group-site-admin">
     <div class="group-label">Site Admin</div>
     <div class="grid">
@@ -227,7 +257,7 @@
       <a href="facebook-page-admin.html">Facebook Page<small>Post updates, manage the page</small></a>
     </div>
   </div>
- 
+
   <div class="group" id="group-management">
     <div class="group-label">Management <span class="group-count">12</span></div>
     <div class="grid">
@@ -245,7 +275,7 @@
       <a href="manage-staff-logins.html">Manage Staff Logins<small>Add, remove, or update access</small></a>
     </div>
   </div>
- 
+
   <div class="group" id="group-keyholder">
     <div class="group-label">Keyholder <span class="group-count">7</span></div>
     <div class="grid">
@@ -258,7 +288,7 @@
       <a href="weather-closure.html">Weather Closure Guide<small>Snow days, power cuts</small></a>
     </div>
   </div>
- 
+
   <div class="group" id="group-bar-staff">
     <div class="group-label">Bar Staff <span class="group-count">7</span></div>
     <div class="grid">
@@ -271,7 +301,7 @@
       <a href="incident-report.html">Accident / Incident Report<small>Health &amp; safety, not till issues</small></a>
     </div>
   </div>
- 
+
   <div class="group" id="group-committee">
     <div class="group-label">Committee <span class="group-count">6</span></div>
     <div class="grid">
@@ -283,7 +313,7 @@
       <a href="funding-opportunities.html">Grant / Funding Opportunities<small>Worth tracking</small></a>
     </div>
   </div>
- 
+
   <div class="group" id="group-public-site">
     <div class="group-label">Public Site</div>
     <div class="grid">
@@ -293,11 +323,11 @@
       <a href="member-suggestions.html">Member Suggestions<small>Ideas from members specifically</small></a>
     </div>
   </div>
- 
+
 </main>
 <script>
   let intentionalNavigation = false;
- 
+
   // Real access check: must be signed in AND have the admin role. This is the
   // actual gate — the redirect from staff-area.html is just a convenience,
   // not what keeps this page genuinely restricted.
@@ -316,28 +346,35 @@
       window.location.href = 'staff-area.html';
     }
   });
- 
-  // Recent Activity — reuses the same GitHub connection saved elsewhere on the site
+
+  function toggleStatusDetails(){
+    const details = document.getElementById('status-details');
+    const btn = document.getElementById('status-expand-btn');
+    const open = details.classList.toggle('open');
+    btn.textContent = open ? 'Details ▴' : 'Details ▾';
+  }
+
+  // Recent Activity — public repo history, no token needed
   async function loadRecentActivity(){
     const statusEl = document.getElementById('activity-status');
     const listEl = document.getElementById('activity-list');
-    const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
-    if(!saved || !saved.owner || !saved.repo){
-      statusEl.textContent = 'Set up your GitHub connection in Manage Staff Logins to see recent changes here.';
-      return;
-    }
+    const dotEl = document.getElementById('activity-dot');
+    const pillEl = document.getElementById('activity-pill-text');
     try{
-      const res = await fetch(`https://api.github.com/repos/${saved.owner}/${saved.repo}/commits?per_page=3`);
+      const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=3`);
       if(!res.ok) throw new Error();
       const commits = await res.json();
       if(commits.length === 0){
         statusEl.textContent = 'No changes yet.';
+        pillEl.textContent = 'No changes yet';
+        dotEl.className = 'status-dot';
         return;
       }
       const lastSeenSha = localStorage.getItem('dashboardLastSeenSha');
       const newestSha = commits[0].sha;
       const lastSeenIndex = commits.findIndex(c => c.sha === lastSeenSha);
- 
+      const newCount = lastSeenIndex === -1 ? 0 : lastSeenIndex;
+
       listEl.innerHTML = commits.map((c, i) => {
         const date = new Date(c.commit.author.date);
         const when = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -352,121 +389,130 @@
           </div>
         `;
       }).join('') + '<a class="activity-link" href="site-changelog.html">See full history →</a>';
+      pillEl.textContent = newCount > 0 ? `${newCount} new change${newCount === 1 ? '' : 's'}` : 'Up to date';
+      dotEl.className = 'status-dot ok';
       localStorage.setItem('dashboardLastSeenSha', newestSha);
     } catch(e){
-      statusEl.textContent = "Couldn't load recent activity — check your GitHub connection.";
+      statusEl.textContent = "Couldn't load recent activity — try again shortly.";
+      pillEl.textContent = 'Activity unavailable';
+      dotEl.className = 'status-dot bad';
     }
   }
   loadRecentActivity();
- 
+
+  // Deployment status via the secure server-side connection (no token in the browser)
   async function checkDeployStatus(){
     const statusEl = document.getElementById('deploy-status');
-    const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
-    if(!saved || !saved.owner || !saved.repo){
-      statusEl.textContent = 'Set up your GitHub connection in Manage Staff Logins to see this.';
-      statusEl.className = '';
-      return;
-    }
+    const dotEl = document.getElementById('deploy-dot');
+    const pillEl = document.getElementById('deploy-pill-text');
     statusEl.textContent = 'Checking…';
     statusEl.className = '';
     try{
-      const headers = saved.token ? { Authorization: `token ${saved.token}` } : {};
-      const res = await fetch(`https://api.github.com/repos/${saved.owner}/${saved.repo}/pages/builds/latest`, { headers });
-      if(!res.ok) throw new Error();
-      const build = await res.json();
+      const res = await githubProxy({ action: 'pagesStatus' });
+      const build = res.data;
       const when = new Date(build.updated_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       if(build.status === 'built'){
         statusEl.textContent = `🟢 Live — last deployed ${when}`;
         statusEl.className = 'status-live';
+        pillEl.textContent = 'Deploy live';
+        dotEl.className = 'status-dot ok';
       } else if(build.status === 'errored'){
         statusEl.textContent = `🔴 Last deployment failed (${when}) — check Settings → Pages on GitHub`;
         statusEl.className = 'status-error';
+        pillEl.textContent = 'Deploy failed';
+        dotEl.className = 'status-dot bad';
       } else {
         statusEl.textContent = `🟡 Deploying now… started ${when}`;
         statusEl.className = 'status-building';
+        pillEl.textContent = 'Deploying…';
+        dotEl.className = 'status-dot warn';
       }
     } catch(e){
-      statusEl.textContent = "Couldn't check right now — the connection may need a token with read access.";
+      statusEl.textContent = "Couldn't check right now — try again shortly.";
       statusEl.className = '';
+      pillEl.textContent = 'Deploy unknown';
+      dotEl.className = 'status-dot';
     }
   }
   checkDeployStatus();
- 
+
   async function checkMaintenanceStatus(){
     const textEl = document.getElementById('maintenance-status-text');
     const badgeEl = document.getElementById('live-status-badge');
+    const dotEl = document.getElementById('maint-dot');
+    const pillEl = document.getElementById('maint-pill-text');
     try{
       const res = await fetch('maintenance-status.json', { cache: 'no-store' });
       if(!res.ok) throw new Error();
       const status = await res.json();
       if(status.active){
         badgeEl.textContent = 'CLOSED';
-        badgeEl.className = 'live-status-badge status-closed';
+        badgeEl.style.background = 'linear-gradient(135deg, #a24339, #8a2f2f)';
+        badgeEl.style.color = '#fff';
         textEl.textContent = status.lastChanged ? `Since ${status.lastChanged}` : '';
+        pillEl.textContent = 'Site closed';
+        dotEl.className = 'status-dot bad';
       } else {
         badgeEl.textContent = 'OPEN';
-        badgeEl.className = 'live-status-badge status-open';
+        badgeEl.style.background = 'linear-gradient(135deg, #3d8f6f, #2d6b52)';
+        badgeEl.style.color = '#fff';
         textEl.textContent = 'Public site is visible to everyone as normal';
+        pillEl.textContent = 'Site open';
+        dotEl.className = 'status-dot ok';
       }
     } catch(e){
       badgeEl.textContent = 'UNKNOWN';
-      badgeEl.className = 'live-status-badge status-unknown';
+      badgeEl.style.background = 'var(--line)';
+      badgeEl.style.color = 'var(--muted)';
       textEl.textContent = "Couldn't check right now.";
+      pillEl.textContent = 'Site status unknown';
+      dotEl.className = 'status-dot';
     }
   }
   checkMaintenanceStatus();
- 
+
   // Refresh the live widgets automatically so nothing needs a manual reload to stay current
   setInterval(() => {
     loadRecentActivity();
     checkDeployStatus();
     checkMaintenanceStatus();
   }, 60000);
- 
+
+  // Maintenance toggle now goes through the secure server-side connection — no token needed here at all
   async function toggleMaintenanceMode(turnOn){
-    const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
     const textEl = document.getElementById('maintenance-status-text');
-    if(!saved || !saved.owner || !saved.repo || !saved.token){
-      alert('Set up your GitHub connection (with a token) in Manage Staff Logins first.');
-      return;
-    }
     const action = turnOn ? 'close the public site to visitors' : 'reopen the public site';
     if(!confirm(`Are you sure you want to ${action}? This takes effect within a couple of minutes.`)) return;
- 
+
     textEl.textContent = 'Updating…';
     try{
-      const apiUrl = `https://api.github.com/repos/${saved.owner}/${saved.repo}/contents/maintenance-status.json`;
-      const getRes = await fetch(apiUrl, { headers: { Authorization: `token ${saved.token}` } });
-      if(!getRes.ok) throw new Error(`Couldn't fetch maintenance-status.json (${getRes.status}).`);
-      const fileData = await getRes.json();
- 
+      const getRes = await githubProxy({ action: 'get', path: 'maintenance-status.json' });
+      const sha = getRes.data.sha;
+
       const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
       const newStatus = {
         active: turnOn,
         message: "We're making a few updates behind the scenes — back shortly.",
         lastChanged: new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
       };
- 
-      const putRes = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: { Authorization: `token ${saved.token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `${turnOn ? 'Close' : 'Reopen'} public site — by ${loggedInName}`,
-          content: btoa(unescape(encodeURIComponent(JSON.stringify(newStatus, null, 2)))),
-          sha: fileData.sha
-        })
+
+      await githubProxy({
+        action: 'put',
+        path: 'maintenance-status.json',
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(newStatus, null, 2)))),
+        sha,
+        message: `${turnOn ? 'Close' : 'Reopen'} public site — by ${loggedInName}`
       });
-      if(!putRes.ok) throw new Error(`Update failed (${putRes.status}). Check the token has "repo" write access.`);
- 
+
       textEl.textContent = turnOn
         ? '🔴 Closing now — takes effect within a couple of minutes.'
         : '🟢 Reopening now — takes effect within a couple of minutes.';
       setTimeout(checkMaintenanceStatus, 8000);
     } catch(err){
-      textEl.textContent = err.message;
+      textEl.textContent = err.message || "Couldn't update — try again shortly.";
     }
   }
- 
+
   function logoutFromDashboard(){
     intentionalNavigation = true;
     auth.signOut();
@@ -475,7 +521,7 @@
     if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
     window.location.href = 'staff-area.html';
   }
- 
+
   function filterDashboard(query){
     const q = query.trim().toLowerCase();
     document.body.classList.toggle('searching', q.length > 0);
@@ -489,7 +535,7 @@
       group.classList.toggle('no-match', q.length > 0 && !anyVisible);
     });
   }
- 
+
   function switchDashTab(tabName, btn){
     document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -502,7 +548,7 @@
       filterDashboard('');
     }
   }
- 
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
@@ -528,6 +574,3 @@
 <script src="update-banner.js"></script>
 </body>
 </html>
- 
-
-
