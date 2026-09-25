@@ -32,12 +32,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#181614; --paper:#f7f3ec; --card:#ffffff; --line:#e9e2d4; --muted:#8a7f6b;
-    --brass:#b8873f; --brass-light:#e6bd77; --forest:#2c3f38; --pop:#ff7a45;
+    --ink:#241d18; --paper:#f0e6d6; --card:#faf4e8; --line:#ded0b8; --muted:#6b5d4f;
+    --brass:#a67c3d; --brass-light:#c9a05e; --forest:#2d4a35; --forest-dark:#1f3526; --pop:#ff7a45;
   }
   [data-theme="dark"]{
-    --ink:#f0ece2; --paper:#14120f; --card:#201d19; --line:#38332a; --muted:#a89c85;
-    --brass:#d4a45c; --brass-light:#eccb8c; --forest:#5c8072; --pop:#ff9166;
+    --ink:#ece2d0; --paper:#161210; --card:#211b16; --line:#3a3128; --muted:#a8977f;
+    --brass:#c9a05e; --brass-light:#e0bd82; --forest:#4a7a5c; --forest-dark:#365c44; --pop:#ff9166;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.3s ease, color 0.3s ease;}
@@ -45,14 +45,15 @@
 
   header{
     background:
-      radial-gradient(ellipse 600px 300px at 20% -30%, rgba(184,135,63,0.25), transparent 60%),
-      linear-gradient(160deg, #181614 0%, #1a2620 100%);
-    padding:22px 24px 20px; text-align:center; position:relative;
+      radial-gradient(ellipse 600px 300px at 20% -30%, rgba(166,124,61,0.25), transparent 60%),
+      linear-gradient(160deg, #1a1512 0%, #1f3526 100%);
+    padding:24px 24px 22px; text-align:center; position:relative;
+    border-bottom:1px solid var(--brass);
   }
-  .header-crest{width:52px; height:52px; border-radius:50%; margin:0 auto 10px; display:block; border:1px solid rgba(230,189,119,0.5); box-shadow:0 0 0 4px rgba(184,135,63,0.12);}
-  .eyebrow{display:block; font-size:0.66rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--brass-light); margin-bottom:6px; opacity:0.9;}
-  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
-  header p{font-size:0.78rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .header-crest{width:56px; height:56px; border-radius:50%; margin:0 auto 12px; display:block; border:1px solid var(--brass-light); box-shadow:0 0 0 4px rgba(166,124,61,0.16);}
+  .eyebrow{display:block; font-size:0.66rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px; opacity:0.95;}
+  header h1{font-family:'Fraunces', serif; font-weight:800; font-size:1.5rem; color:#f0e6d6; letter-spacing:-0.01em;}
+  header p{font-size:0.78rem; color:rgba(240,230,214,0.6); margin-top:5px;}
   .logout-btn{
     margin-top:12px; font-family:'Inter', sans-serif; font-size:0.76rem; font-weight:600;
     background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18);
@@ -136,6 +137,39 @@
   }
   [data-theme="dark"] .dash-search{box-shadow:0 2px 8px rgba(0,0,0,0.2);}
   .dash-search:focus{outline:none; border-color:var(--brass);}
+
+  .stats-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .stat-tile{
+    flex:1 1 140px; display:flex; align-items:center; gap:10px; text-decoration:none;
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px;
+    box-shadow:0 1px 6px rgba(44,63,56,0.04); transition:transform 0.18s ease, border-color 0.18s ease;
+  }
+  [data-theme="dark"] .stat-tile{box-shadow:0 1px 6px rgba(0,0,0,0.2);}
+  .stat-tile:hover{transform:translateY(-2px); border-color:var(--brass);}
+  .stat-num{font-family:'Fraunces', serif; font-weight:800; font-size:1.5rem; color:var(--forest); line-height:1;}
+  [data-theme="dark"] .stat-num{color:var(--brass-light);}
+  .stat-label{font-size:0.72rem; color:var(--muted); font-weight:600; line-height:1.25;}
+
+  .quick-row-wrap{margin-bottom:16px;}
+  .quick-row-title{font-family:'Fraunces', serif; font-size:0.78rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;}
+  .quick-row{display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
+  .quick-row::-webkit-scrollbar{display:none;}
+  .quick-chip{
+    display:block; flex-shrink:0; text-decoration:none; background:var(--card); color:var(--ink);
+    border:1px solid var(--line); border-radius:10px; padding:9px 14px; font-weight:600; font-size:0.8rem;
+    white-space:nowrap; transition:border-color 0.15s ease, transform 0.15s ease;
+  }
+  .quick-chip:hover{border-color:var(--brass); transform:translateY(-2px);}
+
+  .pin-btn{
+    position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%;
+    background:rgba(0,0,0,0.06); border:none; display:flex; align-items:center; justify-content:center;
+    font-size:0.78rem; cursor:pointer; opacity:0.45; transition:all 0.15s ease; line-height:1;
+  }
+  [data-theme="dark"] .pin-btn{background:rgba(255,255,255,0.08);}
+  .pin-btn:hover{opacity:1; background:rgba(166,124,61,0.18);}
+  .pin-btn.pinned{opacity:1; color:var(--brass);}
+  .grid a{position:relative;}
 
   .dash-tabs-wrap{
     position:sticky; top:0; z-index:80; background:var(--paper);
@@ -257,6 +291,18 @@
       </div>
       <p class="activity-empty" style="margin-top:6px; font-size:0.72rem;">Only affects the public site — Staff Area and all internal tools stay working either way. This link always previews the real site regardless: <a href="club-website.html?preview=1">club-website.html?preview=1</a></p>
     </div>
+  </div>
+
+  <div class="stats-row" id="stats-row"></div>
+
+  <div class="quick-row-wrap" id="pinned-wrap" style="display:none;">
+    <div class="quick-row-title">📌 Pinned</div>
+    <div class="quick-row" id="pinned-row"></div>
+  </div>
+
+  <div class="quick-row-wrap" id="recent-wrap" style="display:none;">
+    <div class="quick-row-title">🕘 Recently Used</div>
+    <div class="quick-row" id="recent-row"></div>
   </div>
 
   <input type="text" class="dash-search" id="dash-search" placeholder="Search everything…" oninput="filterDashboard(this.value)">
@@ -594,6 +640,122 @@
       filterDashboard('');
     }
   }
+
+  // ---- Quick stats, pinned tools, and recently used tools ----
+  const PIN_KEY = 'dashboardPinnedTools';
+  const RECENT_KEY = 'dashboardRecentTools';
+
+  function getPinned(){ try{ return JSON.parse(localStorage.getItem(PIN_KEY) || '[]'); }catch(_){ return []; } }
+  function setPinned(arr){ localStorage.setItem(PIN_KEY, JSON.stringify(arr)); }
+  function getRecent(){ try{ return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }catch(_){ return []; } }
+  function setRecent(arr){ localStorage.setItem(RECENT_KEY, JSON.stringify(arr)); }
+
+  function toolMeta(a){
+    const clone = a.cloneNode(true);
+    const pinBtn = clone.querySelector('.pin-btn');
+    if(pinBtn) pinBtn.remove();
+    const small = clone.querySelector('small');
+    if(small) small.remove();
+    const badge = clone.querySelector('.badge');
+    const badgeText = badge ? badge.textContent.trim() : '';
+    if(badge) badge.remove();
+    return { href: a.getAttribute('href'), title: clone.textContent.trim(), badge: badgeText };
+  }
+
+  function renderPinned(){
+    const pinned = getPinned();
+    const wrap = document.getElementById('pinned-wrap');
+    const row = document.getElementById('pinned-row');
+    if(pinned.length === 0){ wrap.style.display = 'none'; row.innerHTML = ''; return; }
+    wrap.style.display = 'block';
+    row.innerHTML = pinned.map(p => `<a class="quick-chip" href="${p.href}">${p.title}</a>`).join('');
+  }
+
+  function renderRecent(){
+    const recent = getRecent();
+    const wrap = document.getElementById('recent-wrap');
+    const row = document.getElementById('recent-row');
+    if(recent.length === 0){ wrap.style.display = 'none'; row.innerHTML = ''; return; }
+    wrap.style.display = 'block';
+    row.innerHTML = recent.map(p => `<a class="quick-chip" href="${p.href}">${p.title}</a>`).join('');
+  }
+
+  function togglePin(meta, btn){
+    let pinned = getPinned();
+    const idx = pinned.findIndex(p => p.href === meta.href);
+    if(idx === -1){
+      pinned.unshift(meta);
+      btn.classList.add('pinned');
+      btn.textContent = '★';
+      btn.title = 'Unpin';
+    } else {
+      pinned.splice(idx, 1);
+      btn.classList.remove('pinned');
+      btn.textContent = '☆';
+      btn.title = 'Pin to top';
+    }
+    setPinned(pinned);
+    renderPinned();
+  }
+
+  function recordRecent(meta){
+    let recent = getRecent().filter(r => r.href !== meta.href);
+    recent.unshift(meta);
+    recent = recent.slice(0, 6);
+    setRecent(recent);
+    renderRecent();
+  }
+
+  function renderStats(){
+    const statsRow = document.getElementById('stats-row');
+    const seen = new Set();
+    const tiles = [];
+    document.querySelectorAll('.grid a').forEach(a => {
+      const meta = toolMeta(a);
+      const num = parseInt(meta.badge, 10);
+      if(isNaN(num) || num <= 0) return;
+      if(seen.has(meta.href)) return;
+      seen.add(meta.href);
+      tiles.push(meta);
+    });
+    if(tiles.length === 0){ statsRow.style.display = 'none'; return; }
+    statsRow.style.display = 'flex';
+    statsRow.innerHTML = tiles.map(t => `
+      <a class="stat-tile" href="${t.href}">
+        <span class="stat-num">${t.badge}</span>
+        <span class="stat-label">${t.title}</span>
+      </a>
+    `).join('');
+  }
+
+  function enhanceToolCards(){
+    document.querySelectorAll('.grid a').forEach(a => {
+      if(a.dataset.enhanced) return;
+      a.dataset.enhanced = '1';
+      const meta = toolMeta(a);
+      const isPinned = getPinned().some(p => p.href === meta.href);
+      const btn = document.createElement('button');
+      btn.className = 'pin-btn' + (isPinned ? ' pinned' : '');
+      btn.type = 'button';
+      btn.title = isPinned ? 'Unpin' : 'Pin to top';
+      btn.textContent = isPinned ? '★' : '☆';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePin(meta, btn);
+      });
+      a.appendChild(btn);
+      a.addEventListener('click', (e) => {
+        if(e.target === btn) return;
+        recordRecent(meta);
+      });
+    });
+  }
+
+  enhanceToolCards();
+  renderPinned();
+  renderRecent();
+  renderStats();
 
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
