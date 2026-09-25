@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Manage Shows — Dunvant WMC</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  main{max-width:820px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:12px;}
+  .load-status{font-size:0.82rem; color:var(--muted); margin-bottom:16px;}
+
+  .show-item{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:14px;}
+  .show-item.past{opacity:0.55;}
+  .show-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;}
+  @media(max-width:560px){ .show-row{grid-template-columns:1fr;} }
+  .show-row label{display:block; font-size:0.74rem; font-weight:600; color:var(--forest); margin-bottom:4px;}
+  .show-row input, .show-row textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.88rem;
+    padding:9px 11px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
+  }
+  .show-row textarea{resize:vertical; min-height:50px;}
+  .show-item .row-actions{display:flex; gap:8px; margin-top:12px;}
+  .save-btn{background:var(--forest); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:0.8rem; font-weight:600; cursor:pointer;}
+  .remove-btn{background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.8rem; font-weight:600; cursor:pointer; padding:9px 14px; border-radius:6px;}
+  .past-tag{font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:2px 8px; margin-left:8px;}
+
+  .add-card{background:var(--card); border:1px dashed var(--brass); border-radius:12px; padding:20px; margin-top:16px; margin-bottom:24px;}
+  .add-card.hidden{display:none;}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+  .btn{font-family:'Inter', sans-serif; font-weight:600; font-size:0.88rem; border:none; border-radius:8px; padding:13px 20px; cursor:pointer;}
+  .btn-add{background:var(--forest); color:#fff;}
+  .btn-create{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;}
+  .btn-cancel{background:none; color:var(--muted); border:1px solid var(--line);}
+  .status{font-size:0.85rem; margin-top:10px; color:var(--muted);}
+  .status.success{color:#3d8f6f; font-weight:600;}
+  .status.error{color:#c25a4d; font-weight:600;}
+  a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+  a.preview-link{display:inline-block; margin-bottom:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Management</span>
+  <h1>Manage Shows</h1>
+  <p>What appears on the public Box Office page</p>
+</header>
+<main>
+  <div class="notice">Add and edit shows here — changes appear on the public Box Office page instantly, no deploy needed. Posters need a direct image link for now (e.g. from a Facebook post or an image host) — file uploads aren't wired up yet. Ticket sales aren't set up yet either, so use the "How to get tickets" field to say how people should actually get one (e.g. "On the door" or "Message the club Facebook page").</div>
+
+  <a class="preview-link" href="box-office.html" target="_blank">↗ View the live Box Office page</a>
+
+  <div class="section-label">Current & Upcoming Shows</div>
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="shows-list"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-add" onclick="showAddForm()">+ Add Show</button>
+  </div>
+
+  <div class="add-card hidden" id="add-card">
+    <div class="section-label">Add New Show</div>
+    <div class="show-row">
+      <div><label>Title</label><input type="text" id="new-title" placeholder="e.g. Live Music Night"></div>
+      <div><label>Date</label><input type="date" id="new-date"></div>
+    </div>
+    <div class="show-row">
+      <div><label>Time (optional)</label><input type="text" id="new-time" placeholder="e.g. 8:00 PM"></div>
+      <div><label>Poster image URL (optional)</label><input type="text" id="new-poster" placeholder="https://..."></div>
+    </div>
+    <div class="show-row" style="grid-template-columns:1fr;">
+      <div><label>Description</label><textarea id="new-desc" placeholder="A line or two about the show"></textarea></div>
+    </div>
+    <div class="show-row" style="grid-template-columns:1fr;">
+      <div><label>How to get tickets</label><input type="text" id="new-tickets" placeholder="e.g. On the door, £5"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-create" onclick="createShow()">Add Show</button>
+      <button class="btn btn-cancel" onclick="hideAddForm()">Cancel</button>
+    </div>
+    <p class="status" id="create-status"></p>
+  </div>
+
+  <a class="back" href="full-admin-dashboard.html">← Back to Full Admin Dashboard</a>
+</main>
+<script>
+  function makeShowItem(id, data){
+    const isPast = data.date < new Date().toISOString().slice(0, 10);
+    const div = document.createElement('div');
+    div.className = 'show-item' + (isPast ? ' past' : '');
+    div.dataset.docId = id;
+    div.innerHTML = `
+      <div class="show-row">
+        <div><label>Title ${isPast ? '<span class="past-tag">Past</span>' : ''}</label><input type="text" class="f-title" value="${data.title || ''}"></div>
+        <div><label>Date</label><input type="date" class="f-date" value="${data.date || ''}"></div>
+      </div>
+      <div class="show-row">
+        <div><label>Time</label><input type="text" class="f-time" value="${data.time || ''}"></div>
+        <div><label>Poster image URL</label><input type="text" class="f-poster" value="${data.posterUrl || ''}"></div>
+      </div>
+      <div class="show-row" style="grid-template-columns:1fr;">
+        <div><label>Description</label><textarea class="f-desc">${data.description || ''}</textarea></div>
+      </div>
+      <div class="show-row" style="grid-template-columns:1fr;">
+        <div><label>How to get tickets</label><input type="text" class="f-tickets" value="${data.ticketInfo || ''}"></div>
+      </div>
+      <div class="row-actions">
+        <button class="save-btn" onclick="saveShow('${id}', this)">💾 Save Changes</button>
+        <button class="remove-btn" onclick="removeShow('${id}', this)">✕ Remove</button>
+      </div>
+    `;
+    return div;
+  }
+
+  async function loadShows(){
+    const statusEl = document.getElementById('load-status');
+    const listEl = document.getElementById('shows-list');
+    listEl.innerHTML = '';
+    try{
+      const snapshot = await db.collection('shows').orderBy('date').get();
+      if(snapshot.empty){
+        statusEl.textContent = 'No shows added yet — use "+ Add Show" below.';
+        return;
+      }
+      snapshot.forEach(doc => listEl.appendChild(makeShowItem(doc.id, doc.data())));
+      statusEl.textContent = `Loaded ${snapshot.size} show(s).`;
+    } catch(e){
+      statusEl.textContent = "Couldn't load shows — " + e.message;
+    }
+  }
+
+  async function saveShow(id, btn){
+    const item = btn.closest('.show-item');
+    const data = {
+      title: item.querySelector('.f-title').value.trim(),
+      date: item.querySelector('.f-date').value,
+      time: item.querySelector('.f-time').value.trim(),
+      posterUrl: item.querySelector('.f-poster').value.trim(),
+      description: item.querySelector('.f-desc').value.trim(),
+      ticketInfo: item.querySelector('.f-tickets').value.trim()
+    };
+    const original = btn.textContent;
+    btn.textContent = 'Saving…';
+    try{
+      await db.collection('shows').doc(id).update(data);
+      btn.textContent = '✓ Saved';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch(e){
+      alert("Couldn't save — " + e.message);
+      btn.textContent = original;
+    }
+  }
+
+  async function removeShow(id, btn){
+    const item = btn.closest('.show-item');
+    const title = item.querySelector('.f-title').value.trim() || 'this show';
+    if(!confirm(`Remove "${title}"? This can't be undone.`)) return;
+    try{
+      await db.collection('shows').doc(id).delete();
+      item.remove();
+    } catch(e){
+      alert("Couldn't remove it — " + e.message);
+    }
+  }
+
+  function showAddForm(){
+    document.getElementById('add-card').classList.remove('hidden');
+    document.getElementById('add-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function hideAddForm(){
+    document.getElementById('add-card').classList.add('hidden');
+    ['new-title','new-date','new-time','new-poster','new-desc','new-tickets'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('create-status').textContent = '';
+  }
+
+  async function createShow(){
+    const title = document.getElementById('new-title').value.trim();
+    const date = document.getElementById('new-date').value;
+    const statusEl = document.getElementById('create-status');
+
+    if(!title || !date){
+      statusEl.textContent = 'A title and date are needed at minimum.';
+      statusEl.className = 'status error';
+      return;
+    }
+    statusEl.textContent = 'Adding…';
+    statusEl.className = 'status';
+    try{
+      await db.collection('shows').add({
+        title,
+        date,
+        time: document.getElementById('new-time').value.trim(),
+        posterUrl: document.getElementById('new-poster').value.trim(),
+        description: document.getElementById('new-desc').value.trim(),
+        ticketInfo: document.getElementById('new-tickets').value.trim()
+      });
+      statusEl.textContent = '✓ Added — now live on the Box Office page.';
+      statusEl.className = 'status success';
+      loadShows();
+      setTimeout(hideAddForm, 1200);
+    } catch(e){
+      statusEl.textContent = "Couldn't add it — " + e.message;
+      statusEl.className = 'status error';
+    }
+  }
+
+  // Only Management and Site Admin should be doing this
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      document.getElementById('load-status').textContent = 'You need to be signed in — go to Staff Area and log in first.';
+      return;
+    }
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      const roles = doc.exists ? (doc.data().roles || []) : [];
+      if(!roles.includes('admin') && !roles.includes('mgmt')){
+        document.getElementById('load-status').textContent = "You're signed in, but this page is for Management and Site Admin only.";
+        return;
+      }
+      loadShows();
+    } catch(e){
+      document.getElementById('load-status').textContent = "Couldn't check your access — " + e.message;
+    }
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+</body>
+</html>
