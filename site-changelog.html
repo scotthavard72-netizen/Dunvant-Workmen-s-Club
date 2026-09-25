@@ -29,17 +29,12 @@
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
   [data-theme="dark"] .notice{background:#2a2318;}
 
-  .config-row{margin-bottom:12px; display:flex; gap:10px;}
-  .config-row input{
-    flex:1; font-family:'Inter', sans-serif; font-size:0.85rem;
-    padding:9px 12px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink);
-  }
+  .toolbar{display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-bottom:14px;}
   .load-btn{
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.85rem;
-    background:var(--forest); color:#fff; border:none; border-radius:6px; padding:9px 16px; cursor:pointer;
+    background:var(--card); color:var(--forest); border:1px solid var(--line); border-radius:6px; padding:9px 16px; cursor:pointer;
   }
-  .load-btn.refresh-btn{background:var(--card); color:var(--forest); border:1px solid var(--line);}
-  .auto-refresh-row{display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--muted); margin-bottom:14px;}
+  .auto-refresh-row{display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--muted);}
   .load-status{font-size:0.82rem; color:var(--muted); margin-bottom:20px;}
   .new-tag{
     font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
@@ -65,47 +60,33 @@
   <p>Pulled automatically from GitHub — every real save shows up here</p>
 </header>
 <main>
-  <div class="notice">This reads directly from GitHub's own history — nothing to maintain manually. Every time a change is saved (including via Manage Staff Logins' "Save to GitHub" button, or any direct edit), it shows up here automatically as soon as the page loads. Uses the same GitHub connection as Manage Staff Logins, if you've already set that up.</div>
+  <div class="notice">This reads directly from the site's GitHub history — nothing to set up. Every time a change is saved (via Publish File Update, Manage Staff Logins, or any other edit) it shows up here automatically.</div>
 
-  <div class="config-row">
-    <input type="text" id="gh-owner" placeholder="GitHub username">
-    <input type="text" id="gh-repo" placeholder="Repository name">
-    <button class="load-btn" onclick="loadCommits()">Load</button>
-    <button class="load-btn refresh-btn" onclick="loadCommits()">🔄 Refresh</button>
+  <div class="toolbar">
+    <label class="auto-refresh-row"><input type="checkbox" id="auto-refresh-toggle" checked onchange="toggleAutoRefresh()"> Auto-refresh every minute</label>
+    <button class="load-btn" onclick="loadCommits()">🔄 Refresh</button>
   </div>
-  <label class="auto-refresh-row"><input type="checkbox" id="auto-refresh-toggle" checked onchange="toggleAutoRefresh()"> Auto-refresh every minute</label>
-  <p class="load-status" id="load-status">Checking for a saved GitHub connection…</p>
+  <p class="load-status" id="load-status">Loading…</p>
 
   <div id="commit-list"></div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
 <script>
-  // Reuse the same GitHub connection saved by Manage Staff Logins, if present
-  const saved = JSON.parse(localStorage.getItem('ghConfig') || 'null');
-  if(saved){
-    document.getElementById('gh-owner').value = saved.owner || '';
-    document.getElementById('gh-repo').value = saved.repo || '';
-  }
+  const OWNER = 'scotthavard72-netizen';
+  const REPO = 'Dunvant-Workmen-s-Club';
 
   async function loadCommits(){
-    const owner = document.getElementById('gh-owner').value.trim();
-    const repo = document.getElementById('gh-repo').value.trim();
     const statusEl = document.getElementById('load-status');
     const listEl = document.getElementById('commit-list');
-    listEl.innerHTML = '';
 
-    if(!owner || !repo){
-      statusEl.textContent = 'Enter your GitHub username and repository name above.';
-      return;
-    }
     statusEl.textContent = 'Loading…';
 
     try{
-      // Public repos work with no token; private repos would need one added here the same way Manage Staff Logins does
-      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=20`);
-      if(!res.ok) throw new Error(`Couldn't load history (${res.status}). Check the username and repo name, or make sure the repo is public.`);
+      const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=20`);
+      if(!res.ok) throw new Error(`Couldn't load history (${res.status}). Try again shortly.`);
       const commits = await res.json();
+      listEl.innerHTML = '';
       if(commits.length === 0){
         statusEl.textContent = 'No commits found yet.';
         return;
@@ -138,11 +119,7 @@
     }
   }
 
-  if(saved && saved.owner && saved.repo){
-    loadCommits();
-  } else {
-    document.getElementById('load-status').textContent = 'No saved connection found — enter your GitHub username and repo above, then tap Load.';
-  }
+  loadCommits();
 
   let autoRefreshInterval = null;
   function startAutoRefresh(){
