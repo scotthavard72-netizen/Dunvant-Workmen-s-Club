@@ -170,6 +170,13 @@
   .pin-btn:hover{opacity:1; background:rgba(166,124,61,0.18);}
   .pin-btn.pinned{opacity:1; color:var(--brass);}
   .grid a{position:relative;}
+  .copy-btn{
+    position:absolute; bottom:6px; left:6px; width:22px; height:22px; border-radius:50%;
+    background:rgba(0,0,0,0.06); border:none; display:flex; align-items:center; justify-content:center;
+    font-size:0.68rem; cursor:pointer; opacity:0.35; transition:all 0.15s ease; line-height:1;
+  }
+  [data-theme="dark"] .copy-btn{background:rgba(255,255,255,0.08);}
+  .copy-btn:hover{opacity:1 !important; background:rgba(166,124,61,0.18);}
 
   .search-row{display:flex; gap:8px; margin-bottom:14px;}
   .search-row .dash-search{margin-bottom:0; flex:1;}
@@ -196,6 +203,20 @@
   }
   [data-theme="dark"] .reorder-btn{background:rgba(255,255,255,0.1);}
   .reorder-btn:hover{opacity:1; background:rgba(166,124,61,0.18);}
+
+  .tab-item{display:inline-flex; align-items:center; gap:2px; flex-shrink:0;}
+  .tab-reorder-controls{display:none; gap:1px;}
+  .layout-edit-mode .tab-reorder-controls{display:inline-flex;}
+  .tab-reorder-btn{
+    width:18px; height:24px; border-radius:6px; background:var(--card); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:0.7rem; cursor:pointer;
+    opacity:0.75; transition:all 0.15s ease;
+  }
+  .tab-reorder-btn:hover{opacity:1; border-color:var(--brass);}
+  .tab-badge{
+    margin-left:6px; font-size:0.64rem; font-weight:700; color:#fff;
+    background:var(--pop); border-radius:20px; padding:1px 7px;
+  }
 
   .dash-tabs-wrap{
     position:sticky; top:0; z-index:80; background:var(--paper);
@@ -278,7 +299,7 @@
   <img src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest" class="header-crest">
   <span class="eyebrow">Full Admin</span>
   <h1>Full Admin Dashboard</h1>
-  <p>Everything on the site, in one place</p>
+  <p id="header-subtitle">Everything on the site, in one place</p>
   <div class="header-actions">
     <a class="site-link-btn" href="club-website.html">View Main Site</a>
     <button class="logout-btn" onclick="logoutFromDashboard()">Log Out</button>
@@ -338,12 +359,12 @@
 
   <div class="dash-tabs-wrap">
     <div class="dash-tabs" id="dash-tabs">
-      <button class="dash-tab-btn active" onclick="switchDashTab('site-admin', this)">Site Admin</button>
-      <button class="dash-tab-btn" onclick="switchDashTab('management', this)">Management</button>
-      <button class="dash-tab-btn" onclick="switchDashTab('keyholder', this)">Keyholder</button>
-      <button class="dash-tab-btn" onclick="switchDashTab('bar-staff', this)">Bar Staff</button>
-      <button class="dash-tab-btn" onclick="switchDashTab('committee', this)">Committee</button>
-      <button class="dash-tab-btn" onclick="switchDashTab('public-site', this)">Public Site</button>
+      <button class="dash-tab-btn active" data-tab="site-admin" onclick="switchDashTab('site-admin', this)">Site Admin</button>
+      <button class="dash-tab-btn" data-tab="management" onclick="switchDashTab('management', this)">Management</button>
+      <button class="dash-tab-btn" data-tab="keyholder" onclick="switchDashTab('keyholder', this)">Keyholder</button>
+      <button class="dash-tab-btn" data-tab="bar-staff" onclick="switchDashTab('bar-staff', this)">Bar Staff</button>
+      <button class="dash-tab-btn" data-tab="committee" onclick="switchDashTab('committee', this)">Committee</button>
+      <button class="dash-tab-btn" data-tab="public-site" onclick="switchDashTab('public-site', this)">Public Site</button>
     </div>
   </div>
 
@@ -777,6 +798,19 @@
       });
       a.appendChild(btn);
 
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button'; copyBtn.className = 'copy-btn'; copyBtn.title = 'Copy link';
+      copyBtn.textContent = '🔗';
+      copyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = new URL(a.getAttribute('href'), window.location.href).href;
+        (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
+          .then(() => { copyBtn.textContent = '✓'; setTimeout(() => { copyBtn.textContent = '🔗'; }, 1200); })
+          .catch(() => {});
+      });
+      a.appendChild(copyBtn);
+
       const controls = document.createElement('span');
       controls.className = 'reorder-controls';
       const upBtn = document.createElement('button');
@@ -866,8 +900,98 @@
     });
   });
 
+  // ---- Reordering tabs ----
+  function loadTabOrder(){
+    try{ return JSON.parse(localStorage.getItem('dashboardTabOrder') || 'null'); }catch(_){ return null; }
+  }
+  function saveTabOrder(container){
+    const order = Array.from(container.children).map(w => w.querySelector('.dash-tab-btn').dataset.tab);
+    localStorage.setItem('dashboardTabOrder', JSON.stringify(order));
+  }
+  function applyStoredTabOrder(){
+    const container = document.getElementById('dash-tabs');
+    const order = loadTabOrder();
+    if(!order) return;
+    const byTab = new Map(Array.from(container.children).map(el => [el.dataset.tab, el]));
+    order.forEach(tab => { const el = byTab.get(tab); if(el){ container.appendChild(el); byTab.delete(tab); } });
+    byTab.forEach(el => container.appendChild(el));
+  }
+  function moveTab(wrap, dir){
+    const container = wrap.parentElement;
+    const sibling = dir < 0 ? wrap.previousElementSibling : wrap.nextElementSibling;
+    if(!sibling) return;
+    if(dir < 0){ container.insertBefore(wrap, sibling); } else { container.insertBefore(sibling, wrap); }
+    saveTabOrder(container);
+  }
+  function enhanceTabs(){
+    const container = document.getElementById('dash-tabs');
+    Array.from(container.children).forEach(btn => {
+      if(btn.dataset.wrapped) return;
+      btn.dataset.wrapped = '1';
+      const wrap = document.createElement('span');
+      wrap.className = 'tab-item';
+      container.insertBefore(wrap, btn);
+      wrap.appendChild(btn);
+      const controls = document.createElement('span');
+      controls.className = 'tab-reorder-controls';
+      const leftBtn = document.createElement('button');
+      leftBtn.type = 'button'; leftBtn.className = 'tab-reorder-btn'; leftBtn.title = 'Move earlier'; leftBtn.textContent = '‹';
+      const rightBtn = document.createElement('button');
+      rightBtn.type = 'button'; rightBtn.className = 'tab-reorder-btn'; rightBtn.title = 'Move later'; rightBtn.textContent = '›';
+      leftBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); moveTab(wrap, -1); });
+      rightBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); moveTab(wrap, 1); });
+      controls.appendChild(leftBtn);
+      controls.appendChild(rightBtn);
+      wrap.appendChild(controls);
+    });
+  }
+
+  // ---- Tab badges: total open count per tab, from that tab's own card badges ----
+  function renderTabBadges(){
+    document.querySelectorAll('.dash-tab-btn').forEach(btn => {
+      const group = document.getElementById('group-' + btn.dataset.tab);
+      if(!group) return;
+      let total = 0;
+      group.querySelectorAll('.badge').forEach(b => {
+        const n = parseInt(b.textContent.trim(), 10);
+        if(!isNaN(n)) total += n;
+      });
+      let badgeEl = btn.querySelector('.tab-badge');
+      if(total > 0){
+        if(!badgeEl){ badgeEl = document.createElement('span'); badgeEl.className = 'tab-badge'; btn.appendChild(badgeEl); }
+        badgeEl.textContent = total;
+      } else if(badgeEl){
+        badgeEl.remove();
+      }
+    });
+  }
+
+  // ---- Personalised greeting ----
+  function renderGreeting(){
+    const el = document.getElementById('header-subtitle');
+    const savedName = localStorage.getItem('staffUserName');
+    if(!el || !savedName) return;
+    const firstName = savedName.split(' ')[0];
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    el.textContent = `${greeting}, ${firstName} — everything on the site, in one place`;
+  }
+
+  // ---- Keyboard shortcut: "/" jumps to search ----
+  document.addEventListener('keydown', (e) => {
+    if(e.key !== '/') return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+    e.preventDefault();
+    document.getElementById('dash-search').focus();
+  });
+
   applyStoredOrder();
   enhanceToolCards();
+  applyStoredTabOrder();
+  enhanceTabs();
+  renderTabBadges();
+  renderGreeting();
   renderPinned();
   renderRecent();
   renderStats();
