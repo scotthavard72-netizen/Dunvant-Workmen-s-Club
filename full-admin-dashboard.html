@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Full Admin Dashboard — Dunvant WMC</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-favicon-180.png">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -47,6 +49,7 @@
       linear-gradient(160deg, #181614 0%, #1a2620 100%);
     padding:22px 24px 20px; text-align:center; position:relative;
   }
+  .header-crest{width:52px; height:52px; border-radius:50%; margin:0 auto 10px; display:block; border:1px solid rgba(230,189,119,0.5); box-shadow:0 0 0 4px rgba(184,135,63,0.12);}
   .eyebrow{display:block; font-size:0.66rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--brass-light); margin-bottom:6px; opacity:0.9;}
   header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
   header p{font-size:0.78rem; color:rgba(255,255,255,0.55); margin-top:4px;}
@@ -203,6 +206,7 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
+  <img src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest" class="header-crest">
   <span class="eyebrow">Full Admin</span>
   <h1>Full Admin Dashboard</h1>
   <p>Everything on the site, in one place</p>

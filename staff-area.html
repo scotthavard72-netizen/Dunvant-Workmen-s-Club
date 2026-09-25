@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Staff Area — Dunvant WMC</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-favicon-180.png">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -103,11 +105,9 @@
 
   /* ── login screen ── */
   .brand-mark{
-    width:64px; height:64px; margin:0 auto 20px;
-    background:linear-gradient(135deg, var(--brass-light), var(--brass));
-    color:#181614; border-radius:18px;
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Fraunces', serif; font-weight:800; font-size:1.9rem;
+    width:72px; height:72px; margin:0 auto 20px;
+    border-radius:50%;
+    display:block; object-fit:cover;
     box-shadow:0 14px 34px rgba(184,135,63,0.35), 0 0 0 1px rgba(255,255,255,0.08) inset;
   }
   .eyebrow{
@@ -252,7 +252,7 @@
 
   <!-- Screen: login -->
   <div class="screen active" id="screen-login">
-    <div class="brand-mark">D</div>
+    <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
     <span class="eyebrow">Restricted access</span>
     <h1>Staff Area</h1>
     <p class="sub">Sign in with your staff login</p>

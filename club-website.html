@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dunvant Workingmens Club</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -44,6 +46,7 @@
   .plaque-wrap{padding:36px 20px 0;}
   .plaque{max-width:900px; margin:0 auto; background:var(--coal); border:1px solid var(--brass); padding:3px; border-radius:2px;}
   .plaque-inner{border:1px solid var(--brass); padding:44px 40px; text-align:center; background:linear-gradient(180deg, #201a15, #16110d);}
+  .plaque-crest{width:72px; height:72px; border-radius:50%; margin:0 auto 18px; display:block; border:1px solid var(--brass); box-shadow:0 0 0 4px rgba(166,124,61,0.12);}
   .plaque-est{font-family:'Fraunces', serif; font-size:0.72rem; letter-spacing:0.14em; color:var(--brass-light); margin-bottom:14px;}
   .plaque-name{font-family:'Fraunces', serif; font-weight:900; font-size:2.4rem; color:var(--plaque-text); line-height:1.05; letter-spacing:-0.01em;}
   .plaque-rule{width:64px; height:2px; background:var(--brass); margin:18px auto;}
@@ -86,6 +89,7 @@
 <div class="plaque-wrap">
   <div class="plaque">
     <div class="plaque-inner">
+      <img src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest" class="plaque-crest">
       <div class="plaque-est">Established 1900 Â· Dunvant, Swansea</div>
       <div class="plaque-name">Dunvant<br>Workingmens Club</div>
       <div class="plaque-rule"></div>
@@ -127,7 +131,7 @@
     }
   }
   applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
-  themeToggle.addEventListener('click', () => { »
+  themeToggle.addEventListener('click', () => { 
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const newTheme = isDark ? 'light' : 'dark';
     applyTheme(newTheme);
