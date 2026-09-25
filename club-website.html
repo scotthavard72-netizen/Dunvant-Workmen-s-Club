@@ -127,7 +127,7 @@
     }
   }
   applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
-  themeToggle.addEventListener('click', () => {
+  themeToggle.addEventListener('click', () => { »
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const newTheme = isDark ? 'light' : 'dark';
     applyTheme(newTheme);
