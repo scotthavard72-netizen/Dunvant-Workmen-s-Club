@@ -72,6 +72,9 @@
     background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
     border:none; border-radius:8px; padding:13px 22px; cursor:pointer; text-decoration:none; display:inline-block;
   }
+  .confirm-btn:disabled{
+    background:var(--forest); color:#fff; opacity:0.85; cursor:default;
+  }
   .cal-export-card{
     background:var(--card); border:1px solid var(--line); border-radius:12px;
     padding:16px 20px; margin-top:14px; text-align:center;
@@ -100,9 +103,9 @@
   <p class="published-note" id="published-note"></p>
   <div id="rota-content"></div>
 
-  <div class="confirm-card">
-    <p>Once you've checked your shifts, let management know you've seen the rota.</p>
-    <a class="confirm-btn" href="#confirm-rota-form-link" target="_blank" rel="noopener">✓ Confirm You've Seen the Rota</a>
+  <div class="confirm-card" id="confirm-card" style="display:none;">
+    <p id="confirm-card-text">Once you've checked your shifts, let management know you've seen the rota.</p>
+    <button class="confirm-btn" id="confirm-btn" onclick="confirmSeenRota()">✓ Confirm You've Seen the Rota</button>
   </div>
 
   <div class="cal-export-card" id="cal-export-card" style="display:none;">
@@ -135,6 +138,7 @@
   let PUBLISHED_DATE = "";
   let PUBLISHED_TIMESTAMP = "";
   let MY_NAME = "";
+  let MY_UID = "";
 
   function formatTime12h(t){
     const [h, m] = t.split(':').map(Number);
@@ -215,6 +219,72 @@
     if(exportCard && CURRENT_SHIFTS.some(s => s.n === MY_NAME)){
       exportCard.style.display = 'block';
     }
+    const confirmCard = document.getElementById('confirm-card');
+    if(confirmCard){
+      if(CURRENT_SHIFTS.length > 0){
+        confirmCard.style.display = 'block';
+        checkConfirmationStatus();
+      } else {
+        confirmCard.style.display = 'none';
+      }
+    }
+  }
+
+  function sanitizeForId(s){
+    return (s || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
+  }
+
+  async function checkConfirmationStatus(){
+    const btn = document.getElementById('confirm-btn');
+    const text = document.getElementById('confirm-card-text');
+    if(!btn || !text) return;
+    if(!MY_UID || !PUBLISHED_TIMESTAMP){
+      text.textContent = "Once you've checked your shifts, let management know you've seen the rota.";
+      btn.textContent = "✓ Confirm You've Seen the Rota";
+      btn.disabled = false;
+      return;
+    }
+    try{
+      const id = `${MY_UID}_${sanitizeForId(PUBLISHED_TIMESTAMP)}`;
+      const doc = await db.collection('rotaConfirmations').doc(id).get();
+      if(doc.exists){
+        text.textContent = "✓ You've confirmed you've seen this week's rota.";
+        btn.textContent = '✓ Confirmed';
+        btn.disabled = true;
+      } else {
+        text.textContent = "Once you've checked your shifts, let management know you've seen the rota.";
+        btn.textContent = "✓ Confirm You've Seen the Rota";
+        btn.disabled = false;
+      }
+    } catch(e){ /* leave the button active so they can still try */ }
+  }
+
+  async function confirmSeenRota(){
+    const btn = document.getElementById('confirm-btn');
+    const text = document.getElementById('confirm-card-text');
+    if(!MY_UID || !PUBLISHED_TIMESTAMP){
+      alert("Couldn't confirm right now — try refreshing the page.");
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Confirming…';
+    try{
+      const id = `${MY_UID}_${sanitizeForId(PUBLISHED_TIMESTAMP)}`;
+      await db.collection('rotaConfirmations').doc(id).set({
+        uid: MY_UID,
+        name: MY_NAME || 'Someone',
+        publishedTimestamp: PUBLISHED_TIMESTAMP,
+        publishedDate: PUBLISHED_DATE,
+        confirmedAtMs: Date.now(),
+        confirmedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      text.textContent = "✓ You've confirmed you've seen this week's rota.";
+      btn.textContent = '✓ Confirmed';
+    } catch(e){
+      btn.disabled = false;
+      btn.textContent = "✓ Confirm You've Seen the Rota";
+      alert("Couldn't confirm that — " + e.message);
+    }
   }
 
   function pad2(n){ return n.toString().padStart(2, '0'); }
@@ -267,6 +337,7 @@
 
   auth.onAuthStateChanged(async (user) => {
     if(user){
+      MY_UID = user.uid;
       try{
         const doc = await db.collection('staff').doc(user.uid).get();
         MY_NAME = doc.exists ? (doc.data().name || '') : '';

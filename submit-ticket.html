@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Submit a Ticket — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:600px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:24px;}
+  .form-card label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .form-card input, .form-card select, .form-card textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
+    padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+    margin-bottom:14px;
+  }
+  .form-card textarea{min-height:100px; resize:vertical;}
+  .row{display:flex; gap:10px;}
+  .row .field{flex:1;}
+  .submit-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.9rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; border-radius:8px; padding:12px 20px; cursor:pointer; width:100%;
+  }
+  .form-status{font-size:0.82rem; color:var(--muted); margin-top:10px; text-align:center;}
+  .form-status.success{color:#3d8f6f; font-weight:600;}
+  .form-status.error{color:#c25a4d; font-weight:600;}
+
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:14px;}
+  .load-status{font-size:0.86rem; color:var(--muted); text-align:center; padding:16px 0;}
+  .ticket-row{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:12px 16px; margin-bottom:8px;
+  }
+  .ticket-row .desc{font-size:0.88rem;}
+  .ticket-row .meta{font-size:0.74rem; color:var(--muted); margin-top:4px;}
+  .status-tag{font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:3px 9px; border-radius:10px;}
+  .status-tag.open{background:#fff2d9; color:#8a6a1f;}
+  .status-tag.in-progress{background:#dbeafe; color:#1e4a7a;}
+  .status-tag.resolved{background:#e4ece9; color:#2c3f38;}
+
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Staff</span>
+  <h1>Submit a Ticket</h1>
+  <p>Report a problem or request something from management</p>
+</header>
+<main>
+  <div class="notice">For anything you need management or Site Admin to sort out — a broken piece of kit, a stock issue, a request. This isn't for shift cover (use Shift Cover Request) or an emergency (call, don't wait for this).</div>
+
+  <div class="form-card">
+    <label for="ticket-category">Category</label>
+    <select id="ticket-category">
+      <option value="Facilities">Facilities / Equipment</option>
+      <option value="IT/Website">IT / Website</option>
+      <option value="Stock">Stock / Supplies</option>
+      <option value="Other">Other</option>
+    </select>
+    <div class="row">
+      <div class="field">
+        <label for="ticket-priority">Priority</label>
+        <select id="ticket-priority">
+          <option value="Normal">Normal</option>
+          <option value="Low">Low</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+    </div>
+    <label for="ticket-description">What's the issue?</label>
+    <textarea id="ticket-description" placeholder="Describe what's happening"></textarea>
+    <button class="submit-btn" onclick="submitTicket()">Submit Ticket</button>
+    <p class="form-status" id="form-status"></p>
+  </div>
+
+  <div class="section-label">Your Recent Tickets</div>
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="my-ticket-list"></div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  let MY_NAME = "";
+
+  const STATUS_LABELS = { open: 'Open', 'in-progress': 'In Progress', resolved: 'Resolved' };
+
+  function timeAgo(ms){
+    if(!ms) return '';
+    const mins = Math.floor((Date.now() - ms) / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if(hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  }
+
+  async function submitTicket(){
+    const category = document.getElementById('ticket-category').value;
+    const priority = document.getElementById('ticket-priority').value;
+    const description = document.getElementById('ticket-description').value.trim();
+    const statusEl = document.getElementById('form-status');
+
+    if(!description){
+      statusEl.textContent = 'Describe the issue first.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+
+    statusEl.textContent = 'Submitting…';
+    statusEl.className = 'form-status';
+    try{
+      await db.collection('tickets').add({
+        type: 'staff',
+        authorName: MY_NAME || 'Someone',
+        category,
+        priority,
+        description,
+        status: 'open',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('ticket-description').value = '';
+      statusEl.textContent = '✓ Submitted.';
+      statusEl.className = 'form-status success';
+      loadMyTickets();
+    } catch(e){
+      statusEl.textContent = "Couldn't submit that — " + e.message;
+      statusEl.className = 'form-status error';
+    }
+  }
+
+  async function loadMyTickets(){
+    const listEl = document.getElementById('my-ticket-list');
+    const statusEl = document.getElementById('load-status');
+    try{
+      const snap = await db.collection('tickets').where('type', '==', 'staff').get();
+      const mine = snap.docs
+        .filter(doc => doc.data().authorName === MY_NAME)
+        .sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0))
+        .slice(0, 10);
+      if(mine.length === 0){
+        listEl.innerHTML = '';
+        statusEl.textContent = "You haven't submitted any tickets yet.";
+        return;
+      }
+      statusEl.textContent = '';
+      listEl.innerHTML = mine.map(doc => {
+        const d = doc.data();
+        const status = d.status || 'open';
+        return `
+          <div class="ticket-row">
+            <div class="desc">${d.description}</div>
+            <div class="meta">
+              <span class="status-tag ${status}">${STATUS_LABELS[status] || status}</span>
+              &nbsp;${d.category || ''} · ${timeAgo(d.createdAtMs)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch(e){
+      statusEl.textContent = "Couldn't load your tickets right now — " + e.message;
+    }
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      window.location.href = 'staff-area.html';
+      return;
+    }
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      MY_NAME = doc.exists ? (doc.data().name || '') : '';
+    } catch(e){ /* keep going without a name */ }
+    loadMyTickets();
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>

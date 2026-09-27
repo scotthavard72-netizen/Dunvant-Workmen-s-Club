@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Report an Issue — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coal:#1a1512; --parchment:#f0e6d6; --card:#faf4e8;
+    --forest:#2d4a35; --forest-dark:#1f3526; --brass:#a67c3d; --brass-light:#c9a05e;
+    --ink:#241d18; --muted:#6b5d4f; --line:#ded0b8; --plaque-text:#f0e6d6; --plaque-tag:#cfc3ae;
+  }
+  [data-theme="dark"]{
+    --parchment:#161210; --card:#211b16;
+    --forest:#4a7a5c; --forest-dark:#365c44; --brass:#c9a05e; --brass-light:#e0bd82;
+    --ink:#ece2d0; --muted:#a8977f; --line:#3a3128; --plaque-text:#ece2d0; --plaque-tag:#b8a98f;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--parchment); color:var(--ink); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+
+  .theme-toggle{
+    position:fixed; top:18px; right:18px; z-index:200;
+    background:rgba(0,0,0,0.15); border:1px solid var(--brass);
+    border-radius:50%; width:40px; height:40px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+
+  nav.clubnav{
+    background:var(--coal); border-bottom:2px solid var(--brass);
+    display:flex; align-items:center; justify-content:center; gap:2px; flex-wrap:wrap;
+    padding:0 60px;
+  }
+  nav.clubnav a{
+    font-family:'Fraunces', serif; font-weight:600; font-size:0.86rem; color:var(--plaque-tag);
+    text-decoration:none; padding:16px 18px; display:inline-block; border-bottom:3px solid transparent;
+  }
+  nav.clubnav a:hover, nav.clubnav a.active{color:var(--brass-light); border-bottom-color:var(--brass);}
+  nav.clubnav a.staff-link{margin-left:8px; color:var(--forest);}
+
+  main{max-width:640px; margin:0 auto; padding:56px 20px 80px;}
+  .section-head{display:flex; align-items:baseline; gap:16px; margin-bottom:28px;}
+  .section-head .num{font-family:'Fraunces', serif; font-weight:700; font-size:0.85rem; color:var(--brass); border:1px solid var(--brass); border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .section-head h1{font-family:'Fraunces', serif; font-weight:700; font-size:1.7rem; color:var(--forest-dark);}
+  .section-head::after{content:''; flex:1; height:1px; background:var(--line);}
+
+  .intro{font-size:0.92rem; color:var(--muted); line-height:1.6; margin-bottom:28px;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:32px 30px;}
+  .form-card label{display:block; font-size:0.8rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .form-card input, .form-card textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.94rem;
+    padding:12px 14px; border:1px solid var(--line); border-radius:6px; background:var(--parchment); color:var(--ink);
+    margin-bottom:16px;
+  }
+  .form-card textarea{min-height:110px; resize:vertical;}
+  .submit-btn{
+    font-family:'Fraunces', serif; font-weight:600; font-size:0.92rem; cursor:pointer; border:none;
+    background:linear-gradient(180deg, var(--brass-light), var(--brass)); color:var(--coal);
+    padding:13px 26px; border-radius:2px; width:100%;
+  }
+  .form-status{font-size:0.86rem; margin-top:12px; text-align:center; color:var(--muted);}
+  .form-status.success{color:#3d8f6f; font-weight:600;}
+  .form-status.error{color:#c25a4d; font-weight:600;}
+
+  footer{text-align:center; padding:36px 20px 50px; font-size:0.8rem; color:var(--muted); border-top:1px solid var(--line);}
+  footer a{color:var(--brass); text-decoration:none; font-weight:600;}
+
+  @media(max-width:640px){
+    nav.clubnav{padding:0 12px; overflow-x:auto; justify-content:flex-start;}
+    nav.clubnav a{padding:14px 12px; white-space:nowrap; font-size:0.8rem;}
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+<nav class="clubnav">
+  <a href="club-website.html">Home</a>
+  <a href="whats-on.html">What's On</a>
+  <a href="book.html">Book</a>
+  <a href="gallery.html">Gallery</a>
+  <a href="visit-us.html">Visit Us</a>
+  <a href="committee.html">Committee</a>
+  <a href="members.html">Members</a>
+  <a href="staff-area.html" class="staff-link">Staff</a>
+</nav>
+
+<main>
+  <div class="section-head"><span class="num">!</span><h1>Report an Issue</h1></div>
+  <p class="intro">Spotted something wrong with the website — a broken link, a typo, a page that won't load? Let us know below and someone will take a look.</p>
+
+  <div class="form-card">
+    <label for="ri-name">Your name (optional)</label>
+    <input type="text" id="ri-name" placeholder="So we can follow up if needed">
+    <label for="ri-email">Your email (optional)</label>
+    <input type="email" id="ri-email" placeholder="you@example.com">
+    <label for="ri-page">Which page? (optional)</label>
+    <input type="text" id="ri-page" placeholder="e.g. the Book page, or paste the link">
+    <label for="ri-description">What's wrong?</label>
+    <textarea id="ri-description" placeholder="Describe the issue"></textarea>
+    <button class="submit-btn" onclick="submitIssue()">Send Report</button>
+    <p class="form-status" id="form-status"></p>
+  </div>
+</main>
+
+<footer>
+  <p>Dunvant Workingmens Club — built and maintained by the committee</p>
+  <p style="margin-top:10px;"><a href="https://www.facebook.com/profile.php?id=61563877044858" target="_blank" rel="noopener">Find us on Facebook →</a></p>
+</footer>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  async function submitIssue(){
+    const name = document.getElementById('ri-name').value.trim();
+    const email = document.getElementById('ri-email').value.trim();
+    const page = document.getElementById('ri-page').value.trim();
+    const description = document.getElementById('ri-description').value.trim();
+    const statusEl = document.getElementById('form-status');
+
+    if(!description){
+      statusEl.textContent = 'Describe the issue first.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+
+    statusEl.textContent = 'Sending…';
+    statusEl.className = 'form-status';
+    try{
+      await db.collection('tickets').add({
+        type: 'public',
+        name: name || 'Anonymous',
+        email,
+        page,
+        description,
+        status: 'open',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('ri-name').value = '';
+      document.getElementById('ri-email').value = '';
+      document.getElementById('ri-page').value = '';
+      document.getElementById('ri-description').value = '';
+      statusEl.textContent = '✓ Sent — thanks for letting us know.';
+      statusEl.className = 'form-status success';
+    } catch(e){
+      statusEl.textContent = "Couldn't send that right now — try again in a moment.";
+      statusEl.className = 'form-status error';
+    }
+  }
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+</body>
+</html>

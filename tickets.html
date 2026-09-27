@@ -27,34 +27,41 @@
   header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
   main{max-width:760px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
-  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin:24px 0 12px; display:flex; align-items:center; gap:10px;}
-  .section-label:first-of-type{margin-top:0;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  .filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
+  .filter-btn{
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600; padding:7px 14px; border-radius:16px; cursor:pointer;
+    border:1px solid var(--line); background:var(--card); color:var(--muted);
+  }
+  .filter-btn.active{background:var(--brass); color:#fff; border-color:var(--brass);}
+  .load-status{font-size:0.86rem; color:var(--muted); text-align:center; padding:16px 0;}
+
   .tag{
     font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
     padding:3px 9px; border-radius:12px;
   }
   .tag.public{background:#e0e7f0; color:#2f4a6e;}
   .tag.staff{background:#e4ece9; color:#2c3f38;}
+  .tag.priority-high{background:#fbe4e4; color:#8a2f2f;}
 
-  .embed-card{
-    background:var(--card); border:1px solid var(--line); border-radius:12px;
-    overflow:hidden; margin-bottom:8px;
+  .ticket{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:14px;}
+  .ticket-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:10px; flex-wrap:wrap;}
+  .ticket-top .badges{display:flex; gap:6px; flex-wrap:wrap;}
+  .status{
+    font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+    padding:4px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0;
   }
-  .embed-card iframe{width:100%; height:340px; border:none; display:block;}
-  .embed-placeholder{
-    padding:44px 20px; text-align:center; font-size:0.86rem; color:var(--muted);
+  .status.open{background:#fff2d9; color:#8a6a1f;}
+  .status.in-progress{background:#dbeafe; color:#1e4a7a;}
+  .status.resolved{background:#e4ece9; color:#2c3f38;}
+  .details{font-size:0.86rem; color:var(--muted); line-height:1.7; margin-bottom:14px;}
+  .details strong{color:var(--ink);}
+  .actions{display:flex; gap:10px; flex-wrap:wrap;}
+  .actions button{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.78rem;
+    padding:8px 12px; border-radius:6px; cursor:pointer; border:1px solid var(--line); background:var(--paper); color:var(--forest);
   }
-  .embed-placeholder code{
-    display:block; margin-top:10px; font-size:0.74rem;
-    background:var(--paper); padding:8px 12px; border-radius:5px;
-    text-align:left; white-space:pre-wrap;
-  }
-  .setup-card{
-    background:var(--card); border:1px dashed var(--brass); border-radius:12px;
-    padding:20px 22px; margin-top:30px;
-  }
-  .setup-card h3{font-family:'Fraunces', serif; font-size:0.95rem; color:var(--forest); margin-bottom:10px;}
-  .setup-card ol{padding-left:1.2em; font-size:0.85rem; color:var(--muted); line-height:1.8;}
   a.back{display:inline-block; margin-top:10px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
   .theme-toggle{
     position:fixed; top:16px; right:16px; z-index:100;
@@ -70,42 +77,137 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Site Admin · Example</span>
+  <span class="eyebrow">Site Admin</span>
   <h1>Tickets</h1>
-  <p>Live view of submitted tickets — updates automatically as people submit</p>
+  <p>Everything reported via Submit a Ticket and Report an Issue</p>
 </header>
 <main>
-  <div class="notice">Each Microsoft Form writes its responses to an Excel sheet in OneDrive automatically. Embed that sheet below (Excel Online → File → Share → Embed) and this page shows the real, current tickets — no manual updating, no badge number to keep in sync by hand.</div>
+  <div class="notice">Live — pulled straight from the site's own database, both the public "Report an Issue" link and the staff "Submit a Ticket" form.</div>
 
-  <div class="section-label"><span class="tag public">Public</span> Website Ticket Sheet</div>
-  <div class="embed-card">
-    <div class="embed-placeholder">
-      Live sheet will display here once embedded
-      <code>&lt;iframe src="YOUR_PUBLIC_TICKETS_EXCEL_EMBED_LINK"&gt;&lt;/iframe&gt;</code>
-    </div>
-  </div>
+  <div class="filter-row" id="filter-row"></div>
 
-  <div class="section-label"><span class="tag staff">Staff</span> Staff Ticket Sheet</div>
-  <div class="embed-card">
-    <div class="embed-placeholder">
-      Live sheet will display here once embedded
-      <code>&lt;iframe src="YOUR_STAFF_TICKETS_EXCEL_EMBED_LINK"&gt;&lt;/iframe&gt;</code>
-    </div>
-  </div>
-
-  <div class="setup-card">
-    <h3>To make this live</h3>
-    <ol>
-      <li>Build the two Microsoft Forms (public footer link, and Bar Staff → Submit a Ticket) if not already done.</li>
-      <li>In each Form's Responses tab, choose "Open in Excel" — this creates a live-updating sheet in OneDrive.</li>
-      <li>Open that sheet in Excel Online → File → Share → Embed, and copy the generated link.</li>
-      <li>Replace the two placeholder <code>src</code> values above with those links.</li>
-    </ol>
-  </div>
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="ticket-list"></div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  let ALL_DOCS = [];
+  let ACTIVE_FILTER = 'open';
+  const FILTERS = ['open', 'in-progress', 'resolved', 'all'];
+  const FILTER_LABELS = { open: 'Open', 'in-progress': 'In Progress', resolved: 'Resolved', all: 'All' };
+
+  function timeAgo(ms){
+    if(!ms) return '';
+    const mins = Math.floor((Date.now() - ms) / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if(hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  }
+
+  function renderFilters(){
+    document.getElementById('filter-row').innerHTML = FILTERS.map(f =>
+      `<span class="filter-btn ${ACTIVE_FILTER === f ? 'active' : ''}" onclick="setFilter('${f}')">${FILTER_LABELS[f]}</span>`
+    ).join('');
+  }
+
+  function setFilter(f){
+    ACTIVE_FILTER = f;
+    renderFilters();
+    renderList();
+  }
+
+  function renderList(){
+    const listEl = document.getElementById('ticket-list');
+    const statusEl = document.getElementById('load-status');
+    let docs = ALL_DOCS;
+    if(ACTIVE_FILTER !== 'all'){
+      docs = docs.filter(doc => (doc.data().status || 'open') === ACTIVE_FILTER);
+    }
+    if(docs.length === 0){
+      listEl.innerHTML = '';
+      statusEl.textContent = 'Nothing here.';
+      return;
+    }
+    statusEl.textContent = '';
+    listEl.innerHTML = docs.map(doc => {
+      const d = doc.data();
+      const status = d.status || 'open';
+      const isStaff = d.type === 'staff';
+      return `
+        <div class="ticket">
+          <div class="ticket-top">
+            <div class="badges">
+              <span class="tag ${isStaff ? 'staff' : 'public'}">${isStaff ? 'Staff' : 'Public'}</span>
+              ${d.category ? `<span class="tag staff">${d.category}</span>` : ''}
+              ${d.priority === 'High' ? `<span class="tag priority-high">High Priority</span>` : ''}
+            </div>
+            <span class="status ${status}">${FILTER_LABELS[status] || status}</span>
+          </div>
+          <div class="details">
+            ${d.description}<br>
+            <strong>From:</strong> ${isStaff ? (d.authorName || 'Someone') : (d.name || 'Anonymous')}${d.email ? ' · ' + d.email : ''}
+            ${d.page ? `<br><strong>Page:</strong> ${d.page}` : ''}
+            <br><strong>Submitted:</strong> ${timeAgo(d.createdAtMs)}
+          </div>
+          <div class="actions">
+            ${status !== 'open' ? `<button onclick="setStatus('${doc.id}', 'open')">Reopen</button>` : ''}
+            ${status !== 'in-progress' ? `<button onclick="setStatus('${doc.id}', 'in-progress')">Mark In Progress</button>` : ''}
+            ${status !== 'resolved' ? `<button onclick="setStatus('${doc.id}', 'resolved')">Mark Resolved</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadTickets(){
+    const statusEl = document.getElementById('load-status');
+    try{
+      const snap = await db.collection('tickets').get();
+      ALL_DOCS = snap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+      renderFilters();
+      renderList();
+    } catch(e){
+      statusEl.textContent = "Couldn't load tickets right now — " + e.message;
+    }
+  }
+
+  async function setStatus(id, status){
+    try{
+      await db.collection('tickets').doc(id).update({ status });
+      loadTickets();
+    } catch(e){
+      alert("Couldn't update that — " + e.message);
+    }
+  }
+
+  auth.onAuthStateChanged((user) => {
+    if(user){
+      loadTickets();
+    } else {
+      window.location.href = 'staff-area.html';
+    }
+  });
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');

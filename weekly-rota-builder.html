@@ -144,6 +144,10 @@
   <p class="action-status" id="publish-status"></p>
   <div class="mini-progress" id="publish-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="publish-progress-bar"></div></div><span class="mini-progress-pct" id="publish-progress-pct">0%</span></div>
 
+  <div class="section-label" style="margin-top:30px;">Who's Confirmed Seeing This Rota</div>
+  <p class="action-status" id="confirm-status">Loading…</p>
+  <div id="confirm-list"></div>
+
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
 <script>
@@ -355,7 +359,45 @@
   window.addEventListener('offline', updateOnlineStatus);
   updateOnlineStatus();
 
+  async function loadConfirmations(){
+    const statusEl = document.getElementById('confirm-status');
+    const listEl = document.getElementById('confirm-list');
+    statusEl.textContent = 'Loading…';
+    statusEl.className = 'action-status';
+    try{
+      const rotaDoc = await db.collection('rota').doc('current').get();
+      if(!rotaDoc.exists || !rotaDoc.data().publishedTimestamp){
+        statusEl.textContent = 'Nothing published yet.';
+        listEl.innerHTML = '';
+        return;
+      }
+      const data = rotaDoc.data();
+      const publishedTimestamp = data.publishedTimestamp;
+      const shiftNames = [...new Set((data.shifts || []).map(s => s.n))];
+
+      const snap = await db.collection('rotaConfirmations').get();
+      const confirmed = snap.docs
+        .map(d => d.data())
+        .filter(d => d.publishedTimestamp === publishedTimestamp);
+      const confirmedNames = new Set(confirmed.map(c => c.name));
+      const notConfirmed = shiftNames.filter(n => !confirmedNames.has(n));
+
+      statusEl.textContent = `${confirmed.length} confirmation${confirmed.length === 1 ? '' : 's'} for the rota published ${data.publishedDate || ''}.`;
+      statusEl.className = 'action-status success';
+      listEl.innerHTML = `
+        <div style="font-size:0.84rem; color:var(--muted); line-height:1.8; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px;">
+          ${confirmed.length ? `<strong style="color:var(--forest);">✓ Confirmed:</strong> ${confirmed.map(c => c.name).join(', ')}<br>` : ''}
+          ${notConfirmed.length ? `<strong style="color:#8a6a1f;">⏳ Not yet:</strong> ${notConfirmed.join(', ')}` : (shiftNames.length ? '<strong style="color:var(--forest);">Everyone on this week\'s rota has confirmed.</strong>' : '')}
+        </div>
+      `;
+    } catch(e){
+      statusEl.textContent = "Couldn't load confirmations — " + e.message;
+      statusEl.className = 'action-status error';
+    }
+  }
+
   buildDayCards();
+  loadConfirmations();
 
   const loggedInName = localStorage.getItem('staffUserName');
   document.getElementById('audit-note').textContent = loggedInName
@@ -402,6 +444,7 @@
       setProgress('publish-progress', 100);
       statusEl.textContent = '✓ Published — live immediately, no deploy wait.';
       statusEl.className = 'action-status success';
+      loadConfirmations();
       return true;
     } catch(err){
       statusEl.textContent = err.code === 'permission-denied'
