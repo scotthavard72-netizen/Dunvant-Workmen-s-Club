@@ -346,7 +346,7 @@
       <div class="whats-new-panel" id="whats-new-panel"></div>
     </div>
     <div class="summary-bar" id="summary-bar"></div>
-    <button class="notify-permission-btn" id="notify-permission-btn" onclick="requestRotaNotifications()">🔔 Get notified when the rota's out</button>
+    <button class="notify-permission-btn" id="notify-permission-btn" onclick="requestRotaNotifications()">🔔 Get notified when the rota's out (and before your shifts)</button>
 
     <div class="quick-row-wrap" id="pinned-wrap" style="display:none;">
       <div class="quick-row-title">📌 Pinned</div>
@@ -409,6 +409,8 @@
         ["staff-directory.html", "Staff Directory", "Everyone with access, their role, and how to reach them"],
         ["staff-shoutouts.html", "Staff Shout-Outs", "Give a colleague a bit of credit"],
         ["staff-availability.html", "Availability", "Flag days you can't work, so the rota avoids them"],
+        ["qr-code-generator.html", "QR Code Generator", "Turn a link into a scannable code for posters"],
+        ["staff-diary.html", "Staff Diary", "Shared notes for a date — not a shift, just a heads-up"],
         ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"],
         ["#staff-ticket-form-link", "Submit a Ticket", "Report a problem or request something from management"],
         ["price-list.html", "Price List", "Quick reference for drink prices"],
@@ -520,6 +522,8 @@
         ["staff-directory.html", "Staff Directory", "Everyone with access, their role, and how to reach them"],
         ["staff-shoutouts.html", "Staff Shout-Outs", "Give a colleague a bit of credit"],
         ["member-suggestions-review.html", "Member Suggestions Review", "What members have submitted via the public site"],
+        ["qr-code-generator.html", "QR Code Generator", "Turn a link into a scannable code for posters"],
+        ["staff-diary.html", "Staff Diary", "Shared notes for a date — not a shift, just a heads-up"],
         ["pending-bookings.html", "Pending Bookings", "Function room requests, for visibility", "2"],
         ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
         ["#meeting-minutes-link", "Meeting Minutes &amp; Agendas", "Past minutes and upcoming meeting agendas"],
@@ -584,6 +588,7 @@
     renderRecentRow();
     loadWhatsNew();
     updateNotifyButtonState();
+    checkShiftReminder(user.name);
     document.getElementById('screen-login').classList.remove('active');
     document.getElementById('screen-menu').classList.add('active');
   }
@@ -847,6 +852,44 @@
       }
     } catch(e){
       // Fine if this fails — just no badge, no notification-worthy error to show
+    }
+  }
+
+  // Reminder for your own next shift — reuses the same notification permission
+  // as "Get notified when the rota's out" above, so there's no separate ask.
+  // Fires once per shift date, whether that shift is today or tomorrow.
+  async function checkShiftReminder(myName){
+    if(!myName || !('Notification' in window) || Notification.permission !== 'granted') return;
+    try{
+      const doc = await db.collection('rota').doc('current').get();
+      if(!doc.exists) return;
+      const shifts = doc.data().shifts || [];
+      const todayFd = new Date().toISOString().split('T')[0];
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowFd = tomorrow.toISOString().split('T')[0];
+
+      const mine = shifts.filter(s => s.n === myName && s.fd && (s.fd === todayFd || s.fd === tomorrowFd));
+      if(mine.length === 0) return;
+
+      const notifiedKey = 'shiftReminderNotified';
+      const alreadyNotified = JSON.parse(localStorage.getItem(notifiedKey) || '[]');
+
+      mine.forEach(s => {
+        const marker = `${s.fd}|${s.st}`;
+        if(alreadyNotified.includes(marker)) return;
+        const when = s.fd === todayFd ? 'today' : 'tomorrow';
+        const timeLabel = `${s.st}${s.et ? '–' + (s.et === '23:59' ? 'midnight' : s.et) : ''}`;
+        new Notification(`Shift reminder — ${when}`, {
+          body: `You're on ${when}, ${timeLabel}${s.r === 'K' ? ' (Keyholder)' : ''}.`,
+          icon: 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect width=\'192\' height=\'192\' rx=\'34\' fill=\'%232c3f38\'/%3E%3Ctext x=\'96\' y=\'132\' font-family=\'Georgia,serif\' font-size=\'112\' font-weight=\'700\' fill=\'%23e0b56a\' text-anchor=\'middle\'%3ED%3C/text%3E%3C/svg%3E'
+        });
+        alreadyNotified.push(marker);
+      });
+      // Keep the marker list from growing forever — only the last 20 needed
+      localStorage.setItem(notifiedKey, JSON.stringify(alreadyNotified.slice(-20)));
+    } catch(e){
+      // Fine if this fails — just no reminder, nothing worth surfacing as an error
     }
   }
 

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>QR Code Generator — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:520px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:24px;}
+  .form-card label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .form-card input{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
+    padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+    margin-bottom:14px;
+  }
+  .row{display:flex; gap:10px; flex-wrap:wrap;}
+  .row .field{flex:1; min-width:120px;}
+  .submit-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.9rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; border-radius:8px; padding:12px 20px; cursor:pointer; width:100%;
+  }
+  .form-status{font-size:0.82rem; color:var(--muted); margin-top:10px; text-align:center;}
+  .form-status.error{color:#c25a4d; font-weight:600;}
+
+  .result-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:24px; text-align:center; display:none;
+  }
+  .result-card.visible{display:block;}
+  #qr-canvas-holder{display:inline-block; background:#fff; padding:14px; border-radius:8px; margin-bottom:16px;}
+  .download-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.86rem;
+    background:none; color:var(--forest); border:1px solid var(--brass);
+    border-radius:8px; padding:11px 18px; cursor:pointer; text-decoration:none; display:inline-block;
+  }
+  .download-btn:hover{background:var(--brass); color:#fff;}
+
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Staff</span>
+  <h1>QR Code Generator</h1>
+  <p>Turn a link into a scannable code for posters or the noticeboard</p>
+</header>
+<main>
+  <div class="notice">Paste any link (an event page, a form, a menu, the Facebook page) and download a QR code image ready to print. Generated entirely in your browser — nothing is saved or sent anywhere.</div>
+
+  <div class="form-card">
+    <label for="qr-url">Link</label>
+    <input type="text" id="qr-url" placeholder="https://...">
+    <div class="row">
+      <div class="field">
+        <label for="qr-size">Size (px)</label>
+        <input type="number" id="qr-size" value="300" min="100" max="1000" step="50">
+      </div>
+    </div>
+    <button class="submit-btn" onclick="generateQr()">Generate QR Code</button>
+    <p class="form-status" id="form-status"></p>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <div id="qr-canvas-holder"></div>
+    <br>
+    <button class="download-btn" onclick="downloadQr()">⬇️ Download PNG</button>
+  </div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script>
+  let qrInstance = null;
+
+  function generateQr(){
+    const urlInput = document.getElementById('qr-url');
+    const sizeInput = document.getElementById('qr-size');
+    const statusEl = document.getElementById('form-status');
+    const holder = document.getElementById('qr-canvas-holder');
+    const resultCard = document.getElementById('result-card');
+
+    let text = urlInput.value.trim();
+    if(!text){
+      statusEl.textContent = 'Paste a link first.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+    if(!/^https?:\/\//i.test(text)){
+      text = 'https://' + text;
+    }
+    if(typeof QRCode === 'undefined'){
+      statusEl.textContent = "Couldn't load the QR library right now — check your connection and try again.";
+      statusEl.className = 'form-status error';
+      return;
+    }
+
+    let size = parseInt(sizeInput.value, 10) || 300;
+    size = Math.min(Math.max(size, 100), 1000);
+
+    holder.innerHTML = '';
+    qrInstance = new QRCode(holder, {
+      text,
+      width: size,
+      height: size,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    statusEl.textContent = '';
+    resultCard.classList.add('visible');
+  }
+
+  function downloadQr(){
+    const holder = document.getElementById('qr-canvas-holder');
+    const canvas = holder.querySelector('canvas');
+    const img = holder.querySelector('img');
+    let dataUrl = null;
+    if(canvas){
+      dataUrl = canvas.toDataURL('image/png');
+    } else if(img && img.src){
+      dataUrl = img.src;
+    }
+    if(!dataUrl){
+      alert("Couldn't find a generated code to download — try generating it again.");
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'dunvant-wmc-qr-code.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  document.getElementById('qr-url').addEventListener('keydown', e => {
+    if(e.key === 'Enter') generateQr();
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>
