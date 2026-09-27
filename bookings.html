@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Pending Bookings — Dunvant WMC</title>
+<title>Bookings — Dunvant WMC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -28,6 +28,16 @@
   main{max-width:680px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
   [data-theme="dark"] .notice{background:#2a2318;}
+
+  .tab-row{display:flex; gap:8px; margin-bottom:22px; border-bottom:1px solid var(--line);}
+  .tab-btn{
+    font-family:'Inter', sans-serif; font-size:0.86rem; font-weight:600; padding:10px 16px; cursor:pointer;
+    border:none; background:none; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tab-btn.active{color:var(--forest); border-bottom-color:var(--brass);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
   .filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
   .filter-btn{
     font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600; padding:7px 14px; border-radius:16px; cursor:pointer;
@@ -55,6 +65,37 @@
   }
   .approve{background:var(--forest); color:#fff;}
   .decline{background:var(--paper); color:var(--ink); border:1px solid var(--line) !important;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:26px;}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+  @media(max-width:520px){ .form-row{grid-template-columns:1fr;} }
+  .form-card label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .form-card input{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
+    padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+  }
+  .submit-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.9rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; border-radius:8px; padding:12px 20px; cursor:pointer; width:100%;
+  }
+  .form-status{font-size:0.82rem; color:var(--muted); margin-top:10px; text-align:center;}
+  .form-status.success{color:#3d8f6f; font-weight:600;}
+  .form-status.error{color:#c25a4d; font-weight:600;}
+
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:14px;}
+
+  .booking-row{
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:12px 16px; margin-bottom:8px;
+  }
+  .booking-info .date{font-weight:600; font-size:0.9rem;}
+  .booking-info .label{font-size:0.8rem; color:var(--muted); margin-top:2px;}
+  .remove-btn{
+    background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.76rem; font-weight:600;
+    cursor:pointer; padding:6px 10px; border-radius:6px; white-space:nowrap; flex-shrink:0;
+  }
   a.back{display:inline-block; margin-top:10px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
   .theme-toggle{
     position:fixed; top:16px; right:16px; z-index:100;
@@ -71,16 +112,43 @@
 
 <header>
   <span class="eyebrow">Management</span>
-  <h1>Pending Bookings</h1>
-  <p>Function room requests submitted via the public Book page</p>
+  <h1>Bookings</h1>
+  <p>Function room requests and what shows as taken on the public Book page</p>
 </header>
 <main>
-  <div class="notice">Approving a request also adds the date to the public "Already booked" list automatically — no need to do that separately in Manage Bookings.</div>
+  <div class="tab-row" id="tab-row">
+    <button class="tab-btn active" id="tab-btn-requests" onclick="setTab('requests')">Requests</button>
+    <button class="tab-btn" id="tab-btn-confirmed" onclick="setTab('confirmed')">Confirmed Bookings</button>
+  </div>
 
-  <div class="filter-row" id="filter-row"></div>
+  <div class="tab-panel active" id="panel-requests">
+    <div class="notice">Function room requests submitted via the public Book page. Approving a request adds the date straight to Confirmed Bookings — no need to add it again over on that tab.</div>
+    <div class="filter-row" id="filter-row"></div>
+    <p class="load-status" id="req-load-status">Loading…</p>
+    <div id="req-list"></div>
+  </div>
 
-  <p class="load-status" id="load-status">Loading…</p>
-  <div id="req-list"></div>
+  <div class="tab-panel" id="panel-confirmed">
+    <div class="notice">Anyone can see this list on the public Book page, so keep the label generic (e.g. "Private Function") rather than naming who booked it. Dates approved on the Requests tab are added here automatically.</div>
+    <div class="form-card">
+      <div class="form-row">
+        <div>
+          <label for="booking-date">Date</label>
+          <input type="date" id="booking-date">
+        </div>
+        <div>
+          <label for="booking-label">Label (shown publicly)</label>
+          <input type="text" id="booking-label" placeholder="Private Function" maxlength="40">
+        </div>
+      </div>
+      <button class="submit-btn" onclick="addBooking()">+ Add Confirmed Booking</button>
+      <p class="form-status" id="form-status"></p>
+    </div>
+
+    <div class="section-label">Upcoming Confirmed Bookings</div>
+    <p class="load-status" id="booking-load-status">Loading…</p>
+    <div id="booking-list"></div>
+  </div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
@@ -101,15 +169,25 @@
   const db = firebase.firestore();
 </script>
 <script>
+  // ── Shared ──
+  function formatBookingDate(fd, opts){
+    if(!fd) return '';
+    return new Date(fd + 'T00:00:00').toLocaleDateString('en-GB', opts || { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function setTab(tab){
+    const isReq = tab === 'requests';
+    document.getElementById('tab-btn-requests').classList.toggle('active', isReq);
+    document.getElementById('tab-btn-confirmed').classList.toggle('active', !isReq);
+    document.getElementById('panel-requests').classList.toggle('active', isReq);
+    document.getElementById('panel-confirmed').classList.toggle('active', !isReq);
+  }
+
+  // ── Requests tab (was pending-bookings.html) ──
   let ALL_DOCS = [];
   let ACTIVE_FILTER = 'pending';
   const FILTERS = ['pending', 'approved', 'declined', 'all'];
   const FILTER_LABELS = { pending: 'Pending', approved: 'Approved', declined: 'Declined', all: 'All' };
-
-  function formatBookingDate(fd){
-    if(!fd) return '';
-    return new Date(fd + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
-  }
 
   function formatTime12h(t){
     if(!t) return '';
@@ -133,7 +211,7 @@
 
   function renderList(){
     const listEl = document.getElementById('req-list');
-    const statusEl = document.getElementById('load-status');
+    const statusEl = document.getElementById('req-load-status');
     let docs = ALL_DOCS;
     if(ACTIVE_FILTER !== 'all'){
       docs = docs.filter(doc => (doc.data().status || 'pending') === ACTIVE_FILTER);
@@ -173,7 +251,7 @@
   }
 
   async function loadRequests(){
-    const statusEl = document.getElementById('load-status');
+    const statusEl = document.getElementById('req-load-status');
     try{
       const snap = await db.collection('bookingRequests').get();
       ALL_DOCS = snap.docs.sort((a, b) => (a.data().date || '').localeCompare(b.data().date || ''));
@@ -199,6 +277,7 @@
         });
       }
       loadRequests();
+      loadBookings();
     } catch(e){
       alert("Couldn't approve that — " + e.message);
     }
@@ -214,9 +293,82 @@
     }
   }
 
+  // ── Confirmed Bookings tab (was manage-bookings.html) ──
+  async function loadBookings(){
+    const listEl = document.getElementById('booking-list');
+    const statusEl = document.getElementById('booking-load-status');
+    try{
+      const snap = await db.collection('bookings').get();
+      const today = new Date().toISOString().split('T')[0];
+      const upcoming = snap.docs
+        .filter(d => (d.data().date || '') >= today)
+        .sort((a, b) => a.data().date.localeCompare(b.data().date));
+      if(upcoming.length === 0){
+        listEl.innerHTML = '';
+        statusEl.textContent = 'No confirmed bookings coming up.';
+        return;
+      }
+      statusEl.textContent = '';
+      listEl.innerHTML = upcoming.map(doc => {
+        const d = doc.data();
+        return `
+          <div class="booking-row">
+            <div class="booking-info">
+              <div class="date">${formatBookingDate(d.date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</div>
+              <div class="label">${d.label || 'Booked'}</div>
+            </div>
+            <button class="remove-btn" onclick="removeBooking('${doc.id}')">✕ Remove</button>
+          </div>
+        `;
+      }).join('');
+    } catch(e){
+      statusEl.textContent = "Couldn't load bookings right now — " + e.message;
+    }
+  }
+
+  async function addBooking(){
+    const date = document.getElementById('booking-date').value;
+    const label = document.getElementById('booking-label').value.trim();
+    const statusEl = document.getElementById('form-status');
+    if(!date){
+      statusEl.textContent = 'Pick a date first.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'form-status';
+    try{
+      await db.collection('bookings').add({
+        date,
+        label: label || 'Private Function',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('booking-date').value = '';
+      document.getElementById('booking-label').value = '';
+      statusEl.textContent = '✓ Added — live on the public Book page now.';
+      statusEl.className = 'form-status success';
+      loadBookings();
+    } catch(e){
+      statusEl.textContent = "Couldn't save that — " + e.message;
+      statusEl.className = 'form-status error';
+    }
+  }
+
+  async function removeBooking(id){
+    if(!confirm('Remove this booking? It will disappear from the public availability list.')) return;
+    try{
+      await db.collection('bookings').doc(id).delete();
+      loadBookings();
+    } catch(e){
+      alert("Couldn't remove it — " + e.message);
+    }
+  }
+
   auth.onAuthStateChanged((user) => {
     if(user){
       loadRequests();
+      loadBookings();
     } else {
       window.location.href = 'staff-area.html';
     }
