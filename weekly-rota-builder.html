@@ -153,6 +153,16 @@
 <script>
   const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
+  // A calendar-day string (YYYY-MM-DD) in the viewer's own local time zone.
+  // Date.toISOString() converts to UTC first, which silently shifts the date
+  // back a day for anyone ahead of UTC (e.g. BST) — this avoids that. This
+  // matters here because every published shift's date ("fd") is compared
+  // against "today" elsewhere on the site (Staff Hub's Today's Team, etc.),
+  // so a day-off-by-one here means shifts show up under the wrong day.
+  function toLocalISODate(date){
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  }
+
   // Pull in whatever's currently published, so a mistake can be fixed or a
   // shift shortened (e.g. sending someone home early once it's quiet) without
   // starting the whole week over from scratch.
@@ -186,7 +196,7 @@
       const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
       const monday = new Date(earliest);
       monday.setDate(earliest.getDate() + diffToMonday);
-      document.getElementById('week-start').value = monday.toISOString().split('T')[0];
+      document.getElementById('week-start').value = toLocalISODate(monday);
       updateDayDates();
 
       // Clear the default blank rows, then fill in each real shift on its correct day
@@ -442,7 +452,7 @@
     try{
       const compact = shifts.map(s => ({
         d: s.day.slice(0, 3), dt: s.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-        fd: s.date.toISOString().split('T')[0],
+        fd: toLocalISODate(s.date),
         n: s.name, r: s.role === 'Keyholder' ? 'K' : 'B', st: s.startTime, et: s.endTime
       }));
       const publishedDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });

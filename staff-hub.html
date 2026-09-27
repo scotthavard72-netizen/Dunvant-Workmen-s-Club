@@ -578,6 +578,13 @@
     return `${h12}:${m.toString().padStart(2, '0')} ${period}`;
   }
 
+  // A calendar-day string (YYYY-MM-DD) in the VIEWER'S OWN local time zone.
+  // Date.toISOString() converts to UTC first, which silently shifts the date
+  // by a day for anyone ahead of UTC (e.g. BST) — this avoids that.
+  function localISODate(date){
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  }
+
   async function loadGlanceShift(){
     const valueEl = document.getElementById('glance-shift');
     const subEl = document.getElementById('glance-shift-sub');
@@ -588,7 +595,7 @@
         return;
       }
       const shifts = (doc.data().shifts || []).filter(s => s.n === MY_NAME && s.fd);
-      const today = new Date().toISOString().split('T')[0];
+      const today = localISODate(new Date());
       const upcoming = shifts.filter(s => s.fd >= today).sort((a, b) => a.fd.localeCompare(b.fd));
       if(upcoming.length === 0){
         valueEl.textContent = 'None scheduled';
@@ -608,7 +615,7 @@
     const subEl = document.getElementById('glance-booking-sub');
     try{
       const snap = await db.collection('bookings').get();
-      const today = new Date().toISOString().split('T')[0];
+      const today = localISODate(new Date());
       const upcoming = snap.docs
         .filter(d => (d.data().date || '') >= today)
         .sort((a, b) => a.data().date.localeCompare(b.data().date));
@@ -658,7 +665,7 @@
         listEl.innerHTML = '<p class="empty-note">No rota published yet.</p>';
         return;
       }
-      const today = new Date().toISOString().split('T')[0];
+      const today = localISODate(new Date());
       const shifts = (doc.data().shifts || []).filter(s => s.fd === today && s.n).sort((a, b) => (a.st || '').localeCompare(b.st || ''));
       if(shifts.length === 0){
         listEl.innerHTML = '<p class="empty-note">Nobody scheduled today.</p>';
@@ -690,10 +697,10 @@
     } catch(e){ document.getElementById('stat-open-cover').textContent = '—'; }
     try{
       const snap = await db.collection('availability').get();
-      const today = new Date().toISOString().split('T')[0];
+      const today = localISODate(new Date());
       const weekAhead = new Date();
       weekAhead.setDate(weekAhead.getDate() + 7);
-      const weekAheadFd = weekAhead.toISOString().split('T')[0];
+      const weekAheadFd = localISODate(weekAhead);
       const flagged = snap.docs.filter(d => {
         const data = d.data();
         const from = data.from || '';
@@ -1199,10 +1206,10 @@
       const doc = await db.collection('rota').doc('current').get();
       if(!doc.exists) return;
       const shifts = doc.data().shifts || [];
-      const todayFd = new Date().toISOString().split('T')[0];
+      const todayFd = localISODate(new Date());
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowFd = tomorrow.toISOString().split('T')[0];
+      const tomorrowFd = localISODate(tomorrow);
 
       const mine = shifts.filter(s => s.n === myName && s.fd && (s.fd === todayFd || s.fd === tomorrowFd));
       if(mine.length === 0) return;
@@ -1685,7 +1692,7 @@
   function renderDiary(docs){
     const listEl = document.getElementById('di-list');
     const statusEl = document.getElementById('di-load-status');
-    const today = new Date().toISOString().split('T')[0];
+    const today = localISODate(new Date());
     const upcoming = docs.filter(doc => (doc.data().date || '') >= today);
     if(upcoming.length === 0){
       listEl.innerHTML = '';
