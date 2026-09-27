@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Cash-Up Log — Dunvant WMC</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:560px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  h2.section-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem; color:var(--forest); margin:28px 0 12px;}
+  h2.section-title:first-of-type{margin-top:0;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px;}
+  .field{margin-bottom:16px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:block; font-size:0.82rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .field .readonly-name{
+    font-size:0.92rem; font-weight:600; padding:12px 14px; background:var(--paper);
+    border:1px solid var(--line); border-radius:8px; color:var(--muted);
+  }
+  .field input, .field textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
+    padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+  }
+  .field textarea{resize:vertical; min-height:70px;}
+  .field input:focus, .field textarea:focus{outline:none; border-color:var(--brass);}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .hint{font-size:0.76rem; color:var(--muted); margin-top:6px;}
+  .discrepancy-line{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--paper); border:1px solid var(--line); border-radius:8px;
+    padding:12px 14px; margin-bottom:16px; font-size:0.9rem; font-weight:600;
+  }
+  .discrepancy-line .amount.ok{color:var(--forest);}
+  .discrepancy-line .amount.warn{color:#a24339;}
+  [data-theme="dark"] .discrepancy-line .amount.warn{color:#e0a89e;}
+  button.submit{
+    width:100%; font-family:'Inter', sans-serif; font-weight:600; font-size:0.95rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; padding:15px 16px; border-radius:8px; cursor:pointer; margin-top:6px;
+  }
+  .form-status{font-size:0.82rem; margin-top:12px; text-align:center; display:none;}
+  .form-status.ok{color:var(--forest); display:block;}
+  .form-status.err{color:#a24339; display:block;}
+
+  .log-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:10px;}
+  .log-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .log-title{font-weight:600; font-size:0.9rem;}
+  .log-meta{font-size:0.78rem; color:var(--muted); margin-top:3px;}
+  .log-figures{display:flex; flex-wrap:wrap; gap:6px 16px; font-size:0.82rem; margin-top:10px;}
+  .log-figures span strong{color:var(--forest);}
+  .log-notes{font-size:0.82rem; color:var(--ink); margin-top:8px; font-style:italic;}
+  .discrepancy-tag{
+    font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+    padding:3px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0;
+  }
+  .discrepancy-tag.ok{background:#e4ece9; color:#2c3f38;}
+  .discrepancy-tag.warn{background:#f6e2df; color:#8a2f2f;}
+  [data-theme="dark"] .discrepancy-tag.ok{background:#1e2d24; color:#a8d4bb;}
+  [data-theme="dark"] .discrepancy-tag.warn{background:#3a1e1a; color:#e0a89e;}
+  .empty-note{font-size:0.84rem; color:var(--muted); padding:6px 2px;}
+
+  a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Keyholder</span>
+  <h1>Cash-Up Log</h1>
+  <p>End-of-night till count and drop record</p>
+</header>
+<main>
+  <div class="notice">Fill this in whenever you cash up. It's saved so management can check the history — no more paper slips that go missing.</div>
+
+  <h2 class="section-title">Log Tonight's Cash-Up</h2>
+  <div class="form-card">
+    <form id="cashup-form" onsubmit="return submitCashup(event)">
+      <div class="field">
+        <label>Keyholder</label>
+        <div class="readonly-name" id="my-name-display">—</div>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="cashup-date" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Opening Float (£)</label>
+          <input type="number" step="0.01" id="cashup-opening-float" placeholder="100.00">
+        </div>
+        <div class="field">
+          <label>Till Reading (£)</label>
+          <input type="number" step="0.01" id="cashup-till-reading" placeholder="If you have a Z-reading">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Cash Counted (£)</label>
+          <input type="number" step="0.01" id="cashup-cash-counted" oninput="updateDiscrepancy()" placeholder="Total counted at close">
+        </div>
+        <div class="field">
+          <label>Float Kept for Tomorrow (£)</label>
+          <input type="number" step="0.01" id="cashup-float-kept" oninput="updateDiscrepancy()" placeholder="100.00">
+        </div>
+      </div>
+      <div class="discrepancy-line">
+        <span>To bank / discrepancy</span>
+        <span class="amount" id="discrepancy-display">—</span>
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="cashup-notes" placeholder="Anything worth flagging — short till, torn notes, etc."></textarea>
+      </div>
+      <button class="submit" type="submit">Save Cash-Up</button>
+      <p class="form-status" id="form-status"></p>
+    </form>
+  </div>
+
+  <h2 class="section-title">Recent Cash-Ups</h2>
+  <div id="log-list"><p class="empty-note">Loading…</p></div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  let MY_NAME = '';
+
+  function fmtMoney(n){
+    const sign = n < 0 ? '-' : '';
+    return `${sign}£${Math.abs(n).toFixed(2)}`;
+  }
+
+  function updateDiscrepancy(){
+    const el = document.getElementById('discrepancy-display');
+    const tillReading = parseFloat(document.getElementById('cashup-till-reading').value);
+    const cashCounted = parseFloat(document.getElementById('cashup-cash-counted').value);
+    const floatKept = parseFloat(document.getElementById('cashup-float-kept').value) || 0;
+
+    if(isNaN(cashCounted)){
+      el.textContent = '—';
+      el.className = 'amount';
+      return;
+    }
+    const toBank = cashCounted - floatKept;
+    if(isNaN(tillReading)){
+      el.textContent = `${fmtMoney(toBank)} to bank`;
+      el.className = 'amount ok';
+      return;
+    }
+    const discrepancy = cashCounted - floatKept - tillReading;
+    if(Math.abs(discrepancy) < 0.01){
+      el.textContent = `${fmtMoney(toBank)} to bank — matches till`;
+      el.className = 'amount ok';
+    } else {
+      el.textContent = `${fmtMoney(toBank)} to bank — ${discrepancy > 0 ? 'up' : 'short'} ${fmtMoney(Math.abs(discrepancy))}`;
+      el.className = 'amount warn';
+    }
+  }
+
+  function renderLogCard(d){
+    const cashCounted = typeof d.cashCounted === 'number' ? d.cashCounted : null;
+    const floatKept = typeof d.floatKept === 'number' ? d.floatKept : 0;
+    const tillReading = typeof d.tillReading === 'number' ? d.tillReading : null;
+    let discrepancy = null;
+    if(cashCounted !== null && tillReading !== null) discrepancy = cashCounted - floatKept - tillReading;
+    const tag = discrepancy === null
+      ? ''
+      : Math.abs(discrepancy) < 0.01
+        ? '<span class="discrepancy-tag ok">Matches</span>'
+        : `<span class="discrepancy-tag warn">${discrepancy > 0 ? 'Up' : 'Short'} ${fmtMoney(Math.abs(discrepancy))}</span>`;
+    return `
+      <div class="log-card">
+        <div class="log-top">
+          <div>
+            <div class="log-title">${d.keyholderName}</div>
+            <div class="log-meta">${d.date || ''}</div>
+          </div>
+          ${tag}
+        </div>
+        <div class="log-figures">
+          ${cashCounted !== null ? `<span>Counted: <strong>${fmtMoney(cashCounted)}</strong></span>` : ''}
+          ${tillReading !== null ? `<span>Till: <strong>${fmtMoney(tillReading)}</strong></span>` : ''}
+          <span>Float kept: <strong>${fmtMoney(floatKept)}</strong></span>
+        </div>
+        ${d.notes ? `<div class="log-notes">"${d.notes}"</div>` : ''}
+      </div>
+    `;
+  }
+
+  async function loadLogs(){
+    const listEl = document.getElementById('log-list');
+    try{
+      const snap = await db.collection('cashUps').get();
+      const docs = snap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0)).slice(0, 20);
+      listEl.innerHTML = docs.length
+        ? docs.map(doc => renderLogCard(doc.data())).join('')
+        : '<p class="empty-note">No cash-ups logged yet.</p>';
+    } catch(e){
+      listEl.innerHTML = '<p class="empty-note">Couldn\'t load recent cash-ups right now.</p>';
+    }
+  }
+
+  async function submitCashup(e){
+    e.preventDefault();
+    const statusEl = document.getElementById('form-status');
+    const date = document.getElementById('cashup-date').value;
+    const openingFloat = parseFloat(document.getElementById('cashup-opening-float').value);
+    const tillReading = parseFloat(document.getElementById('cashup-till-reading').value);
+    const cashCounted = parseFloat(document.getElementById('cashup-cash-counted').value);
+    const floatKept = parseFloat(document.getElementById('cashup-float-kept').value);
+    const notes = document.getElementById('cashup-notes').value.trim();
+
+    if(!date || isNaN(cashCounted)){
+      statusEl.textContent = 'Add the date and how much cash was counted, at least.';
+      statusEl.className = 'form-status err';
+      return false;
+    }
+
+    const submitBtn = e.target.querySelector('button.submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving…';
+
+    const record = {
+      keyholderName: MY_NAME,
+      date,
+      cashCounted,
+      floatKept: isNaN(floatKept) ? 0 : floatKept,
+      notes,
+      createdAtMs: Date.now(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if(!isNaN(openingFloat)) record.openingFloat = openingFloat;
+    if(!isNaN(tillReading)) record.tillReading = tillReading;
+
+    try{
+      await db.collection('cashUps').add(record);
+      statusEl.textContent = '✓ Saved.';
+      statusEl.className = 'form-status ok';
+      document.getElementById('cashup-form').reset();
+      document.getElementById('cashup-date').value = date;
+      updateDiscrepancy();
+      loadLogs();
+    } catch(e){
+      statusEl.textContent = "Couldn't save that — try again in a moment.";
+      statusEl.className = 'form-status err';
+    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save Cash-Up';
+    return false;
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      window.location.href = 'staff-area.html';
+      return;
+    }
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      MY_NAME = (doc.exists ? doc.data().name : null) || localStorage.getItem('staffUserName') || 'You';
+    } catch(e){
+      MY_NAME = localStorage.getItem('staffUserName') || 'You';
+    }
+    document.getElementById('my-name-display').textContent = MY_NAME;
+    document.getElementById('cashup-date').value = new Date().toISOString().slice(0, 10);
+    loadLogs();
+  });
+
+  // Dark mode
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>

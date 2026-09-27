@@ -101,6 +101,13 @@
   .empty-note{font-size:0.84rem; color:var(--muted); padding:6px 2px;}
 
   a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+  .notify-btn{
+    display:block; width:100%; font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600;
+    background:var(--card); color:var(--forest); border:1px dashed var(--line);
+    border-radius:12px; padding:12px 14px; cursor:pointer; margin-bottom:20px; transition:all 0.15s ease;
+  }
+  .notify-btn:hover{border-color:var(--brass);}
+  .notify-btn:disabled{cursor:default; opacity:0.7;}
 </style>
 </head>
 <body>
@@ -113,6 +120,8 @@
 </header>
 <main>
   <div class="notice">Pick one of your upcoming shifts, name who you're asking, and they'll see it here to accept or decline. This is between the two of you — let a keyholder or management know once it's agreed, so the rota stays accurate.</div>
+
+  <button class="notify-btn" id="notify-permission-btn" onclick="requestSwapNotifications()">🔔 Get notified when a swap is accepted or declined</button>
 
   <h2 class="section-title">Propose a Swap</h2>
   <div class="form-card">
@@ -280,10 +289,54 @@
       mineEl.innerHTML = mineDocs.length
         ? mineDocs.map(d => renderSwapCard(d, false)).join('')
         : '<p class="empty-note">You haven\'t asked anyone to swap yet.</p>';
+
+      checkSwapStatusChanges(mineDocs);
     } catch(e){
       forMeEl.innerHTML = '<p class="empty-note">Couldn\'t load requests right now — try refreshing.</p>';
       mineEl.innerHTML = '';
     }
+  }
+
+  // Makeshift "notification" — there's no real push notification system here, so
+  // this just compares each of your own requests' status against what we last saw
+  // (in this browser) and pops a local notification when one has changed.
+  function updateNotifyButtonState(){
+    const btn = document.getElementById('notify-permission-btn');
+    if(!btn) return;
+    if(!('Notification' in window)){ btn.style.display = 'none'; return; }
+    if(Notification.permission === 'granted'){
+      btn.textContent = '🔔 Notifications on';
+      btn.disabled = true;
+    } else if(Notification.permission === 'denied'){
+      btn.textContent = '🔕 Notifications blocked in browser settings';
+      btn.disabled = true;
+    } else {
+      btn.textContent = '🔔 Get notified when a swap is accepted or declined';
+      btn.disabled = false;
+    }
+  }
+  function requestSwapNotifications(){
+    if(!('Notification' in window)){
+      alert("This browser doesn't support notifications.");
+      return;
+    }
+    Notification.requestPermission().then(() => updateNotifyButtonState());
+  }
+  function checkSwapStatusChanges(mineDocs){
+    let seen = {};
+    try{ seen = JSON.parse(localStorage.getItem('swapStatusSeen') || '{}'); }catch(_){}
+    const canNotify = 'Notification' in window && Notification.permission === 'granted';
+    mineDocs.forEach(doc => {
+      const d = doc.data();
+      const prev = seen[doc.id];
+      if(canNotify && prev && prev !== d.status && (d.status === 'accepted' || d.status === 'declined')){
+        new Notification(d.status === 'accepted' ? '✅ Shift swap accepted' : '❌ Shift swap declined', {
+          body: `${d.colleagueName} ${d.status} your ${d.shiftLabel || 'shift'} swap request.`
+        });
+      }
+      seen[doc.id] = d.status;
+    });
+    localStorage.setItem('swapStatusSeen', JSON.stringify(seen));
   }
 
   // When a swap is accepted, try to update the live rota so the shift shows
@@ -408,8 +461,10 @@
       MY_NAME = localStorage.getItem('staffUserName') || 'You';
     }
     document.getElementById('my-name-display').textContent = MY_NAME;
+    updateNotifyButtonState();
     loadRotaAndShifts();
     loadSwapLists();
+    setInterval(loadSwapLists, 60000);
   });
 
   // Dark mode
