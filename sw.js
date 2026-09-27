@@ -1,7 +1,6 @@
-const CACHE_NAME = 'dunvant-site-v14';
+const CACHE_NAME = 'dunvant-site-v15';
 const URLS_TO_CACHE = [
   "agm-planning.html",
-  "alarm-fault.html",
   "backup-reminder.html",
   "bookings.html",
   "cash-up-log.html",
@@ -9,12 +8,11 @@ const URLS_TO_CACHE = [
   "club-constitution.html",
   "current-rota.html",
   "edit-site-content.html",
+  "emergency-procedures.html",
   "entertainment-tracker.html",
   "expense-requests.html",
   "facebook-page-admin.html",
   "finances-accounts.html",
-  "fire-safety.html",
-  "first-aid.html",
   "full-admin-dashboard.html",
   "funding-opportunities.html",
   "google-analytics.html",
@@ -26,7 +24,6 @@ const URLS_TO_CACHE = [
   "membership-numbers.html",
   "membership-till-system.html",
   "new-starter-checklist.html",
-  "out-of-hours-contact.html",
   "overall-changelog.html",
   "price-list.html",
   "qr-code-generator.html",
@@ -47,8 +44,6 @@ const URLS_TO_CACHE = [
   "this-weeks-rota.html",
   "tickets.html",
   "till-card-lookup.html",
-  "till-discrepancy.html",
-  "weather-closure.html",
   "weekly-rota-builder.html",
   "whats-on-this-week.html"
 ];

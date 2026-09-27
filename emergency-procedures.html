@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Emergency &amp; Procedures — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:680px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  /* Picker */
+  .picker-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media(max-width:480px){ .picker-grid{grid-template-columns:1fr;} }
+  .picker-btn{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 18px;
+    text-align:left; cursor:pointer; font-family:'Inter', sans-serif; color:var(--ink);
+  }
+  .picker-btn:hover{border-color:var(--brass);}
+  .picker-icon{font-size:1.6rem; display:block; margin-bottom:8px;}
+  .picker-title{font-family:'Fraunces', serif; font-weight:600; font-size:1rem; color:var(--forest);}
+  .picker-sub{font-size:0.78rem; color:var(--muted); margin-top:4px;}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .panel-back{
+    display:inline-block; margin-bottom:18px; font-size:0.82rem; font-weight:600;
+    color:var(--brass); text-decoration:none; cursor:pointer; background:none; border:none; padding:0;
+    font-family:'Inter', sans-serif;
+  }
+  .panel-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.15rem; color:var(--forest); margin-bottom:4px;}
+  .panel-sub{font-size:0.84rem; color:var(--muted); margin-bottom:18px;}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:12px;}
+  .card h3{font-family:'Fraunces', serif; font-size:0.95rem; color:var(--forest); margin-bottom:6px;}
+  .card p, .card li{font-size:0.86rem; color:var(--muted); line-height:1.7;}
+  .step{display:flex; gap:16px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:12px;}
+  .step .num{
+    flex-shrink:0; width:32px; height:32px; border-radius:50%;
+    background:var(--forest); color:#fff; font-family:'Fraunces', serif; font-weight:600;
+    display:flex; align-items:center; justify-content:center; font-size:0.95rem;
+  }
+  .step .body h3{font-size:0.95rem; margin-bottom:4px;}
+  .step .body p{font-size:0.86rem; color:var(--muted);}
+  .contact-card{background:#fbe0dd; border:1px solid #e0a8a0; border-radius:12px; padding:18px 20px; margin-top:16px;}
+  .contact-card h3{font-family:'Fraunces', serif; font-size:0.95rem; color:#8a2f2f; margin-bottom:6px;}
+  .contact-card p{font-size:0.88rem; color:#6b3532;}
+  .rule-card{background:var(--card); border:1px dashed var(--brass); border-radius:12px; padding:18px 20px; margin-top:16px;}
+  .rule-card h3{font-family:'Fraunces', serif; font-size:0.95rem; color:var(--forest); margin-bottom:6px;}
+  .rule-card p{font-size:0.88rem; color:var(--muted);}
+  .contact{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:16px 18px; margin-bottom:10px;
+  }
+  .contact .name{font-weight:600; font-size:0.94rem;}
+  .contact .role{font-size:0.78rem; color:var(--muted); margin-top:2px;}
+  .contact .num{font-family:'Fraunces', serif; font-weight:600; font-size:0.88rem; color:var(--forest);}
+  .order-badge{
+    font-family:'Fraunces', serif; font-weight:600; font-size:0.8rem;
+    color:#fff; background:var(--brass); width:26px; height:26px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; margin-right:12px;
+  }
+  .contact-row{display:flex; align-items:center;}
+
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Keyholder</span>
+  <h1>Emergency &amp; Procedures</h1>
+  <p>What's happening? Pick it below.</p>
+</header>
+<main>
+  <div class="notice">These are example pages — get the real details (assembly point, alarm company, callout numbers, thresholds) confirmed and swapped in from the club's actual documents and contacts.</div>
+
+  <!-- ── Picker ── -->
+  <div class="picker-grid" id="picker-grid">
+    <button class="picker-btn" onclick="showPanel('fire')">
+      <span class="picker-icon">🔥</span>
+      <span class="picker-title">Fire / Evacuation</span>
+      <span class="picker-sub">Alarm's gone off, or there's a fire</span>
+    </button>
+    <button class="picker-btn" onclick="showPanel('alarm')">
+      <span class="picker-icon">🚨</span>
+      <span class="picker-title">Alarm Fault</span>
+      <span class="picker-sub">Won't set, or's gone off unexpectedly</span>
+    </button>
+    <button class="picker-btn" onclick="showPanel('first-aid')">
+      <span class="picker-icon">🩹</span>
+      <span class="picker-title">First Aid</span>
+      <span class="picker-sub">Kit location and who's trained</span>
+    </button>
+    <button class="picker-btn" onclick="showPanel('till')">
+      <span class="picker-icon">💷</span>
+      <span class="picker-title">Till Discrepancy</span>
+      <span class="picker-sub">A count that doesn't match</span>
+    </button>
+    <button class="picker-btn" onclick="showPanel('contact')">
+      <span class="picker-icon">📞</span>
+      <span class="picker-title">Out-of-Hours Contact</span>
+      <span class="picker-sub">Need a keyholder or a callout, right now</span>
+    </button>
+    <button class="picker-btn" onclick="showPanel('weather')">
+      <span class="picker-icon">❄️</span>
+      <span class="picker-title">Weather Closure</span>
+      <span class="picker-sub">Snow, power cut, deciding whether to close</span>
+    </button>
+  </div>
+
+  <!-- ── Fire / Evacuation ── -->
+  <div class="panel" id="panel-fire">
+    <button class="panel-back" onclick="showPicker()">← Choose a different situation</button>
+    <div class="panel-title">Fire Safety / Evacuation</div>
+    <div class="panel-sub">What to do, and where everyone goes</div>
+    <div class="step"><div class="num">1</div><div class="body"><h3>If you hear the alarm</h3><p>Stop serving, calmly direct everyone to the nearest exit — don't stop to collect belongings.</p></div></div>
+    <div class="step"><div class="num">2</div><div class="body"><h3>Assembly point</h3><p>[Location — e.g. the car park / across the road] — everyone gathers here so a headcount can be done.</p></div></div>
+    <div class="step"><div class="num">3</div><div class="body"><h3>Fire extinguisher locations</h3><p>[List where extinguishers are kept in the building]</p></div></div>
+    <div class="step"><div class="num">4</div><div class="body"><h3>Call 999</h3><p>Unless it's confirmed a false alarm — never assume, always treat it as real until proven otherwise.</p></div></div>
+  </div>
+
+  <!-- ── Alarm Fault ── -->
+  <div class="panel" id="panel-alarm">
+    <button class="panel-back" onclick="showPicker()">← Choose a different situation</button>
+    <div class="panel-title">Alarm Fault</div>
+    <div class="panel-sub">Who to call and what to do if the alarm won't set or trips</div>
+    <div class="step"><div class="num">1</div><div class="body"><h3>Stay calm, check the panel</h3><p>Look at the alarm panel display for a zone number or fault code — this tells the engineer what's wrong and speeds things up.</p></div></div>
+    <div class="step"><div class="num">2</div><div class="body"><h3>If it won't set on close</h3><p>Don't force it or leave the building unset. Try once more, then call the alarm company's fault line rather than guessing.</p></div></div>
+    <div class="step"><div class="num">3</div><div class="body"><h3>If it's gone off unexpectedly</h3><p>Check nothing's actually wrong (break-in, fire) before assuming it's a fault. If all clear, silence and reset per the panel instructions, then still log it — repeated false alarms need investigating.</p></div></div>
+    <div class="step"><div class="num">4</div><div class="body"><h3>Log it</h3><p>Let management know what happened, even if you sorted it yourself — patterns matter more than one-off faults.</p></div></div>
+    <div class="contact-card">
+      <h3>Alarm Company Fault Line</h3>
+      <p>[Company name] — [phone number] — have the site ID ready: [site ID]</p>
+    </div>
+  </div>
+
+  <!-- ── First Aid ── -->
+  <div class="panel" id="panel-first-aid">
+    <button class="panel-back" onclick="showPicker()">← Choose a different situation</button>
+    <div class="panel-title">First Aid</div>
+    <div class="panel-sub">Kit location and who's trained</div>
+    <div class="card"><h3>First aid kit location</h3><p>[Location — e.g. behind the main bar, under the till]</p></div>
+    <div class="card"><h3>Trained first aiders</h3><p>[Name] — [Name] — keep this list current as people's certifications lapse or renew</p></div>
+    <div class="card"><h3>Defibrillator</h3><p>[If the club has one, or the nearest public one — location and access code if applicable]</p></div>
+  </div>
+
+  <!-- ── Till Discrepancy ── -->
+  <div class="panel" id="panel-till">
+    <button class="panel-back" onclick="showPicker()">← Choose a different situation</button>
+    <div class="panel-title">Till Discrepancy</div>
+    <div class="panel-sub">Steps for a count that doesn't match</div>
+    <div class="step"><div class="num">1</div><div class="body"><h3>Recount before anything else</h3><p>Most discrepancies are counting mistakes. Recount the float and takings separately before assuming there's a real problem.</p></div></div>
+    <div class="step"><div class="num">2</div><div class="body"><h3>Check for obvious causes</h3><p>Look back through the till roll for any voids, refunds, or manual overrides that might explain the gap.</p></div></div>
+    <div class="step"><div class="num">3</div><div class="body"><h3>Log the discrepancy</h3><p>Write down the amount, the date, and who was on the till during that shift — even small discrepancies, so patterns can be spotted over time.</p></div></div>
+    <div class="step"><div class="num">4</div><div class="body"><h3>Notify management</h3><p>Send the details via the Outlook group email. Don't try to "fix" the figures yourself — let management decide how to handle it.</p></div></div>
+    <div class="rule-card">
+      <h3>When to escalate immediately</h3>
+      <p>Any discrepancy over [amount] should be reported to management the same night, not left until the next shift.</p>
+    </div>
+  </div>
+
+  <!-- ── Out-of-Hours Contact ── -->
+  <div class="panel" id="panel-contact">
+    <button class="panel-back" onclick="showPicker()">← Choose a different situation</button>
+    <div class="panel-title">Out-of-Hours Contact</div>
+    <div class="panel-sub">Emergency keyholder and callout numbers — call in order, only moving down if there's no answer</div>
+    <div class="contact-row">
+      <div class="order-badge">1</div>
+      <div class="contact" style="flex:1;">
+        <div><div class="name">[Keyholder name]</div><div class="role">Primary keyholder</div></div>
+        <div class="num">[phone number]</div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <div class="order-badge">2</div>
+      <div class="contact" style="flex:1;">
+        <div><div class="name">[Keyholder name]</div><div class="role">Secondary keyholder</div></div>
+        <div class="num">[phone number]</div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <div class="order-badge">3</div>
+      <div class="contact" style="flex:1;">
+        <div><div class="name">Alarm Company</div><div class="role">Fault line — see Alarm Fault above</div></div>
+        <div class="num">[phone number]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Weather Closure ── -->
+  <div class="panel" id="panel-weather">
+    <button class="panel-back" onclick="showPicker()">← Choose a different situation</button>
+    <div class="panel-title">Weather Closure Guide</div>
+    <div class="panel-sub">Snow days, power cuts, and who decides</div>
+    <div class="step"><div class="num">1</div><div class="body"><h3>Who decides</h3><p>[Name/role — e.g. Chair or Secretary] makes the final call on closing, not individual staff.</p></div></div>
+    <div class="step"><div class="num">2</div><div class="body"><h3>How it's communicated</h3><p>Facebook post for members, plus the Outlook group email for staff — both, not just one.</p></div></div>
+    <div class="step"><div class="num">3</div><div class="body"><h3>Power cut during opening hours</h3><p>[Steps — e.g. safely close the till, don't serve without lighting, wait for confirmation before reopening]</p></div></div>
+  </div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script>
+  function showPanel(key){
+    document.getElementById('picker-grid').style.display = 'none';
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + key).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+  function showPicker(){
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('picker-grid').style.display = 'grid';
+  }
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>
