@@ -1434,6 +1434,17 @@
     if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
   });
 
+  // Unlike Staff Area (one page, one "Back to Homepage" link), Staff Hub is full
+  // of outbound tool links — clicking any of them also triggers pagehide, and
+  // without this they'd wrongly count as "closing the tab" and sign you out.
+  // Any genuine link click means you're navigating, not leaving, so it counts
+  // as intentional regardless of which tool, tile, or row it came from.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    const href = a && a.getAttribute('href');
+    if(href && !href.startsWith('#')) intentionalNavigation = true;
+  }, true);
+
   // ── Suggestions (was staff-suggestions.html) ──
   let SG_FILTER = 'all';
   let SG_DOCS = [];
