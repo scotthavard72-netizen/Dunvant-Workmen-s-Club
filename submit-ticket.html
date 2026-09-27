@@ -123,6 +123,22 @@
 </script>
 <script>
   let MY_NAME = "";
+  let MY_UID = "";
+
+  // Best-effort entry in the shared Team Activity feed — never blocks the
+  // real action if it fails.
+  async function logActivity(action, detail){
+    try{
+      await db.collection('activityLog').add({
+        actorUid: MY_UID,
+        actorName: MY_NAME || 'Someone',
+        action,
+        detail: detail || '',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){ /* non-critical */ }
+  }
 
   const STATUS_LABELS = { open: 'Open', 'in-progress': 'In Progress', resolved: 'Resolved' };
 
@@ -166,6 +182,7 @@
       statusEl.textContent = '✓ Submitted.';
       statusEl.className = 'form-status success';
       loadMyTickets();
+      logActivity('Ticket Submitted', (category || 'General') + ' · ' + (priority || 'normal'));
     } catch(e){
       statusEl.textContent = "Couldn't submit that — " + e.message;
       statusEl.className = 'form-status error';
@@ -210,6 +227,7 @@
       window.location.href = 'staff-area.html';
       return;
     }
+    MY_UID = user.uid;
     try{
       const doc = await db.collection('staff').doc(user.uid).get();
       MY_NAME = doc.exists ? (doc.data().name || '') : '';

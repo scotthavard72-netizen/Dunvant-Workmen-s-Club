@@ -170,6 +170,23 @@
 <script>
   const ROLE_OPTIONS = ["bar", "keyholder", "mgmt", "admin", "committee"];
   const ROLE_LABELS = {bar:"Bar", keyholder:"Keyholder", mgmt:"Mgmt", admin:"Admin", committee:"Committee"};
+  let MY_NAME = '';
+  let MY_UID = '';
+
+  // Best-effort entry in the shared Team Activity feed — never blocks the
+  // real action if it fails.
+  async function logActivity(action, detail){
+    try{
+      await db.collection('activityLog').add({
+        actorUid: MY_UID,
+        actorName: MY_NAME || 'Someone',
+        action,
+        detail: detail || '',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){ /* non-critical */ }
+  }
 
   function setProgress(id, percent){
     const bar = document.getElementById(id + '-bar');
@@ -247,6 +264,7 @@
       setProgress('save-progress', 100);
       statusEl.textContent = '✓ Saved — changes are live immediately, no deploy needed.';
       statusEl.className = 'status success';
+      logActivity('Staff Access Updated', rows.length + (rows.length === 1 ? ' person' : ' people'));
     } catch(e){
       statusEl.textContent = "Couldn't save — " + e.message;
       statusEl.className = 'status error';
@@ -262,6 +280,7 @@
     try{
       await db.collection('staff').doc(docId).delete();
       row.remove();
+      logActivity('Staff Access Removed', name);
     } catch(e){
       alert("Couldn't remove them — " + e.message);
     }
@@ -370,11 +389,14 @@
     }
     try{
       const doc = await db.collection('staff').doc(user.uid).get();
-      const roles = doc.exists ? (doc.data().roles || []) : [];
+      const data = doc.exists ? doc.data() : {};
+      const roles = data.roles || [];
       if(!roles.includes('admin')){
         document.getElementById('load-status').textContent = "You're signed in, but this page is for Site Admins only.";
         return;
       }
+      MY_UID = user.uid;
+      MY_NAME = data.name || '';
       loadStaff();
     } catch(e){
       document.getElementById('load-status').textContent = "Couldn't check your access — " + e.message;

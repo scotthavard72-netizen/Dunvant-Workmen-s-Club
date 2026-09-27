@@ -107,6 +107,22 @@
 </script>
 <script>
   let MY_NAME = "";
+  let MY_UID = "";
+
+  // Best-effort entry in the shared Team Activity feed — never blocks the
+  // real action if it fails.
+  async function logActivity(action, detail){
+    try{
+      await db.collection('activityLog').add({
+        actorUid: MY_UID,
+        actorName: MY_NAME || 'Someone',
+        action,
+        detail: detail || '',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){ /* non-critical */ }
+  }
 
   async function submitCoverRequest(e){
     e.preventDefault();
@@ -138,6 +154,7 @@
       statusEl.textContent = '✓ Sent — management can see this straight away.';
       statusEl.className = 'form-status ok';
       document.getElementById('cover-form').reset();
+      logActivity('Shift Cover Request', date + (urgent ? ' (urgent)' : ''));
     } catch(e){
       statusEl.textContent = "Couldn't send that — " + e.message;
       statusEl.className = 'form-status err';
@@ -152,6 +169,7 @@
       window.location.href = 'staff-area.html';
       return;
     }
+    MY_UID = user.uid;
     try{
       const doc = await db.collection('staff').doc(user.uid).get();
       MY_NAME = doc.exists ? (doc.data().name || '') : '';

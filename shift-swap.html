@@ -184,8 +184,24 @@
 </script>
 <script>
   let MY_NAME = '';
+  let MY_UID = '';
   let MY_ROLES = [];
   let MY_SHIFTS = [];
+
+  // Best-effort entry in the shared Team Activity feed — never blocks the
+  // real action if it fails.
+  async function logActivity(action, detail){
+    try{
+      await db.collection('activityLog').add({
+        actorUid: MY_UID,
+        actorName: MY_NAME || 'Someone',
+        action,
+        detail: detail || '',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){ /* non-critical */ }
+  }
 
   function formatTime12h(t){
     const [h, m] = t.split(':').map(Number);
@@ -438,6 +454,7 @@
       document.getElementById('swap-colleague').value = '';
       document.getElementById('swap-message').value = '';
       loadSwapLists();
+      logActivity('Shift Swap Request', 'asked ' + colleague);
     } catch(e){
       statusEl.textContent = "Couldn't send that — try again in a moment.";
       statusEl.className = 'form-status err';
@@ -452,6 +469,7 @@
       window.location.href = 'staff-area.html';
       return;
     }
+    MY_UID = user.uid;
     try{
       const doc = await db.collection('staff').doc(user.uid).get();
       const data = doc.exists ? doc.data() : {};

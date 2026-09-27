@@ -411,6 +411,21 @@
     if(pct) pct.textContent = percent + '%';
   }
 
+  // Best-effort entry in the shared Team Activity feed — never blocks the
+  // real action if it fails.
+  async function logActivity(action, detail){
+    try{
+      await db.collection('activityLog').add({
+        actorUid: (auth.currentUser && auth.currentUser.uid) || '',
+        actorName: localStorage.getItem('staffUserName') || 'Someone',
+        action,
+        detail: detail || '',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){ /* non-critical */ }
+  }
+
   async function publishRota(){
     const shifts = collectShifts();
     if(!shifts) return false;
@@ -445,6 +460,7 @@
       statusEl.textContent = '✓ Published — live immediately, no deploy wait.';
       statusEl.className = 'action-status success';
       loadConfirmations();
+      logActivity('Rota Published', publishedDate);
       return true;
     } catch(err){
       statusEl.textContent = err.code === 'permission-denied'
