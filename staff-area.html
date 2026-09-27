@@ -141,6 +141,12 @@
   .error{font-size:0.82rem; color:#ff8a7a; margin-top:14px; display:none; font-weight:600;}
   .note{font-size:0.76rem; color:rgba(255,255,255,0.4); margin-top:18px;}
 
+  .shared-device-toggle{
+    display:flex; align-items:flex-start; gap:9px; text-align:left;
+    font-size:0.76rem; color:rgba(255,255,255,0.55); margin:4px 0 20px; cursor:pointer;
+  }
+  .shared-device-toggle input{width:auto; margin:2px 0 0; accent-color:var(--brass-light); flex-shrink:0;}
+
   .quick-login{margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,0.1);}
   .quick-login-label{font-size:0.78rem; color:rgba(255,255,255,0.5); margin-bottom:10px;}
   .quick-login-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
@@ -177,6 +183,10 @@
     <input type="email" id="login-username" placeholder="Email" autocomplete="off">
     <input type="password" id="login-password" placeholder="Password" autocomplete="off">
     <a href="#" id="forgot-password-link" class="forgot-link" onclick="sendForgotPassword(event)">Forgot password?</a>
+    <label class="shared-device-toggle" for="shared-device-checkbox">
+      <input type="checkbox" id="shared-device-checkbox" onchange="setSharedDevice(this.checked)">
+      This is a shared or bar computer — sign out automatically when it's closed
+    </label>
     <button class="enter" onclick="attemptLogin()">Sign In</button>
     <p class="error" id="login-error">Username or password not recognised</p>
     <p class="note">Don't have a login? Ask Site Admin to add you.</p>
@@ -203,6 +213,18 @@
   // sign-off-on-close listener further down doesn't treat it as a real close.
   let intentionalNavigation = false;
 
+  // Whether THIS device auto-signs-out on close. Off by default — Firebase
+  // already keeps people signed in across closes, which is what most staff
+  // want on their own phone/PC. A shared device (e.g. the bar terminal) can
+  // opt in via the checkbox so the next person isn't signed in as whoever
+  // used it last.
+  const SHARED_DEVICE_KEY = 'staffSharedDevice';
+  function isSharedDevice(){ return localStorage.getItem(SHARED_DEVICE_KEY) === 'true'; }
+  function setSharedDevice(checked){
+    if(checked) localStorage.setItem(SHARED_DEVICE_KEY, 'true');
+    else localStorage.removeItem(SHARED_DEVICE_KEY);
+  }
+
   // Smooth fade in/out when moving between Staff Area and the public homepage
   requestAnimationFrame(() => document.body.classList.add('loaded'));
   document.addEventListener('DOMContentLoaded', () => {
@@ -215,6 +237,8 @@
         setTimeout(() => { window.location.href = homepageLink.href; }, 200);
       });
     }
+    const sharedDeviceCheckbox = document.getElementById('shared-device-checkbox');
+    if(sharedDeviceCheckbox) sharedDeviceCheckbox.checked = isSharedDevice();
   });
 
   // ── Staff login list ──
@@ -335,10 +359,12 @@
     }
   });
 
-  // Sign off automatically when this tab or the browser closes.
+  // Sign off automatically when this tab or the browser closes — but only on
+  // a device marked as shared (see SHARED_DEVICE_KEY above). On a personal
+  // phone or PC, Firebase's own persistence keeps people signed in instead.
   // Doesn't fire for our own redirects (like Site Admin → Dashboard) — only real closes.
   window.addEventListener('pagehide', () => {
-    if(intentionalNavigation) return;
+    if(intentionalNavigation || !isSharedDevice()) return;
     auth.signOut();
     localStorage.removeItem('staffUserName');
     localStorage.removeItem('staffUserRoles');

@@ -550,6 +550,11 @@
   // sign-off-on-close listener further down doesn't treat it as a real close.
   let intentionalNavigation = false;
 
+  // Whether THIS device auto-signs-out on close — set from the checkbox on
+  // Staff Area's login screen (see staff-area.html). Off by default.
+  const SHARED_DEVICE_KEY = 'staffSharedDevice';
+  function isSharedDevice(){ return localStorage.getItem(SHARED_DEVICE_KEY) === 'true'; }
+
   let MY_NAME = '';
   let MY_UID = '';
   let MY_ROLES = [];
@@ -1438,10 +1443,12 @@
     window.location.href = 'staff-area.html';
   }
 
-  // Sign off automatically when this tab or the browser closes.
+  // Sign off automatically when this tab or the browser closes — but only on
+  // a device marked as shared (see SHARED_DEVICE_KEY above). On a personal
+  // phone or PC, staying signed in is what people actually want.
   // Doesn't fire for our own redirects — only real closes.
   window.addEventListener('pagehide', () => {
-    if(intentionalNavigation) return;
+    if(intentionalNavigation || !isSharedDevice()) return;
     auth.signOut();
     localStorage.removeItem('staffUserName');
     localStorage.removeItem('staffUserRoles');
