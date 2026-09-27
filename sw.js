@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dunvant-site-v18';
+const CACHE_NAME = 'dunvant-site-v19';
 const URLS_TO_CACHE = [
   "agm-planning.html",
   "backup-reminder.html",
