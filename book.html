@@ -62,6 +62,18 @@
   footer{text-align:center; padding:36px 20px 50px; font-size:0.8rem; color:var(--muted); border-top:1px solid var(--line);}
   footer a{color:var(--brass); text-decoration:none; font-weight:600;}
 
+  .avail-wrap{margin-top:40px;}
+  .avail-note{font-size:0.86rem; color:var(--muted); margin-bottom:16px; line-height:1.6;}
+  .avail-list{background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .avail-row{
+    display:flex; justify-content:space-between; align-items:center; gap:14px;
+    padding:14px 20px; border-bottom:1px solid var(--line); font-size:0.9rem;
+  }
+  .avail-row:last-child{border-bottom:none;}
+  .avail-row .date{font-weight:600; font-family:'Fraunces', serif;}
+  .avail-row .label{color:var(--muted); font-size:0.84rem;}
+  .avail-empty{padding:20px; text-align:center; color:var(--muted); font-size:0.86rem;}
+
   @media(max-width:640px){
     nav.clubnav{padding:0 12px; overflow-x:auto; justify-content:flex-start;}
     nav.clubnav a{padding:14px 12px; white-space:nowrap; font-size:0.8rem;}
@@ -94,6 +106,12 @@
     </div>
     <a class="btn brass" href="https://forms.cloud.microsoft/r/xPbfry03VW" target="_blank" rel="noopener">Go to Booking Form</a>
   </div>
+
+  <div class="avail-wrap">
+    <div class="section-head"><span class="num">2</span><h2>Already booked</h2></div>
+    <p class="avail-note">These dates are already taken for a private function — everything else is worth asking about. This updates as the committee confirms new bookings.</p>
+    <div class="avail-list" id="avail-list"><div class="avail-empty">Loading…</div></div>
+  </div>
 </main>
 
 <footer>
@@ -101,6 +119,49 @@
   <p style="margin-top:10px;"><a href="https://www.facebook.com/profile.php?id=61563877044858" target="_blank" rel="noopener">Find us on Facebook →</a></p>
   <p style="margin-top:6px;"><a href="mailto:dunvantclub@outlook.com?subject=Website%20issue" style="color:var(--muted); font-weight:400;">Spotted a problem with this website? Let us know →</a></p>
 </footer>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  function formatBookingDate(fd){
+    return new Date(fd + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  async function loadAvailability(){
+    const listEl = document.getElementById('avail-list');
+    try{
+      const snap = await db.collection('bookings').get();
+      const today = new Date().toISOString().split('T')[0];
+      const upcoming = snap.docs
+        .map(d => d.data())
+        .filter(d => d.date && d.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date));
+      if(upcoming.length === 0){
+        listEl.innerHTML = '<div class="avail-empty">Nothing booked yet — ask away.</div>';
+        return;
+      }
+      listEl.innerHTML = upcoming.map(d => `
+        <div class="avail-row">
+          <span class="date">${formatBookingDate(d.date)}</span>
+          <span class="label">${d.label || 'Booked'}</span>
+        </div>
+      `).join('');
+    } catch(e){
+      listEl.innerHTML = '<div class="avail-empty">Couldn\'t load availability right now — just fill in the form and we\'ll confirm.</div>';
+    }
+  }
+  loadAvailability();
+</script>
 <script>
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');

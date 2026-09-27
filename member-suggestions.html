@@ -51,6 +51,23 @@
   .tag.done{background:#e4ece9; color:#2c3f38;}
   .tag.open{background:#fff2d9; color:#8a6a1f;}
   a.back{display:inline-block; margin-top:10px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:24px;}
+  .form-card label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .form-card input, .form-card textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
+    padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+    margin-bottom:14px; resize:vertical;
+  }
+  .form-card textarea{min-height:90px;}
+  .submit-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.9rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; border-radius:8px; padding:12px 20px; cursor:pointer; width:100%;
+  }
+  .form-status{font-size:0.82rem; color:var(--muted); margin-top:10px; text-align:center;}
+  .form-status.success{color:#3d8f6f; font-weight:600;}
+  .form-status.error{color:#c25a4d; font-weight:600;}
   @media(max-width:600px){
     table, thead, tbody, th, td, tr{display:block;}
     thead{display:none;}
@@ -70,18 +87,69 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Public Site · Example</span>
+  <span class="eyebrow">Public Site</span>
   <h1>Member Suggestions</h1>
   <p>A place for members specifically to suggest ideas</p>
 </header>
 <main>
 
-  <div class="notice">This is an example page — distinct from the public "Report an Issue" link, this is for ideas and suggestions rather than problems. Would need a Microsoft Form the same way as everything else here.</div>
-  <div class="card"><h3>Have an idea for the club?</h3><p>[Link to Suggestion Form once built] — new events, changes you'd like to see, anything at all.</p></div>
+  <div class="notice">Distinct from the "Report an Issue" link — this is for ideas and suggestions rather than problems. New events, changes you'd like to see, anything at all. The committee reads every one.</div>
+
+  <div class="form-card">
+    <label for="suggestion-name">Your name (optional)</label>
+    <input type="text" id="suggestion-name" placeholder="Leave blank to stay anonymous">
+    <label for="suggestion-text">Your suggestion</label>
+    <textarea id="suggestion-text" placeholder="What's your idea?"></textarea>
+    <button class="submit-btn" onclick="submitMemberSuggestion()">Send Suggestion</button>
+    <p class="form-status" id="form-status"></p>
+  </div>
 
   <a class="back" href="club-website.html">← Back to Homepage</a>
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  async function submitMemberSuggestion(){
+    const name = document.getElementById('suggestion-name').value.trim();
+    const text = document.getElementById('suggestion-text').value.trim();
+    const statusEl = document.getElementById('form-status');
+    if(!text){
+      statusEl.textContent = 'Write your suggestion first.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+    statusEl.textContent = 'Sending…';
+    statusEl.className = 'form-status';
+    try{
+      await db.collection('memberSuggestions').add({
+        authorName: name || 'Anonymous',
+        text,
+        status: 'new',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('suggestion-name').value = '';
+      document.getElementById('suggestion-text').value = '';
+      statusEl.textContent = "✓ Sent — thanks, the committee will see this.";
+      statusEl.className = 'form-status success';
+    } catch(e){
+      statusEl.textContent = "Couldn't send that right now — try again in a moment.";
+      statusEl.className = 'form-status error';
+    }
+  }
+</script>
 <script>
   // Maintenance mode — checks the shared toggle file. A ?preview=1 link
   // (used automatically from Full Admin Dashboard) bypasses it for Site Admin.

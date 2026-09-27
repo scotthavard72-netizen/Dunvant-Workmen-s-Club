@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Member Suggestions Review — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:640px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  .filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
+  .filter-btn{
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600; padding:7px 14px; border-radius:16px; cursor:pointer;
+    border:1px solid var(--line); background:var(--card); color:var(--muted);
+  }
+  .filter-btn.active{background:var(--brass); color:#fff; border-color:var(--brass);}
+
+  .load-status{font-size:0.86rem; color:var(--muted); text-align:center; padding:16px 0;}
+
+  .suggestion-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:10px;}
+  .suggestion-text{font-size:0.9rem; line-height:1.5; margin-bottom:8px;}
+  .suggestion-meta{font-size:0.76rem; color:var(--muted); margin-bottom:10px;}
+  .status-tag{font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:3px 9px; border-radius:10px;}
+  .status-tag.new{background:#fff2d9; color:#8a6a1f;}
+  .status-tag.reviewed{background:#dbeafe; color:#1e4a7a;}
+  .status-tag.actioned{background:#e4ece9; color:#2c3f38;}
+  .mod-actions{display:flex; gap:6px; flex-wrap:wrap;}
+  .mod-btn{
+    font-family:'Inter', sans-serif; font-size:0.74rem; font-weight:600; cursor:pointer;
+    border:1px solid var(--line); background:var(--paper); color:var(--forest); border-radius:6px; padding:6px 10px;
+  }
+
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Committee</span>
+  <h1>Member Suggestions Review</h1>
+  <p>What members have submitted via the public site</p>
+</header>
+<main>
+  <div class="notice">Submitted anonymously or with a name, straight from the public Member Suggestions page.</div>
+
+  <div class="filter-row" id="filter-row"></div>
+
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="suggestion-list"></div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  let ALL_DOCS = [];
+  let ACTIVE_FILTER = 'all';
+  const FILTERS = ['all', 'new', 'reviewed', 'actioned'];
+  const FILTER_LABELS = { all: 'All', new: 'New', reviewed: 'Reviewed', actioned: 'Actioned' };
+
+  function timeAgo(ms){
+    if(!ms) return '';
+    const mins = Math.floor((Date.now() - ms) / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if(hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  }
+
+  function renderFilters(){
+    document.getElementById('filter-row').innerHTML = FILTERS.map(f =>
+      `<span class="filter-btn ${ACTIVE_FILTER === f ? 'active' : ''}" onclick="setFilter('${f}')">${FILTER_LABELS[f]}</span>`
+    ).join('');
+  }
+
+  function setFilter(f){
+    ACTIVE_FILTER = f;
+    renderFilters();
+    renderList();
+  }
+
+  function renderList(){
+    const listEl = document.getElementById('suggestion-list');
+    const statusEl = document.getElementById('load-status');
+    let docs = ALL_DOCS;
+    if(ACTIVE_FILTER !== 'all'){
+      docs = docs.filter(doc => (doc.data().status || 'new') === ACTIVE_FILTER);
+    }
+    if(docs.length === 0){
+      listEl.innerHTML = '';
+      statusEl.textContent = 'Nothing here.';
+      return;
+    }
+    statusEl.textContent = '';
+    listEl.innerHTML = docs.map(doc => {
+      const d = doc.data();
+      const status = d.status || 'new';
+      return `
+        <div class="suggestion-card">
+          <div class="suggestion-text">${d.text}</div>
+          <div class="suggestion-meta">
+            <span class="status-tag ${status}">${FILTER_LABELS[status] || status}</span>
+            &nbsp;— ${d.authorName || 'Anonymous'} · ${timeAgo(d.createdAtMs)}
+          </div>
+          <div class="mod-actions">
+            ${status !== 'reviewed' ? `<button class="mod-btn" onclick="setStatus('${doc.id}', 'reviewed')">Mark Reviewed</button>` : ''}
+            ${status !== 'actioned' ? `<button class="mod-btn" onclick="setStatus('${doc.id}', 'actioned')">Mark Actioned</button>` : ''}
+            ${status !== 'new' ? `<button class="mod-btn" onclick="setStatus('${doc.id}', 'new')">Reopen</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadSuggestions(){
+    const statusEl = document.getElementById('load-status');
+    try{
+      const snap = await db.collection('memberSuggestions').get();
+      ALL_DOCS = snap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+      renderFilters();
+      renderList();
+    } catch(e){
+      statusEl.textContent = "Couldn't load suggestions right now — " + e.message;
+    }
+  }
+
+  async function setStatus(id, status){
+    try{
+      await db.collection('memberSuggestions').doc(id).update({ status });
+      loadSuggestions();
+    } catch(e){
+      alert("Couldn't update that — " + e.message);
+    }
+  }
+
+  auth.onAuthStateChanged((user) => {
+    if(user){
+      loadSuggestions();
+    } else {
+      window.location.href = 'staff-area.html';
+    }
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>

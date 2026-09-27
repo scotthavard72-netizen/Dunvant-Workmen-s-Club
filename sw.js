@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dunvant-site-v9';
+const CACHE_NAME = 'dunvant-site-v10';
 const URLS_TO_CACHE = [
   "agm-planning.html",
   "alarm-fault.html",
@@ -21,7 +21,9 @@ const URLS_TO_CACHE = [
   "hosting-status.html",
   "incident-report.html",
   "licensing-compliance.html",
+  "manage-bookings.html",
   "manage-staff-logins.html",
+  "member-suggestions-review.html",
   "membership-numbers.html",
   "membership-till-system.html",
   "new-starter-checklist.html",
