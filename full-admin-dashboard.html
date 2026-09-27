@@ -373,11 +373,9 @@
     <div class="grid">
       <a href="edit-site-content.html">Edit Site Content<small>Find where to change something, and a live editor to change it</small></a>
       <a href="manage-staff-logins.html">Manage Staff Logins<small>Add, remove, or update access</small></a>
-      <a href="site-todos.html">Site To-Do List <span class="badge">24</span><small>Everything still waiting for real content</small></a>
+      <a href="site-status.html">Site Status <span class="badge">16</span><small>To-do list, health check, and both changelogs</small></a>
       <a href="tickets.html">Tickets<small>Issues from the public and staff</small></a>
       <a href="google-analytics.html">Google Analytics<small>Setup guide — free, no backend needed</small></a>
-      <a href="overall-changelog.html">Overall Changelog<small>The big picture, in plain English</small></a>
-      <a href="site-health-check.html">Site Health Check<small>Scans for broken or wrong-folder links</small></a>
       <a href="https://outlook.live.com/owa/calendar/bb8f79de-cbbe-4d7b-8e7f-2123ebde7711/c726ef94-949e-4889-9aa2-39f3f93837b8/cid-FC69B5B067121F85/index.html" target="_blank" rel="noopener">Outlook Rota Calendar<small>Add, edit, or remove shifts</small></a>
       <a href="facebook-page-admin.html">Facebook Page<small>Post updates, manage the page</small></a>
     </div>
@@ -505,7 +503,7 @@
           </div>
         </div>
       `;
-    }).join('') + '<a class="activity-link" href="site-changelog.html">See full history →</a>';
+    }).join('') + '<a class="activity-link" href="site-status.html">See full history →</a>';
     if(cached){
       pillEl.textContent = 'Showing cached';
       dotEl.className = 'status-dot warn';

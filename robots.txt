@@ -24,16 +24,10 @@ Disallow: /membership-numbers.html
 Disallow: /membership-till-system.html
 Disallow: /new-starter-checklist.html
 Disallow: /out-of-hours-contact.html
-Disallow: /overall-changelog.html
-Disallow: /pending-bookings.html
 Disallow: /price-list.html
-Disallow: /publish-file-update.html
-Disallow: /shift-cover-form-responses.html
 Disallow: /shift-cover-request.html
 Disallow: /shift-cover-requests-mgmt.html
-Disallow: /site-changelog.html
-Disallow: /site-health-check.html
-Disallow: /site-todos.html
+Disallow: /site-status.html
 Disallow: /staff-area.html
 Disallow: /staff-faq.html
 Disallow: /staff-rota.html
