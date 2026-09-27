@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Staff Hub — Dunvant WMC</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:640px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:22px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  /* At a glance strip */
+  .glance-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:26px;}
+  @media(max-width:560px){ .glance-grid{grid-template-columns:1fr;} }
+  .glance-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px;
+    text-decoration:none; color:inherit; display:block;
+  }
+  .glance-card:hover{border-color:var(--brass);}
+  .glance-label{font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:6px;}
+  .glance-value{font-family:'Fraunces', serif; font-size:1.05rem; font-weight:600; color:var(--forest); line-height:1.3;}
+  .glance-sub{font-size:0.74rem; color:var(--muted); margin-top:3px;}
+
+  .tab-row{display:flex; gap:6px; margin-bottom:22px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .tab-btn{
+    font-family:'Inter', sans-serif; font-size:0.86rem; font-weight:600; padding:10px 14px; cursor:pointer;
+    border:none; background:none; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tab-btn.active{color:var(--forest); border-bottom-color:var(--brass);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  h2.section-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.02rem; color:var(--forest); margin:0 0 12px;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:24px;}
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:block; font-size:0.8rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .form-card input, .form-card textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
+    padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+    resize:vertical;
+  }
+  textarea{min-height:80px;}
+  .checkbox-row{display:flex; align-items:center; gap:8px; font-size:0.86rem; color:var(--muted);}
+  .form-row{display:grid; grid-template-columns:1fr 2fr; gap:12px;}
+  @media(max-width:520px){ .form-row{grid-template-columns:1fr;} }
+  button.submit, .submit-btn{
+    width:100%; font-family:'Inter', sans-serif; font-weight:600; font-size:0.92rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; padding:13px 16px; border-radius:8px; cursor:pointer; margin-top:6px;
+  }
+  .form-status{font-size:0.82rem; margin-top:10px; text-align:center; color:var(--muted);}
+  .form-status.ok, .form-status.success{color:#3d8f6f; font-weight:600;}
+  .form-status.err, .form-status.error{color:#a24339; font-weight:600;}
+
+  .filter-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .filter-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.78rem;
+    background:var(--card); color:var(--muted); border:1px solid var(--line);
+    border-radius:20px; padding:7px 14px; cursor:pointer;
+  }
+  .filter-btn.active{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512; border-color:transparent;}
+  .load-status, .empty-note{font-size:0.86rem; color:var(--muted); text-align:center; padding:14px 0;}
+
+  .suggestion-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:10px;}
+  .suggestion-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+  .suggestion-text{font-size:0.92rem; line-height:1.5;}
+  .suggestion-meta{font-size:0.76rem; color:var(--muted); margin-top:8px;}
+  .status-tag{font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:3px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0;}
+  .status-tag.new{background:#fff2d9; color:#8a6a1f;}
+  .status-tag.reviewed{background:#dbeafe; color:#1e4a7a;}
+  .status-tag.actioned{background:#e4ece9; color:#2c3f38;}
+  [data-theme="dark"] .status-tag.new{background:#3a2f10; color:#e0bd82;}
+  [data-theme="dark"] .status-tag.reviewed{background:#1a2e42; color:#a9c9ec;}
+  [data-theme="dark"] .status-tag.actioned{background:#1e2d24; color:#a8d4bb;}
+  .suggestion-actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .action-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.78rem;
+    border:1px solid var(--line); background:var(--paper); color:var(--ink);
+    border-radius:6px; padding:7px 12px; cursor:pointer;
+  }
+  .action-btn:hover{border-color:var(--brass);}
+  .action-btn.upvote.voted{background:var(--brass-light); border-color:transparent; color:#1a1512;}
+
+  .shoutout-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:10px; position:relative;}
+  .shoutout-card::before{content:"🎉"; position:absolute; top:14px; right:16px; font-size:1.1rem;}
+  .shoutout-to{font-family:'Fraunces', serif; font-weight:600; font-size:0.98rem; color:var(--forest); margin-bottom:6px; padding-right:28px;}
+  .shoutout-message{font-size:0.88rem; line-height:1.45;}
+  .shoutout-meta{font-size:0.72rem; color:var(--muted); margin-top:10px;}
+
+  .day-group{margin-bottom:14px;}
+  .day-label{font-family:'Fraunces', serif; font-size:0.86rem; font-weight:600; color:var(--forest); margin-bottom:8px;}
+  .day-label.today{color:var(--pop);}
+  .diary-row{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:12px 16px; margin-bottom:8px;
+  }
+  .diary-info .note{font-size:0.9rem; line-height:1.4;}
+  .diary-info .meta{font-size:0.74rem; color:var(--muted); margin-top:4px;}
+  .remove-btn{
+    background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.76rem; font-weight:600;
+    cursor:pointer; padding:6px 10px; border-radius:6px; white-space:nowrap; flex-shrink:0;
+  }
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Staff</span>
+  <h1>Staff Hub</h1>
+  <p>Suggestions, shout-outs, the diary — and what's coming up</p>
+</header>
+<main>
+  <div class="glance-grid" id="glance-grid">
+    <a class="glance-card" href="current-rota.html">
+      <div class="glance-label">My Next Shift</div>
+      <div class="glance-value" id="glance-shift">Loading…</div>
+      <div class="glance-sub" id="glance-shift-sub"></div>
+    </a>
+    <a class="glance-card" href="bookings.html">
+      <div class="glance-label">Next Booking</div>
+      <div class="glance-value" id="glance-booking">Loading…</div>
+      <div class="glance-sub" id="glance-booking-sub"></div>
+    </a>
+    <a class="glance-card" href="tickets.html" id="glance-tickets-card" style="display:none;">
+      <div class="glance-label">Open Tickets</div>
+      <div class="glance-value" id="glance-tickets">Loading…</div>
+      <div class="glance-sub">Public + staff</div>
+    </a>
+  </div>
+
+  <div class="tab-row" id="tab-row">
+    <button class="tab-btn active" id="tab-btn-suggestions" onclick="setTab('suggestions')">Suggestions</button>
+    <button class="tab-btn" id="tab-btn-shoutouts" onclick="setTab('shoutouts')">Shout-Outs</button>
+    <button class="tab-btn" id="tab-btn-diary" onclick="setTab('diary')">Diary</button>
+  </div>
+
+  <!-- ── Suggestions ── -->
+  <div class="tab-panel active" id="panel-suggestions">
+    <div class="notice">Anything you think could work better — a process, a tool, the rota, anything. Visible to all staff; post anonymously if you'd rather. Upvote ones you agree with so management can see what matters most.</div>
+    <div class="form-card">
+      <form id="suggestion-form" onsubmit="return submitSuggestion(event)">
+        <div class="field">
+          <label>Your Suggestion</label>
+          <textarea id="suggestion-text" required placeholder="What would you change or add?"></textarea>
+        </div>
+        <div class="field">
+          <label class="checkbox-row"><input type="checkbox" id="suggestion-anon"> Post anonymously</label>
+        </div>
+        <button class="submit" type="submit">Submit Suggestion</button>
+        <p class="form-status" id="sg-form-status"></p>
+      </form>
+    </div>
+    <h2 class="section-title">All Suggestions</h2>
+    <div class="filter-row" id="sg-filter-row">
+      <button class="filter-btn active" data-filter="all" onclick="setSgFilter('all', this)">All</button>
+      <button class="filter-btn" data-filter="new" onclick="setSgFilter('new', this)">New</button>
+      <button class="filter-btn" data-filter="reviewed" onclick="setSgFilter('reviewed', this)">Reviewed</button>
+      <button class="filter-btn" data-filter="actioned" onclick="setSgFilter('actioned', this)">Actioned</button>
+    </div>
+    <div id="sg-list"><p class="empty-note">Loading…</p></div>
+  </div>
+
+  <!-- ── Shout-Outs ── -->
+  <div class="tab-panel" id="panel-shoutouts">
+    <div class="notice">Say a quick thank-you, or call out someone who went above and beyond. Visible to everyone on the team.</div>
+    <div class="form-card">
+      <div class="field">
+        <label for="shoutout-to">Who's it for?</label>
+        <input type="text" id="shoutout-to" list="colleague-list" placeholder="Name">
+        <datalist id="colleague-list"></datalist>
+      </div>
+      <div class="field">
+        <label for="shoutout-message">Your message</label>
+        <textarea id="shoutout-message" placeholder="What did they do?"></textarea>
+      </div>
+      <button class="submit-btn" onclick="submitShoutout()">🎉 Post Shout-Out</button>
+      <p class="form-status" id="so-form-status"></p>
+    </div>
+    <h2 class="section-title">Recent Shout-Outs</h2>
+    <p class="load-status" id="so-load-status">Loading…</p>
+    <div id="so-list"></div>
+  </div>
+
+  <!-- ── Diary ── -->
+  <div class="tab-panel" id="panel-diary">
+    <div class="notice">For anything worth flagging on a particular date that isn't a shift — a delivery, an alarm test, a meeting, a reminder for whoever's next in. Visible to everyone, any role can add one.</div>
+    <div class="form-card">
+      <div class="form-row">
+        <div class="field">
+          <label for="diary-date">Date</label>
+          <input type="date" id="diary-date">
+        </div>
+        <div class="field">
+          <label for="diary-note">Note</label>
+          <input type="text" id="diary-note" placeholder="e.g. Brewery delivery expected 10am" maxlength="140">
+        </div>
+      </div>
+      <button class="submit-btn" onclick="addDiaryEntry()">+ Add to Diary</button>
+      <p class="form-status" id="di-form-status"></p>
+    </div>
+    <h2 class="section-title">Upcoming</h2>
+    <p class="load-status" id="di-load-status">Loading…</p>
+    <div id="di-list"></div>
+  </div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  let MY_NAME = '';
+  let MY_UID = '';
+  let MY_ROLES = [];
+  let CAN_MODERATE = false;
+
+  function setTab(tab){
+    const tabs = ['suggestions', 'shoutouts', 'diary'];
+    tabs.forEach(t => {
+      document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
+      document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+    });
+  }
+
+  // ── At a Glance ──
+  function formatTime12h(t){
+    if(!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${m.toString().padStart(2, '0')} ${period}`;
+  }
+
+  async function loadGlanceShift(){
+    const valueEl = document.getElementById('glance-shift');
+    const subEl = document.getElementById('glance-shift-sub');
+    try{
+      const doc = await db.collection('rota').doc('current').get();
+      if(!doc.exists){
+        valueEl.textContent = 'No rota yet';
+        return;
+      }
+      const shifts = (doc.data().shifts || []).filter(s => s.n === MY_NAME && s.fd);
+      const today = new Date().toISOString().split('T')[0];
+      const upcoming = shifts.filter(s => s.fd >= today).sort((a, b) => a.fd.localeCompare(b.fd));
+      if(upcoming.length === 0){
+        valueEl.textContent = 'None scheduled';
+        return;
+      }
+      const next = upcoming[0];
+      const isToday = next.fd === today;
+      valueEl.textContent = isToday ? 'Today' : new Date(next.fd + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
+      subEl.textContent = `${formatTime12h(next.st)} – ${next.et === '23:59' ? 'Midnight' : formatTime12h(next.et)}${next.r === 'K' ? ' · 🔑' : ''}`;
+    } catch(e){
+      valueEl.textContent = 'Couldn\'t load';
+    }
+  }
+
+  async function loadGlanceBooking(){
+    const valueEl = document.getElementById('glance-booking');
+    const subEl = document.getElementById('glance-booking-sub');
+    try{
+      const snap = await db.collection('bookings').get();
+      const today = new Date().toISOString().split('T')[0];
+      const upcoming = snap.docs
+        .filter(d => (d.data().date || '') >= today)
+        .sort((a, b) => a.data().date.localeCompare(b.data().date));
+      if(upcoming.length === 0){
+        valueEl.textContent = 'None booked';
+        return;
+      }
+      const next = upcoming[0].data();
+      valueEl.textContent = new Date(next.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+      subEl.textContent = next.label || 'Private Function';
+    } catch(e){
+      valueEl.textContent = 'Couldn\'t load';
+    }
+  }
+
+  async function loadGlanceTickets(){
+    if(!CAN_MODERATE) return;
+    document.getElementById('glance-tickets-card').style.display = 'block';
+    const valueEl = document.getElementById('glance-tickets');
+    try{
+      const snap = await db.collection('tickets').get();
+      const open = snap.docs.filter(d => (d.data().status || 'open') !== 'resolved').length;
+      valueEl.textContent = open === 0 ? 'All clear' : `${open} open`;
+    } catch(e){
+      valueEl.textContent = 'Couldn\'t load';
+    }
+  }
+
+  // ── Suggestions (was staff-suggestions.html) ──
+  let SG_FILTER = 'all';
+  let SG_DOCS = [];
+
+  function timeAgo(ms){
+    if(!ms) return '';
+    const date = new Date(ms);
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function setSgFilter(filter, btn){
+    SG_FILTER = filter;
+    document.querySelectorAll('#sg-filter-row .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderSgList();
+  }
+
+  function renderSgCard(doc){
+    const d = doc.data();
+    const upvotedBy = d.upvotedBy || [];
+    const voted = upvotedBy.includes(MY_UID);
+    const statusLabel = d.status.charAt(0).toUpperCase() + d.status.slice(1);
+    const moderation = CAN_MODERATE ? `
+      <div class="suggestion-actions">
+        ${d.status !== 'reviewed' ? `<button class="action-btn" onclick="setSgStatus('${doc.id}','reviewed')">Mark Reviewed</button>` : ''}
+        ${d.status !== 'actioned' ? `<button class="action-btn" onclick="setSgStatus('${doc.id}','actioned')">Mark Actioned</button>` : ''}
+        ${d.status !== 'new' ? `<button class="action-btn" onclick="setSgStatus('${doc.id}','new')">Reopen</button>` : ''}
+      </div>` : '';
+    return `
+      <div class="suggestion-card">
+        <div class="suggestion-top">
+          <div class="suggestion-text">${d.text}</div>
+          <span class="status-tag ${d.status}">${statusLabel}</span>
+        </div>
+        <div class="suggestion-meta">${d.authorName} · ${timeAgo(d.createdAtMs)}</div>
+        <div class="suggestion-actions">
+          <button class="action-btn upvote${voted ? ' voted' : ''}" onclick="toggleUpvote('${doc.id}')">👍 ${upvotedBy.length}</button>
+        </div>
+        ${moderation}
+      </div>
+    `;
+  }
+
+  function renderSgList(){
+    const listEl = document.getElementById('sg-list');
+    const docs = SG_FILTER === 'all' ? SG_DOCS : SG_DOCS.filter(d => d.data().status === SG_FILTER);
+    listEl.innerHTML = docs.length ? docs.map(renderSgCard).join('') : '<p class="empty-note">Nothing here yet.</p>';
+  }
+
+  async function loadSuggestions(){
+    const listEl = document.getElementById('sg-list');
+    try{
+      const snap = await db.collection('staffSuggestions').get();
+      SG_DOCS = snap.docs.sort((a, b) => {
+        const bv = (b.data().upvotedBy || []).length - (a.data().upvotedBy || []).length;
+        if(bv !== 0) return bv;
+        return (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0);
+      });
+      renderSgList();
+    } catch(e){
+      listEl.innerHTML = '<p class="empty-note">Couldn\'t load suggestions right now.</p>';
+    }
+  }
+
+  async function toggleUpvote(id){
+    const ref = db.collection('staffSuggestions').doc(id);
+    try{
+      const doc = await ref.get();
+      const upvotedBy = doc.data().upvotedBy || [];
+      if(upvotedBy.includes(MY_UID)){
+        await ref.update({ upvotedBy: firebase.firestore.FieldValue.arrayRemove(MY_UID) });
+      } else {
+        await ref.update({ upvotedBy: firebase.firestore.FieldValue.arrayUnion(MY_UID) });
+      }
+      loadSuggestions();
+    } catch(e){
+      alert("Couldn't update that — try again in a moment.");
+    }
+  }
+
+  async function setSgStatus(id, status){
+    try{
+      await db.collection('staffSuggestions').doc(id).update({ status });
+      loadSuggestions();
+    } catch(e){
+      alert("Couldn't update that — try again in a moment.");
+    }
+  }
+
+  async function submitSuggestion(e){
+    e.preventDefault();
+    const statusEl = document.getElementById('sg-form-status');
+    const text = document.getElementById('suggestion-text').value.trim();
+    const anon = document.getElementById('suggestion-anon').checked;
+    if(!text){
+      statusEl.textContent = 'Write something first.';
+      statusEl.className = 'form-status err';
+      return false;
+    }
+    const submitBtn = e.target.querySelector('button.submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+    try{
+      await db.collection('staffSuggestions').add({
+        text,
+        authorName: anon ? 'Anonymous' : MY_NAME,
+        status: 'new',
+        upvotedBy: [],
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      statusEl.textContent = '✓ Thanks — posted.';
+      statusEl.className = 'form-status ok';
+      document.getElementById('suggestion-form').reset();
+      loadSuggestions();
+    } catch(e){
+      statusEl.textContent = "Couldn't send that — try again in a moment.";
+      statusEl.className = 'form-status err';
+    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Suggestion';
+    return false;
+  }
+
+  // ── Shout-Outs (was staff-shoutouts.html) ──
+  function renderShoutouts(docs){
+    const listEl = document.getElementById('so-list');
+    const statusEl = document.getElementById('so-load-status');
+    if(docs.length === 0){
+      listEl.innerHTML = '';
+      statusEl.textContent = 'No shout-outs yet — be the first!';
+      return;
+    }
+    statusEl.textContent = '';
+    listEl.innerHTML = docs.map(doc => {
+      const d = doc.data();
+      return `
+        <div class="shoutout-card">
+          <div class="shoutout-to">For ${d.toName || 'the team'}</div>
+          <div class="shoutout-message">${d.message}</div>
+          <div class="shoutout-meta">— ${d.fromName || 'Anonymous'} · ${timeAgo(d.createdAtMs)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadShoutouts(){
+    const statusEl = document.getElementById('so-load-status');
+    try{
+      const snap = await db.collection('shoutouts').get();
+      const docs = snap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0)).slice(0, 40);
+      renderShoutouts(docs);
+    } catch(e){
+      statusEl.textContent = "Couldn't load shout-outs right now — " + e.message;
+    }
+  }
+
+  async function loadColleagueNames(){
+    try{
+      const snap = await db.collection('staff').orderBy('name').get();
+      const dl = document.getElementById('colleague-list');
+      dl.innerHTML = snap.docs.map(d => `<option value="${d.data().name}">`).join('');
+    } catch(e){ /* datalist just stays empty */ }
+  }
+
+  async function submitShoutout(){
+    const toName = document.getElementById('shoutout-to').value.trim();
+    const message = document.getElementById('shoutout-message').value.trim();
+    const statusEl = document.getElementById('so-form-status');
+    if(!message){
+      statusEl.textContent = 'Write a message first.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+    statusEl.textContent = 'Posting…';
+    statusEl.className = 'form-status';
+    try{
+      await db.collection('shoutouts').add({
+        toName: toName || 'the team',
+        message,
+        fromName: MY_NAME || 'Anonymous',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('shoutout-to').value = '';
+      document.getElementById('shoutout-message').value = '';
+      statusEl.textContent = '✓ Posted!';
+      statusEl.className = 'form-status success';
+      loadShoutouts();
+    } catch(e){
+      statusEl.textContent = "Couldn't post that — " + e.message;
+      statusEl.className = 'form-status error';
+    }
+  }
+
+  // ── Diary (was staff-diary.html) ──
+  function formatDayLabel(fd){
+    const opts = { weekday: 'long', day: 'numeric', month: 'short' };
+    return new Date(fd + 'T00:00:00').toLocaleDateString('en-GB', opts);
+  }
+
+  function renderDiary(docs){
+    const listEl = document.getElementById('di-list');
+    const statusEl = document.getElementById('di-load-status');
+    const today = new Date().toISOString().split('T')[0];
+    const upcoming = docs.filter(doc => (doc.data().date || '') >= today);
+    if(upcoming.length === 0){
+      listEl.innerHTML = '';
+      statusEl.textContent = 'Nothing coming up.';
+      return;
+    }
+    statusEl.textContent = '';
+    const grouped = {};
+    upcoming.forEach(doc => {
+      const d = doc.data();
+      if(!grouped[d.date]) grouped[d.date] = [];
+      grouped[d.date].push(doc);
+    });
+    const dates = Object.keys(grouped).sort();
+    listEl.innerHTML = dates.map(date => {
+      const rows = grouped[date].map(doc => {
+        const d = doc.data();
+        return `
+          <div class="diary-row">
+            <div class="diary-info">
+              <div class="note">${d.note}</div>
+              <div class="meta">— ${d.authorName || 'Someone'}</div>
+            </div>
+            <button class="remove-btn" onclick="removeDiaryEntry('${doc.id}')">✕</button>
+          </div>
+        `;
+      }).join('');
+      const isToday = date === today;
+      return `<div class="day-group"><div class="day-label ${isToday ? 'today' : ''}">${isToday ? 'Today, ' : ''}${formatDayLabel(date)}</div>${rows}</div>`;
+    }).join('');
+  }
+
+  async function loadDiary(){
+    const statusEl = document.getElementById('di-load-status');
+    try{
+      const snap = await db.collection('diaryEntries').get();
+      const docs = snap.docs.sort((a, b) => (a.data().date || '').localeCompare(b.data().date || ''));
+      renderDiary(docs);
+    } catch(e){
+      statusEl.textContent = "Couldn't load the diary right now — " + e.message;
+    }
+  }
+
+  async function addDiaryEntry(){
+    const date = document.getElementById('diary-date').value;
+    const note = document.getElementById('diary-note').value.trim();
+    const statusEl = document.getElementById('di-form-status');
+    if(!date || !note){
+      statusEl.textContent = 'Pick a date and write a note first.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'form-status';
+    try{
+      await db.collection('diaryEntries').add({
+        date,
+        note,
+        authorName: MY_NAME || 'Someone',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('diary-date').value = '';
+      document.getElementById('diary-note').value = '';
+      statusEl.textContent = '✓ Added.';
+      statusEl.className = 'form-status success';
+      loadDiary();
+    } catch(e){
+      statusEl.textContent = "Couldn't save that — " + e.message;
+      statusEl.className = 'form-status error';
+    }
+  }
+
+  async function removeDiaryEntry(id){
+    if(!confirm('Remove this diary entry?')) return;
+    try{
+      await db.collection('diaryEntries').doc(id).delete();
+      loadDiary();
+    } catch(e){
+      alert("Couldn't remove it — " + e.message);
+    }
+  }
+
+  // ── Boot ──
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      window.location.href = 'staff-area.html';
+      return;
+    }
+    MY_UID = user.uid;
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      const data = doc.exists ? doc.data() : {};
+      MY_NAME = data.name || localStorage.getItem('staffUserName') || 'You';
+      MY_ROLES = data.roles || [];
+    } catch(e){
+      MY_NAME = localStorage.getItem('staffUserName') || 'You';
+    }
+    CAN_MODERATE = MY_ROLES.some(r => ['admin', 'mgmt', 'committee'].includes(r));
+
+    loadGlanceShift();
+    loadGlanceBooking();
+    loadGlanceTickets();
+    loadSuggestions();
+    loadShoutouts();
+    loadColleagueNames();
+    loadDiary();
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>
