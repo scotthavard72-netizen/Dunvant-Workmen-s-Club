@@ -82,6 +82,40 @@
     white-space:nowrap;
   }
   .logout-btn:hover{border-color:#c25a4d; color:#c25a4d;}
+  .welcome-actions{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+  .admin-corner-btn{
+    display:none; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    background:var(--paper); border:1px solid var(--line); color:var(--muted);
+    cursor:pointer; font-size:0.92rem;
+  }
+  .admin-corner-btn:hover{border-color:var(--brass); color:var(--brass);}
+
+  /* ── Site Admin passcode gate ── */
+  .admin-gate-overlay{
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(20,16,12,0.55); align-items:center; justify-content:center; padding:20px;
+  }
+  .admin-gate-overlay.open{display:flex;}
+  .admin-gate-box{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:22px 22px 20px; max-width:280px; width:100%;
+  }
+  .admin-gate-box h3{font-family:'Fraunces', serif; font-size:1.05rem; margin-bottom:6px;}
+  .admin-gate-box p{font-size:0.82rem; color:var(--muted); margin-bottom:14px;}
+  .admin-gate-box input{
+    width:100%; font-family:'Inter', sans-serif; font-size:1rem; letter-spacing:0.1em;
+    background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; color:var(--ink); margin-bottom:8px;
+  }
+  .admin-gate-error{font-size:0.78rem; color:#c25a4d; margin-bottom:10px;}
+  .admin-gate-actions{display:flex; gap:8px; justify-content:flex-end;}
+  .admin-gate-actions button{
+    font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600;
+    border-radius:20px; padding:8px 16px; cursor:pointer; border:1px solid var(--line);
+  }
+  .admin-gate-cancel{background:var(--paper); color:var(--muted);}
+  .admin-gate-submit{background:var(--forest); color:#fff; border-color:var(--forest);}
 
   /* ── My Tools: full per-role menu, ported from Staff Area ── */
   .whats-new-wrap{margin-bottom:14px;}
@@ -304,7 +338,23 @@
         <span class="welcome-role" id="welcome-role">—</span>
       </div>
     </div>
-    <button class="logout-btn" onclick="logout()">Log Out</button>
+    <div class="welcome-actions">
+      <button class="admin-corner-btn" id="admin-corner-btn" onclick="openAdminGate()" title="Site Admin" aria-label="Site Admin">🔒</button>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <div class="admin-gate-overlay" id="admin-gate-overlay">
+    <div class="admin-gate-box">
+      <h3>Site Admin</h3>
+      <p>Enter the admin passcode to continue.</p>
+      <input type="password" id="admin-gate-input" inputmode="numeric" autocomplete="off" placeholder="Passcode" onkeydown="if(event.key==='Enter') verifyAdminPin();">
+      <p class="admin-gate-error" id="admin-gate-error" style="display:none;">Incorrect passcode.</p>
+      <div class="admin-gate-actions">
+        <button class="admin-gate-cancel" onclick="closeAdminGate()">Cancel</button>
+        <button class="admin-gate-submit" onclick="verifyAdminPin()">Unlock</button>
+      </div>
+    </div>
   </div>
 
   <div class="tab-row" id="tab-row">
@@ -764,8 +814,8 @@
   };
 
   // ── Which menus each role sees, beyond its own ──
-  // mgmt also sees bar; keyholder also sees bar; admin sees everything (but admin
-  // is redirected to the Full Admin Dashboard before this ever renders).
+  // mgmt also sees bar; keyholder also sees bar; admin sees everything, but the
+  // Site Admin tab itself stays tucked behind the passcode gate (see adminUnlocked).
   const ROLE_EXTRAS = {
     bar: ["bar"],
     keyholder: ["bar", "keyholder"],
@@ -783,18 +833,30 @@
     );
   }
 
+  // Site Admin is tucked away behind the corner lock icon + passcode, so it's
+  // left out of the ordinary tab/search surface until unlocked for this session.
+  let adminUnlocked = false;
+  let adminPinCache = null;
+  function visibleAccessibleRoles(){
+    return ACCESSIBLE_ROLES.filter(r => r !== 'admin' || adminUnlocked);
+  }
+
   function renderToolsSection(){
     ACCESSIBLE_ROLES = computeAccessibleRoles();
     updateAppBadge(ACCESSIBLE_ROLES);
 
-    const defaultTab = (MY_ROLES.includes('admin') && ACCESSIBLE_ROLES.includes('admin')) ? 'admin' : ACCESSIBLE_ROLES[0];
+    document.getElementById('admin-corner-btn').style.display =
+      (MY_ROLES.includes('admin') && ACCESSIBLE_ROLES.includes('admin')) ? 'inline-flex' : 'none';
+
+    const visibleRoles = visibleAccessibleRoles();
+    const defaultTab = visibleRoles[0] || 'bar';
 
     const tabsContainer = document.getElementById('role-tabs');
-    if(ACCESSIBLE_ROLES.length <= 1){
+    if(visibleRoles.length <= 1){
       tabsContainer.innerHTML = '';
-      renderItems(ACCESSIBLE_ROLES[0] || 'bar');
+      renderItems(defaultTab);
     } else {
-      tabsContainer.innerHTML = ACCESSIBLE_ROLES.map((roleKey) =>
+      tabsContainer.innerHTML = visibleRoles.map((roleKey) =>
         `<button class="role-tab-btn${roleKey === defaultTab ? ' active' : ''}" data-role="${roleKey}" onclick="switchRoleTab('${roleKey}', this)">${MENUS[roleKey].label}</button>`
       ).join('');
       renderItems(defaultTab);
@@ -1144,12 +1206,58 @@
     document.getElementById('quick-search').value = '';
   }
 
+  // ── Site Admin passcode gate ──
+  function openAdminGate(){
+    document.getElementById('admin-gate-input').value = '';
+    document.getElementById('admin-gate-error').style.display = 'none';
+    document.getElementById('admin-gate-overlay').classList.add('open');
+    document.getElementById('admin-gate-input').focus();
+  }
+
+  function closeAdminGate(){
+    document.getElementById('admin-gate-overlay').classList.remove('open');
+  }
+
+  async function verifyAdminPin(){
+    const entered = document.getElementById('admin-gate-input').value.trim();
+    const errorEl = document.getElementById('admin-gate-error');
+    if(!entered) return;
+    try{
+      if(adminPinCache === null){
+        const doc = await db.collection('settings').doc('adminGate').get();
+        adminPinCache = doc.exists ? String(doc.data().pin || '') : '';
+      }
+    } catch(e){
+      errorEl.textContent = "Couldn't check the passcode — try again.";
+      errorEl.style.display = 'block';
+      return;
+    }
+    if(adminPinCache && entered === adminPinCache){
+      closeAdminGate();
+      unlockAdminTab();
+    } else {
+      errorEl.textContent = 'Incorrect passcode.';
+      errorEl.style.display = 'block';
+    }
+  }
+
+  function unlockAdminTab(){
+    adminUnlocked = true;
+    const roles = visibleAccessibleRoles();
+    const tabsContainer = document.getElementById('role-tabs');
+    tabsContainer.innerHTML = roles.map((roleKey) =>
+      `<button class="role-tab-btn${roleKey === 'admin' ? ' active' : ''}" data-role="${roleKey}" onclick="switchRoleTab('${roleKey}', this)">${MENUS[roleKey].label}</button>`
+    ).join('');
+    document.getElementById('quick-search').value = '';
+    renderItems('admin');
+  }
+
   // Every accessible tool across every tab the person can see, de-duplicated —
   // used so search finds a tool no matter which role tab it's filed under.
   function collectAllAccessibleItems(){
     const seen = new Set();
     const results = [];
-    ACCESSIBLE_ROLES.forEach(roleKey => {
+    visibleAccessibleRoles().forEach(roleKey => {
       const roleData = MENUS[roleKey];
       const groups = roleData.groups ? roleData.groups : [{ label: roleData.label, items: roleData.items }];
       groups.forEach(g => {
@@ -1172,7 +1280,7 @@
       // Back to the normal, per-tab view.
       tabsContainer.style.display = '';
       const activeBtn = tabsContainer.querySelector('.role-tab-btn.active') || tabsContainer.querySelector('.role-tab-btn');
-      renderItems(activeBtn ? activeBtn.dataset.role : ACCESSIBLE_ROLES[0]);
+      renderItems(activeBtn ? activeBtn.dataset.role : (visibleAccessibleRoles()[0] || 'bar'));
       return;
     }
 
