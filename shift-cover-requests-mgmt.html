@@ -27,6 +27,8 @@
   header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
   main{max-width:680px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  .section-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem; color:var(--forest); margin:0 0 12px;}
+  .section-title:not(:first-of-type){margin-top:32px;}
   table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
   th, td{text-align:left; padding:14px 16px; font-size:0.86rem; border-bottom:1px solid var(--line);}
   th{background:var(--forest); color:#fff; font-weight:600; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em;}
@@ -71,6 +73,11 @@
   <p>Submitted by bar staff via Teams</p>
 </header>
 <main>
+  <h2 class="section-title">Shift Swaps</h2>
+  <div class="notice">Live — pulled directly from Shift Swap. Staff arrange these between themselves; this is just visibility for you, and the rota updates automatically once a swap is accepted.</div>
+  <div id="swap-list"><p style="font-size:0.86rem; color:var(--muted);">Loading…</p></div>
+
+  <h2 class="section-title">Cover Requests (Example)</h2>
   <div class="notice">This is an example page with sample data. Since requests come in via Teams chat rather than a form, this list would need to be updated manually — or built properly with a form tool that logs each submission automatically.</div>
 
   <table>
@@ -104,6 +111,63 @@
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  function swapStatusClass(s){
+    if(s === 'accepted') return 'covered';
+    if(s === 'declined' || s === 'cancelled') return 'open';
+    return 'seen';
+  }
+
+  async function loadShiftSwaps(){
+    const listEl = document.getElementById('swap-list');
+    try{
+      const snap = await db.collection('shiftSwaps').get();
+      const docs = snap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+      if(docs.length === 0){
+        listEl.innerHTML = '<p style="font-size:0.86rem; color:var(--muted);">No shift swaps yet.</p>';
+        return;
+      }
+      listEl.innerHTML = `
+        <table>
+          <thead><tr><th>From</th><th>To</th><th>Shift</th><th>Status</th></tr></thead>
+          <tbody>
+            ${docs.map(doc => {
+              const d = doc.data();
+              const label = d.status.charAt(0).toUpperCase() + d.status.slice(1);
+              const note = d.status === 'accepted' ? (d.rotaUpdated ? ' — rota updated' : (d.rotaUpdateNote ? ' — check rota' : '')) : '';
+              return `<tr>
+                <td data-label="From">${d.requesterName}</td>
+                <td data-label="To">${d.colleagueName}</td>
+                <td data-label="Shift">${d.shiftLabel || ''}${d.role === 'keyholder' ? ' (Keyholder)' : ''}</td>
+                <td data-label="Status"><span class="status ${swapStatusClass(d.status)}">${label}</span>${note}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    } catch(e){
+      listEl.innerHTML = '<p style="font-size:0.86rem; color:var(--muted);">Couldn\'t load shift swaps right now.</p>';
+    }
+  }
+  auth.onAuthStateChanged((user) => {
+    if(user) loadShiftSwaps();
+  });
+</script>
 <script>
   function acknowledge(rowId){
     const row = document.getElementById(rowId);

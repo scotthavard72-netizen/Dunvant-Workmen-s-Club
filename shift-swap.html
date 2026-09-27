@@ -77,6 +77,18 @@
   [data-theme="dark"] .status-tag.pending{background:#3a2f10; color:#e0bd82;}
   [data-theme="dark"] .status-tag.accepted{background:#1e2d24; color:#a8d4bb;}
   [data-theme="dark"] .status-tag.declined{background:#3a1e1a; color:#e0a89e;}
+  .role-tag{
+    font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
+    padding:2px 8px; border-radius:20px; margin-left:6px; display:inline-block;
+  }
+  .role-tag.keyholder{background:var(--brass-light); color:#1a1512;}
+  .role-tag.bar{background:var(--line); color:var(--muted);}
+  .role-warning{font-size:0.76rem; color:#a24339; margin-top:8px;}
+  [data-theme="dark"] .role-warning{color:#e0a89e;}
+  .rota-note{font-size:0.76rem; color:var(--forest); margin-top:8px;}
+  .rota-note.warn{color:#a24339;}
+  [data-theme="dark"] .rota-note{color:#a8d4bb;}
+  [data-theme="dark"] .rota-note.warn{color:#e0a89e;}
   .swap-actions{display:flex; gap:8px; margin-top:12px;}
   .swap-btn{
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.8rem;
@@ -115,6 +127,13 @@
           <option value="">Loading your shifts…</option>
         </select>
         <p class="hint" id="shift-hint"></p>
+      </div>
+      <div class="field" id="manual-role-field" style="display:none;">
+        <label>Role Needed</label>
+        <select id="manual-role">
+          <option value="bar">Bar Staff</option>
+          <option value="keyholder">Keyholder</option>
+        </select>
       </div>
       <div class="field">
         <label>Ask</label>
@@ -156,6 +175,7 @@
 </script>
 <script>
   let MY_NAME = '';
+  let MY_ROLES = [];
   let MY_SHIFTS = [];
 
   function formatTime12h(t){
@@ -169,10 +189,17 @@
     return `${s.d}, ${s.dt} — ${formatTime12h(s.st)}–${s.et === '23:59' ? 'Midnight' : formatTime12h(s.et)}`;
   }
 
+  function roleTagHtml(role){
+    return role === 'keyholder'
+      ? '<span class="role-tag keyholder">🔑 Keyholder</span>'
+      : '<span class="role-tag bar">Bar Staff</span>';
+  }
+
   async function loadRotaAndShifts(){
     const shiftSelect = document.getElementById('swap-shift');
     const colleagueList = document.getElementById('colleague-list');
     const hint = document.getElementById('shift-hint');
+    const manualRoleField = document.getElementById('manual-role-field');
     try{
       const doc = await db.collection('rota').doc('current').get();
       const shifts = doc.exists ? (doc.data().shifts || []) : [];
@@ -180,16 +207,19 @@
       MY_SHIFTS = shifts.filter(s => (s.n || '').trim().toLowerCase() === MY_NAME.trim().toLowerCase());
       if(MY_SHIFTS.length === 0){
         shiftSelect.innerHTML = '<option value="">No shifts found on the current rota</option>';
-        hint.textContent = "Can't see your shift listed? Just message your colleague directly and let a keyholder know once you've agreed.";
+        hint.textContent = "Can't see your shift listed? Pick the role it needs below and give the details in your message — a keyholder can update the rota manually once it's agreed.";
+        manualRoleField.style.display = 'block';
       } else {
-        shiftSelect.innerHTML = MY_SHIFTS.map((s, i) => `<option value="${i}">${shiftLabel(s)}</option>`).join('');
+        shiftSelect.innerHTML = MY_SHIFTS.map((s, i) => `<option value="${i}">${shiftLabel(s)}${s.r === 'K' ? ' (Keyholder)' : ''}</option>`).join('');
         hint.textContent = '';
+        manualRoleField.style.display = 'none';
       }
 
       const otherNames = [...new Set(shifts.map(s => s.n).filter(n => n && n.trim().toLowerCase() !== MY_NAME.trim().toLowerCase()))];
       colleagueList.innerHTML = otherNames.map(n => `<option value="${n}"></option>`).join('');
     } catch(e){
       shiftSelect.innerHTML = '<option value="">Couldn\'t load the rota — enter details in the message box instead</option>';
+      manualRoleField.style.display = 'block';
     }
   }
 
@@ -205,16 +235,27 @@
       : (!viewerIsRecipient && d.status === 'pending')
       ? `<div class="swap-actions"><button class="swap-btn cancel" onclick="cancelSwap('${doc.id}')">Cancel</button></div>`
       : '';
+    const needsKeyholderWarning = viewerIsRecipient && d.status === 'pending' && d.role === 'keyholder'
+      && !MY_ROLES.includes('keyholder') && !MY_ROLES.includes('admin')
+      ? '<div class="role-warning">⚠️ This shift needs a keyholder — you\'re not marked as one. Check before accepting.</div>'
+      : '';
+    let rotaNote = '';
+    if(d.status === 'accepted'){
+      if(d.rotaUpdated) rotaNote = '<div class="rota-note">✓ Rota updated automatically</div>';
+      else if(d.rotaUpdateNote) rotaNote = `<div class="rota-note warn">${d.rotaUpdateNote}</div>`;
+    }
     return `
       <div class="swap-card">
         <div class="swap-top">
           <div>
-            <div class="swap-title">${who}</div>
+            <div class="swap-title">${who} ${roleTagHtml(d.role || 'bar')}</div>
             <div class="swap-meta">${d.shiftLabel || ''}</div>
           </div>
           <span class="status-tag ${d.status}">${statusLabel}</span>
         </div>
         ${d.message ? `<div class="swap-message">"${d.message}"</div>` : ''}
+        ${needsKeyholderWarning}
+        ${rotaNote}
         ${actions}
       </div>
     `;
@@ -245,9 +286,47 @@
     }
   }
 
+  // When a swap is accepted, try to update the live rota so the shift shows
+  // the new person's name automatically — matched against the exact shift
+  // snapshot saved when the request was sent. If the rota's moved on since
+  // (republished, shift removed, etc.) this just flags it instead of failing.
+  async function applySwapToRota(swapId){
+    const noteRef = db.collection('shiftSwaps').doc(swapId);
+    try{
+      const swapDoc = await noteRef.get();
+      const d = swapDoc.data();
+      if(!d.shift){
+        await noteRef.update({ rotaUpdateNote: "No exact shift was on record — update the rota manually." });
+        return;
+      }
+      const rotaRef = db.collection('rota').doc('current');
+      const rotaDoc = await rotaRef.get();
+      if(!rotaDoc.exists){
+        await noteRef.update({ rotaUpdateNote: "Couldn't find the current rota — update it manually." });
+        return;
+      }
+      const shifts = rotaDoc.data().shifts || [];
+      const idx = shifts.findIndex(s =>
+        s.d === d.shift.d && s.dt === d.shift.dt && s.st === d.shift.st && s.et === d.shift.et &&
+        (s.r || '') === (d.shift.r || '') && (s.n || '').trim().toLowerCase() === d.requesterName.trim().toLowerCase()
+      );
+      if(idx === -1){
+        await noteRef.update({ rotaUpdateNote: "That shift's no longer on the current rota — update it manually if needed." });
+        return;
+      }
+      const updatedShifts = shifts.slice();
+      updatedShifts[idx] = { ...updatedShifts[idx], n: d.colleagueName };
+      await rotaRef.update({ shifts: updatedShifts });
+      await noteRef.update({ rotaUpdated: true });
+    } catch(e){
+      await noteRef.update({ rotaUpdateNote: "Couldn't update the rota automatically — please update it manually." }).catch(() => {});
+    }
+  }
+
   async function respondSwap(id, status){
     try{
       await db.collection('shiftSwaps').doc(id).update({ status, respondedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      if(status === 'accepted') await applySwapToRota(id);
       loadSwapLists();
     } catch(e){
       alert("Couldn't update that request — try again in a moment.");
@@ -270,6 +349,7 @@
     const shiftIdx = document.getElementById('swap-shift').value;
     const colleague = document.getElementById('swap-colleague').value.trim();
     const message = document.getElementById('swap-message').value.trim();
+    const manualRole = document.getElementById('manual-role').value;
 
     if(!colleague){
       statusEl.textContent = "Enter who you're asking first.";
@@ -283,6 +363,7 @@
     }
 
     const shift = shiftIdx !== '' ? MY_SHIFTS[shiftIdx] : null;
+    const role = shift ? (shift.r === 'K' ? 'keyholder' : 'bar') : manualRole;
     const submitBtn = e.target.querySelector('button.submit');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending…';
@@ -291,7 +372,9 @@
       await db.collection('shiftSwaps').add({
         requesterName: MY_NAME,
         colleagueName: colleague,
+        shift: shift ? { d: shift.d, dt: shift.dt, st: shift.st, et: shift.et, r: shift.r || '' } : null,
         shiftLabel: shift ? shiftLabel(shift) : 'See message for details',
+        role,
         message,
         status: 'pending',
         createdAtMs: Date.now(),
@@ -318,7 +401,9 @@
     }
     try{
       const doc = await db.collection('staff').doc(user.uid).get();
-      MY_NAME = doc.exists ? (doc.data().name || 'You') : (localStorage.getItem('staffUserName') || 'You');
+      const data = doc.exists ? doc.data() : {};
+      MY_NAME = data.name || localStorage.getItem('staffUserName') || 'You';
+      MY_ROLES = data.roles || [];
     } catch(e){
       MY_NAME = localStorage.getItem('staffUserName') || 'You';
     }
