@@ -120,14 +120,14 @@
   <p>Real accounts, real passwords — no code editing, no GitHub</p>
 </header>
 <main>
-  <div class="notice">Add, edit, or remove staff directly here. Adding someone creates a real login for them — they'll be asked to choose their own password the first time they sign in, so the one you set here is only ever temporary. "Send Password Reset" lets an existing person set a new one by email at any time.</div>
+  <div class="notice">Add, edit, or remove staff directly here. Adding someone creates a real login for them — they'll be asked to choose their own password the first time they sign in, so the one you set here is only ever temporary. "Send Password Reset" lets an existing person set a new one by email at any time. For anyone with the Admin role, set their Site Admin passcode here too — that's the code they enter to unlock the Site Admin tab in Staff Hub, separate from their login password.</div>
 
   <div class="section-label">Current Staff</div>
   <p class="load-status" id="load-status">Loading…</p>
   <div class="table-scroll">
   <table>
     <thead>
-      <tr><th>Name</th><th>Email</th><th>Roles</th><th></th></tr>
+      <tr><th>Name</th><th>Email</th><th>Roles</th><th>Site Admin PIN</th><th></th></tr>
     </thead>
     <tbody id="staff-rows"></tbody>
   </table>
@@ -165,7 +165,7 @@
     <p class="status" id="create-status"></p>
   </div>
 
-  <a class="back" href="../staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
 <script>
   const ROLE_OPTIONS = ["bar", "keyholder", "mgmt", "admin", "committee"];
@@ -191,6 +191,7 @@
       <td data-label="Name"><input type="text" class="f-name" value="${data.name || ''}"></td>
       <td data-label="Email"><input type="email" class="f-email" value="${data.email || ''}" disabled></td>
       <td data-label="Roles"><div class="roles-cell">${roleChipsHtml(id, data.roles || [])}</div></td>
+      <td data-label="Site Admin PIN"><input type="text" inputmode="numeric" maxlength="8" class="f-pin" placeholder="Not set" value="${data.adminPin || ''}"></td>
       <td data-label="">
         <div class="row-actions">
           <button class="reset-btn" onclick="sendReset('${data.email}')">Reset PW</button>
@@ -238,7 +239,8 @@
         const docId = row.dataset.docId;
         const name = row.querySelector('.f-name').value.trim();
         const activeRoles = [...row.querySelectorAll('.role-chip.active')].map(c => c.dataset.role);
-        batch.update(db.collection('staff').doc(docId), { name, roles: activeRoles });
+        const adminPin = row.querySelector('.f-pin').value.trim();
+        batch.update(db.collection('staff').doc(docId), { name, roles: activeRoles, adminPin });
       });
       setProgress('save-progress', 60);
       await batch.commit();
