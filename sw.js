@@ -32,7 +32,6 @@ const URLS_TO_CACHE = [
   "price-list.html",
   "publish-file-update.html",
   "qr-code-generator.html",
-  "shift-cover-form-responses.html",
   "shift-cover-request.html",
   "shift-cover-requests-mgmt.html",
   "shift-swap.html",

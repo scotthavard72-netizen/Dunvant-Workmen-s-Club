@@ -40,12 +40,14 @@
   .status.open{background:#fff2d9; color:#8a6a1f;}
   .status.covered{background:#e4ece9; color:#2c3f38;}
   .status.seen{background:#dbeafe; color:#1e4a7a;}
+  .status.urgent-tag{background:#fbe4e4; color:#8a2f2f; margin-left:6px;}
   button.ack{
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.78rem;
     background:var(--forest); color:#fff; border:none;
-    padding:8px 14px; border-radius:6px; cursor:pointer; white-space:nowrap;
+    padding:8px 14px; border-radius:6px; cursor:pointer; white-space:nowrap; margin-right:6px; margin-bottom:4px;
   }
   button.ack:hover{opacity:0.85;}
+  button.ack.secondary{background:var(--paper); color:var(--ink); border:1px solid var(--line);}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
   @media(max-width:560px){
     table, thead, tbody, th, td, tr{display:block;}
@@ -68,46 +70,19 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Management · Example</span>
+  <span class="eyebrow">Management</span>
   <h1>Shift Cover Requests</h1>
-  <p>Submitted by bar staff via Teams</p>
+  <p>Submitted by bar staff, plus shift swaps between colleagues</p>
 </header>
 <main>
+  <h2 class="section-title">Cover Requests</h2>
+  <div class="notice">Live — pulled straight from the Shift Cover Request form. "Mark Covered" once someone's taken it, or "Acknowledge" just to show you've seen it.</div>
+  <p class="load-status" id="cover-load-status" style="font-size:0.86rem; color:var(--muted);">Loading…</p>
+  <div id="cover-list"></div>
+
   <h2 class="section-title">Shift Swaps</h2>
   <div class="notice">Live — pulled directly from Shift Swap. Staff arrange these between themselves; this is just visibility for you, and the rota updates automatically once a swap is accepted.</div>
   <div id="swap-list"><p style="font-size:0.86rem; color:var(--muted);">Loading…</p></div>
-
-  <h2 class="section-title">Cover Requests (Example)</h2>
-  <div class="notice">This is an example page with sample data. Since requests come in via Teams chat rather than a form, this list would need to be updated manually — or built properly with a form tool that logs each submission automatically.</div>
-
-  <table>
-    <thead>
-      <tr><th>Name</th><th>Shift Date</th><th>Reason</th><th>Status</th><th></th></tr>
-    </thead>
-    <tbody>
-      <tr id="row1">
-        <td data-label="Name">Chloe M.</td>
-        <td data-label="Date">Fri 8th Aug</td>
-        <td data-label="Reason">Family commitment</td>
-        <td data-label="Status"><span class="status open">Open</span></td>
-        <td data-label=""><button class="ack" onclick="acknowledge('row1')">Acknowledge</button></td>
-      </tr>
-      <tr id="row2">
-        <td data-label="Name">Rhys T.</td>
-        <td data-label="Date">Sun 10th Aug</td>
-        <td data-label="Reason">Unwell</td>
-        <td data-label="Status"><span class="status covered">Covered</span></td>
-        <td data-label=""></td>
-      </tr>
-      <tr id="row3">
-        <td data-label="Name">Sam D.</td>
-        <td data-label="Date">Sat 16th Aug</td>
-        <td data-label="Reason">Prior booking</td>
-        <td data-label="Status"><span class="status open">Open</span></td>
-        <td data-label=""><button class="ack" onclick="acknowledge('row3')">Acknowledge</button></td>
-      </tr>
-    </tbody>
-  </table>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
@@ -164,19 +139,70 @@
       listEl.innerHTML = '<p style="font-size:0.86rem; color:var(--muted);">Couldn\'t load shift swaps right now.</p>';
     }
   }
-  auth.onAuthStateChanged((user) => {
-    if(user) loadShiftSwaps();
-  });
-</script>
-<script>
-  function acknowledge(rowId){
-    const row = document.getElementById(rowId);
-    const status = row.querySelector('.status');
-    status.textContent = 'Seen';
-    status.className = 'status seen';
-    const btn = row.querySelector('.ack');
-    if(btn) btn.remove();
+  function formatCoverDate(fd){
+    if(!fd) return '';
+    return new Date(fd + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   }
+
+  async function loadCoverRequests(){
+    const listEl = document.getElementById('cover-list');
+    const statusEl = document.getElementById('cover-load-status');
+    try{
+      const snap = await db.collection('shiftCoverRequests').get();
+      const docs = snap.docs.sort((a, b) => {
+        const au = a.data().urgent ? 1 : 0, bu = b.data().urgent ? 1 : 0;
+        if(au !== bu) return bu - au;
+        return (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0);
+      });
+      if(docs.length === 0){
+        listEl.innerHTML = '';
+        statusEl.textContent = 'No cover requests yet.';
+        return;
+      }
+      statusEl.textContent = '';
+      listEl.innerHTML = `
+        <table>
+          <thead><tr><th>Name</th><th>Shift Date</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            ${docs.map(doc => {
+              const d = doc.data();
+              const status = d.status || 'open';
+              const label = status.charAt(0).toUpperCase() + status.slice(1);
+              return `<tr>
+                <td data-label="Name">${d.name || 'Someone'}</td>
+                <td data-label="Date">${formatCoverDate(d.date)}</td>
+                <td data-label="Reason">${d.reason || ''}</td>
+                <td data-label="Status"><span class="status ${status === 'covered' ? 'covered' : (status === 'seen' ? 'seen' : 'open')}">${label}</span>${d.urgent ? '<span class="status urgent-tag">Urgent</span>' : ''}</td>
+                <td data-label="">
+                  ${status !== 'seen' ? `<button class="ack secondary" onclick="setCoverStatus('${doc.id}','seen')">Acknowledge</button>` : ''}
+                  ${status !== 'covered' ? `<button class="ack" onclick="setCoverStatus('${doc.id}','covered')">Mark Covered</button>` : ''}
+                  ${status !== 'open' ? `<button class="ack secondary" onclick="setCoverStatus('${doc.id}','open')">Reopen</button>` : ''}
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    } catch(e){
+      statusEl.textContent = "Couldn't load cover requests right now — " + e.message;
+    }
+  }
+
+  async function setCoverStatus(id, status){
+    try{
+      await db.collection('shiftCoverRequests').doc(id).update({ status });
+      loadCoverRequests();
+    } catch(e){
+      alert("Couldn't update that — " + e.message);
+    }
+  }
+
+  auth.onAuthStateChanged((user) => {
+    if(user){
+      loadShiftSwaps();
+      loadCoverRequests();
+    }
+  });
 </script>
 <script>
   const themeToggle = document.getElementById('theme-toggle');

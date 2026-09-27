@@ -27,21 +27,26 @@
   header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
   main{max-width:520px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
   .form-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:26px;}
   .field{margin-bottom:18px;}
+  .field:last-child{margin-bottom:0;}
   .field label{display:block; font-size:0.82rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
   .field input, .field textarea{
     width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
-    padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper);
+    padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
   }
   .field textarea{resize:vertical; min-height:80px;}
   .field input:focus, .field textarea:focus{outline:none; border-color:var(--brass);}
+  .checkbox-row{display:flex; align-items:center; gap:8px; font-size:0.88rem; color:var(--ink); font-weight:600;}
   button.submit{
     width:100%; font-family:'Inter', sans-serif; font-weight:600; font-size:0.95rem;
     background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
-    border:none; padding:15px 16px; border-radius:8px; cursor:pointer;
+    border:none; padding:15px 16px; border-radius:8px; cursor:pointer; margin-top:6px;
   }
-  .confirm{display:none; text-align:center; padding:20px 0; font-size:0.92rem; color:var(--forest); font-weight:600;}
+  .form-status{font-size:0.84rem; margin-top:14px; text-align:center; display:none;}
+  .form-status.ok{color:var(--forest); display:block;}
+  .form-status.err{color:#a24339; display:block;}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
   .theme-toggle{
     position:fixed; top:16px; right:16px; z-index:100;
@@ -57,32 +62,15 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Bar Staff · Example</span>
+  <span class="eyebrow">Bar Staff</span>
   <h1>Shift Cover Request</h1>
   <p>Can't make a shift? Flag it here</p>
 </header>
 <main>
-  <div class="notice">Fill this in for routine cover requests — it goes to a Microsoft Form, which emails management automatically. If it's urgent (e.g. tonight's shift), use the Teams button instead so someone sees it straight away rather than waiting on email.</div>
+  <div class="notice">Goes straight to management and Site Admin — visible immediately on Shift Cover Requests, no form or email in between. Tick "Urgent" for anything close to the shift itself (e.g. tonight's), but for a genuine emergency still call or message someone directly as well.</div>
 
   <div class="form-card">
-    <div class="field">
-      <label>Routine request</label>
-    </div>
-    <a class="submit" style="display:block; text-align:center; text-decoration:none;" href="https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=DQSIkWdsW0yxEjajBLZtrQAAAAAAAAAAAAO__rZLZohUNEVBTTNKU1VVWFhTNVlGSUZVSTQ5VzZaWi4u" target="_blank" rel="noopener">
-      Submit Shift Cover Request
-    </a>
-    <p style="font-size:0.78rem; color:var(--muted); margin-top:10px; text-align:center;">Opens a short form — takes under a minute</p>
-
-    <hr style="border:none; border-top:1px solid var(--line); margin:26px 0;">
-
-    <div class="field">
-      <label>Urgent — need a reply fast?</label>
-    </div>
-    <form id="cover-form" onsubmit="return submitForm(event)">
-      <div class="field">
-        <label>Your Name</label>
-        <input type="text" id="cover-name" required placeholder="e.g. Jane">
-      </div>
+    <form id="cover-form" onsubmit="return submitCoverRequest(event)">
       <div class="field">
         <label>Shift Date</label>
         <input type="date" id="cover-date" required>
@@ -91,29 +79,85 @@
         <label>Reason</label>
         <textarea id="cover-reason" placeholder="Let management know why you can't make it"></textarea>
       </div>
-      <button class="submit" type="submit" style="background:var(--forest); color:#fff;">Message via Teams (urgent)</button>
+      <div class="field">
+        <label class="checkbox-row"><input type="checkbox" id="cover-urgent"> Urgent — needs a reply fast</label>
+      </div>
+      <button class="submit" type="submit">Submit Cover Request</button>
+      <p class="form-status" id="form-status"></p>
     </form>
   </div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
-  // Replace with the management contact's email address used for their Microsoft/Teams account
-  const TEAMS_CONTACT_EMAIL = "management@dunvantclub.example";
-
-  function submitForm(e){
-    e.preventDefault();
-    const name = document.getElementById('cover-name').value;
-    const date = document.getElementById('cover-date').value;
-    const reason = document.getElementById('cover-reason').value || "No reason given";
-
-    const message = `URGENT shift cover request\nName: ${name}\nDate: ${date}\nReason: ${reason}`;
-    const url = `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(TEAMS_CONTACT_EMAIL)}&message=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-    return false;
-  }
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 </script>
 <script>
+  let MY_NAME = "";
+
+  async function submitCoverRequest(e){
+    e.preventDefault();
+    const statusEl = document.getElementById('form-status');
+    const date = document.getElementById('cover-date').value;
+    const reason = document.getElementById('cover-reason').value.trim();
+    const urgent = document.getElementById('cover-urgent').checked;
+
+    if(!date){
+      statusEl.textContent = 'Pick the shift date first.';
+      statusEl.className = 'form-status err';
+      return false;
+    }
+
+    const submitBtn = e.target.querySelector('button.submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    try{
+      await db.collection('shiftCoverRequests').add({
+        name: MY_NAME || 'Someone',
+        date,
+        reason: reason || 'No reason given',
+        urgent,
+        status: 'open',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      statusEl.textContent = '✓ Sent — management can see this straight away.';
+      statusEl.className = 'form-status ok';
+      document.getElementById('cover-form').reset();
+    } catch(e){
+      statusEl.textContent = "Couldn't send that — " + e.message;
+      statusEl.className = 'form-status err';
+    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Cover Request';
+    return false;
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      window.location.href = 'staff-area.html';
+      return;
+    }
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      MY_NAME = doc.exists ? (doc.data().name || '') : '';
+    } catch(e){ /* keep going without a name */ }
+  });
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
