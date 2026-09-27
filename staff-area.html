@@ -371,7 +371,7 @@
 
     <div class="tabs" id="menu-tabs"></div>
     <div class="search-row">
-      <input type="text" class="quick-search" id="quick-search" placeholder="Search this menu…" oninput="filterMenu(this.value)">
+      <input type="text" class="quick-search" id="quick-search" placeholder="Search every tool…" oninput="filterMenu(this.value)">
       <button class="edit-layout-btn" id="edit-layout-btn" onclick="toggleEditMode()">✥ Rearrange</button>
     </div>
     <div class="menu" id="menu-items"></div>
@@ -551,6 +551,7 @@
 
   // Canonical display order when someone has more than one role's worth of menus
   const ROLE_ORDER = ["bar", "keyholder", "mgmt", "admin", "committee"];
+  let ACCESSIBLE_ROLES = [];
 
   function renderMenu(user){
     // Site Admin's dashboard already covers every role and tool — skip the in-page
@@ -569,6 +570,7 @@
     const accessible = ROLE_ORDER.filter(r =>
       user.roles.some(userRole => ROLE_EXTRAS[userRole].includes(r))
     );
+    ACCESSIBLE_ROLES = accessible;
 
     updateAppBadge(accessible);
 
@@ -930,21 +932,64 @@
     document.getElementById('quick-search').value = '';
   }
 
+  // Every accessible tool across every tab the person can see, de-duplicated —
+  // used so search finds a tool no matter which role tab it's filed under.
+  function collectAllAccessibleItems(){
+    const seen = new Set();
+    const results = [];
+    ACCESSIBLE_ROLES.forEach(roleKey => {
+      const roleData = MENUS[roleKey];
+      const groups = roleData.groups ? roleData.groups : [{ label: roleData.label, items: roleData.items }];
+      groups.forEach(g => {
+        g.items.forEach(item => {
+          const dedupeKey = item[0];
+          if(seen.has(dedupeKey)) return;
+          seen.add(dedupeKey);
+          results.push({ item, roleLabel: roleData.label });
+        });
+      });
+    });
+    return results;
+  }
+
   function filterMenu(query){
     const q = query.trim().toLowerCase();
-    document.querySelectorAll('#menu-items a').forEach(a => {
-      const matches = a.textContent.toLowerCase().includes(q);
-      a.classList.toggle('hidden', !matches);
+    const tabsContainer = document.getElementById('menu-tabs');
+
+    if(!q){
+      // Back to the normal, per-tab view.
+      tabsContainer.style.display = '';
+      const activeBtn = tabsContainer.querySelector('.tab-btn.active') || tabsContainer.querySelector('.tab-btn');
+      renderItems(activeBtn ? activeBtn.dataset.role : ACCESSIBLE_ROLES[0]);
+      return;
+    }
+
+    // Search across every tab, not just the one that's currently open.
+    tabsContainer.style.display = 'none';
+    const matches = collectAllAccessibleItems().filter(({ item }) =>
+      item[1].toLowerCase().includes(q) || (item[2] || '').toLowerCase().includes(q)
+    );
+
+    const container = document.getElementById('menu-items');
+    if(matches.length === 0){
+      container.innerHTML = '<p style="padding:20px 4px; color:var(--muted); font-size:0.86rem;">No tools match that.</p>';
+      return;
+    }
+
+    // Only label results by tab when the results actually span more than one.
+    const spansMultipleTabs = new Set(matches.map(m => m.roleLabel)).size > 1;
+    if(!spansMultipleTabs){
+      container.innerHTML = matches.map(({ item }) => renderMenuItem(item, 'search')).join('');
+      return;
+    }
+    const grouped = {};
+    matches.forEach(({ item, roleLabel }) => {
+      if(!grouped[roleLabel]) grouped[roleLabel] = [];
+      grouped[roleLabel].push(item);
     });
-    document.querySelectorAll('#menu-items .menu-group-label').forEach(label => {
-      let sib = label.nextElementSibling;
-      let anyVisible = false;
-      while(sib && !sib.classList.contains('menu-group-label')){
-        if(!sib.classList.contains('hidden')) anyVisible = true;
-        sib = sib.nextElementSibling;
-      }
-      label.classList.toggle('hidden', !anyVisible);
-    });
+    container.innerHTML = Object.entries(grouped).map(([roleLabel, items]) =>
+      `<div class="menu-group-label">${roleLabel}</div>${items.map(it => renderMenuItem(it, 'search')).join('')}`
+    ).join('');
   }
 
   function attemptLogin(){
