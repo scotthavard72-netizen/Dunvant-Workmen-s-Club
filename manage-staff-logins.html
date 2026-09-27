@@ -120,7 +120,7 @@
   <p>Real accounts, real passwords — no code editing, no GitHub</p>
 </header>
 <main>
-  <div class="notice">Add, edit, or remove staff directly here. Adding someone creates a real login for them with their own email and password, and "Send Password Reset" lets them set their own password by email — nobody needs to give you their password to log in.</div>
+  <div class="notice">Add, edit, or remove staff directly here. Adding someone creates a real login for them — they'll be asked to choose their own password the first time they sign in, so the one you set here is only ever temporary. "Send Password Reset" lets an existing person set a new one by email at any time.</div>
 
   <div class="section-label">Current Staff</div>
   <p class="load-status" id="load-status">Loading…</p>
@@ -147,7 +147,13 @@
       <div><label>Email</label><input type="email" id="new-email" placeholder="their.email@example.com"></div>
     </div>
     <div class="add-row">
-      <div><label>Initial Password</label><input type="text" id="new-password" placeholder="At least 6 characters"></div>
+      <div>
+        <label>Initial Password</label>
+        <div style="position:relative;">
+          <input type="password" id="new-password" placeholder="At least 6 characters" style="padding-right:44px;" autocomplete="new-password">
+          <button type="button" onclick="togglePasswordVisibility()" id="toggle-pw-btn" aria-label="Show password" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:0.95rem; padding:4px 8px;">👁️</button>
+        </div>
+      </div>
     </div>
     <label style="font-size:0.76rem; font-weight:600; color:var(--forest); display:block; margin-bottom:6px;">Roles</label>
     <div class="roles-cell" id="new-roles-cell"></div>
@@ -267,6 +273,15 @@
       .catch(e => alert("Couldn't send it — " + e.message));
   }
 
+  function togglePasswordVisibility(){
+    const input = document.getElementById('new-password');
+    const btn = document.getElementById('toggle-pw-btn');
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.textContent = showing ? '👁️' : '🙈';
+    btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  }
+
   function showAddForm(){
     document.getElementById('add-person-card').classList.remove('hidden');
     document.getElementById('new-roles-cell').innerHTML = roleChipsHtml('new', []);
@@ -277,6 +292,8 @@
     document.getElementById('new-name').value = '';
     document.getElementById('new-email').value = '';
     document.getElementById('new-password').value = '';
+    document.getElementById('new-password').type = 'password';
+    document.getElementById('toggle-pw-btn').textContent = '👁️';
     document.getElementById('create-status').textContent = '';
   }
 
@@ -316,12 +333,12 @@
       setProgress('create-progress', 40);
       const cred = await tempApp.auth().createUserWithEmailAndPassword(email, password);
       setProgress('create-progress', 70);
-      await db.collection('staff').doc(cred.user.uid).set({ name, email, roles });
+      await db.collection('staff').doc(cred.user.uid).set({ name, email, roles, mustChangePassword: true });
       setProgress('create-progress', 100);
       await tempApp.auth().signOut();
       await tempApp.delete();
 
-      statusEl.textContent = `✓ Created — ${name} can log in right away with that email and password.`;
+      statusEl.textContent = `✓ Created — ${name} can log in right away with that email and password, and will be asked to set their own on first login.`;
       statusEl.className = 'status success';
       loadStaff();
       setTimeout(hideAddForm, 1800);

@@ -329,6 +329,18 @@
     <p class="note" id="ios-install-note" style="display:none;">On iPhone: tap Share → Add to Home Screen to install.</p>
   </div>
 
+  <!-- Screen: forced password change (first login after Site Admin creates an account) -->
+  <div class="screen" id="screen-change-password">
+    <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
+    <span class="eyebrow">Welcome</span>
+    <h1>Choose Your Own Password</h1>
+    <p class="sub">You're using the password Site Admin set up for you — pick your own before you go any further.</p>
+    <input type="password" id="new-own-password" placeholder="New password (min 6 characters)" autocomplete="new-password">
+    <input type="password" id="confirm-own-password" placeholder="Confirm new password" autocomplete="new-password">
+    <button class="enter" onclick="setOwnPassword()">Set Password &amp; Continue</button>
+    <p class="error" id="change-password-error"></p>
+  </div>
+
   <!-- Screen: menu (shared across roles, content swapped by JS) -->
   <div class="screen" id="screen-menu">
     <div class="welcome-row">
@@ -955,6 +967,50 @@
     // On success, onAuthStateChanged below picks it up and loads the person's roles.
   }
 
+  async function setOwnPassword(){
+    const pw = document.getElementById('new-own-password').value;
+    const confirmPw = document.getElementById('confirm-own-password').value;
+    const errorEl = document.getElementById('change-password-error');
+    errorEl.style.display = 'none';
+
+    if(pw.length < 6){
+      errorEl.textContent = 'Password needs to be at least 6 characters.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if(pw !== confirmPw){
+      errorEl.textContent = "Those two don't match — try again.";
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const user = auth.currentUser;
+    if(!user){
+      errorEl.textContent = 'Your session dropped — sign in again.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    try{
+      await user.updatePassword(pw);
+      await db.collection('staff').doc(user.uid).update({ mustChangePassword: false });
+      document.getElementById('new-own-password').value = '';
+      document.getElementById('confirm-own-password').value = '';
+
+      const doc = await db.collection('staff').doc(user.uid).get();
+      const data = doc.data();
+      document.getElementById('screen-change-password').classList.remove('active');
+      localStorage.setItem('staffUserName', data.name);
+      localStorage.setItem('staffUserRoles', JSON.stringify(data.roles));
+      renderMenu({ name: data.name, roles: data.roles });
+    } catch(e){
+      errorEl.textContent = e.code === 'auth/requires-recent-login'
+        ? "For security, sign out and back in with your old password once more, then try this again."
+        : ("Couldn't set that — " + e.message);
+      errorEl.style.display = 'block';
+    }
+  }
+
   function sendForgotPassword(event){
     event.preventDefault();
     const email = document.getElementById('login-username').value.trim();
@@ -1007,6 +1063,12 @@
         return;
       }
       const data = doc.data();
+      if(data.mustChangePassword){
+        document.getElementById('screen-login').classList.remove('active');
+        document.getElementById('screen-menu').classList.remove('active');
+        document.getElementById('screen-change-password').classList.add('active');
+        return;
+      }
       localStorage.setItem('staffUserName', data.name);
       localStorage.setItem('staffUserRoles', JSON.stringify(data.roles));
       renderMenu({ name: data.name, roles: data.roles });
