@@ -18,6 +18,12 @@
         background:#181614; color:#fff; border:none; border-radius:6px;
         padding:6px 14px; cursor:pointer;
       }
+      #shared-offline-banner{
+        display:none; align-items:center; justify-content:center; gap:10px;
+        padding:10px 16px; font-family:'Inter', sans-serif; font-size:0.82rem; font-weight:600;
+        text-align:center; position:sticky; top:0; z-index:9999;
+        background:#8a2f2f; color:#fff;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -30,9 +36,29 @@
     document.getElementById('shared-update-refresh-btn').addEventListener('click', () => window.location.reload());
   }
 
+  // Only add this if the page doesn't already have its own offline-banner —
+  // a handful of older pages built theirs by hand before this existed.
+  function injectOfflineBannerHTML(){
+    if(document.getElementById('offline-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'shared-offline-banner';
+    banner.innerHTML = `<span>📡 You're offline — showing the last saved version. Anything that needs a live connection (forms, the rota, live lists) won't work until you're back online.</span>`;
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+
+  function updateOfflineStatus(){
+    const banner = document.getElementById('shared-offline-banner');
+    if(!banner) return;
+    banner.style.display = navigator.onLine ? 'none' : 'flex';
+  }
+
   function init(){
     injectBannerStyles();
     injectBannerHTML();
+    injectOfflineBannerHTML();
+    updateOfflineStatus();
+    window.addEventListener('online', updateOfflineStatus);
+    window.addEventListener('offline', updateOfflineStatus);
 
     if('serviceWorker' in navigator){
       navigator.serviceWorker.register('sw.js').then((registration) => {
