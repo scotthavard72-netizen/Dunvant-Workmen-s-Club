@@ -249,6 +249,15 @@
   }
   .reorder-btn:hover{border-color:var(--brass);}
 
+  /* On a wider screen (PC), lay tools out side by side instead of one long
+     stacked column — the phone layout stays exactly as it was below this. */
+  @media (min-width: 720px){
+    main{max-width:980px;}
+    .menu{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px; align-items:start;}
+    .menu a{margin-bottom:0;}
+    .menu-group-label{grid-column:1 / -1;}
+  }
+
   .tab-row{display:flex; gap:6px; margin-bottom:22px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
   .tab-btn{
     font-family:'Inter', sans-serif; font-size:0.86rem; font-weight:600; padding:10px 14px; cursor:pointer;
