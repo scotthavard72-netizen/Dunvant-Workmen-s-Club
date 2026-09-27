@@ -27,14 +27,25 @@
   header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
   main{max-width:680px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+  .filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
+  .filter-btn{
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600; padding:7px 14px; border-radius:16px; cursor:pointer;
+    border:1px solid var(--line); background:var(--card); color:var(--muted);
+  }
+  .filter-btn.active{background:var(--brass); color:#fff; border-color:var(--brass);}
+  .load-status{font-size:0.86rem; color:var(--muted); text-align:center; padding:16px 0;}
+
   .req{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:14px;}
-  .req-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
+  .req-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:10px;}
   .req-top h3{font-family:'Fraunces', serif; font-size:1.05rem; font-weight:600;}
   .status{
     font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
-    padding:4px 10px; border-radius:20px; white-space:nowrap;
+    padding:4px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0;
   }
   .status.pending{background:#fff2d9; color:#8a6a1f;}
+  .status.approved{background:#e4ece9; color:#2c3f38;}
+  .status.declined{background:#fbe4e4; color:#8a2f2f;}
   .details{font-size:0.86rem; color:var(--muted); line-height:1.7; margin-bottom:14px;}
   .details strong{color:var(--ink);}
   .actions{display:flex; gap:10px;}
@@ -44,8 +55,6 @@
   }
   .approve{background:var(--forest); color:#fff;}
   .decline{background:var(--paper); color:var(--ink); border:1px solid var(--line) !important;}
-  .req.resolved{opacity:0.45;}
-  .req.resolved .actions{display:none;}
   a.back{display:inline-block; margin-top:10px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
   .theme-toggle{
     position:fixed; top:16px; right:16px; z-index:100;
@@ -61,60 +70,158 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Management · Example</span>
+  <span class="eyebrow">Management</span>
   <h1>Pending Bookings</h1>
-  <p>Function room requests awaiting approval</p>
+  <p>Function room requests submitted via the public Book page</p>
 </header>
 <main>
-  <div class="notice">This is an example page with sample data — approve/decline here is visual only. A real version would need to write back to the booking record (e.g. update the entry in the Microsoft Form response sheet or shared calendar).</div>
+  <div class="notice">Approving a request also adds the date to the public "Already booked" list automatically — no need to do that separately in Manage Bookings.</div>
 
-  <div class="req" id="req1">
-    <div class="req-top">
-      <h3>60th Birthday Party</h3>
-      <span class="status pending">Pending</span>
-    </div>
-    <div class="details">
-      <strong>Date:</strong> Saturday 22nd August<br>
-      <strong>Time:</strong> 6:00 PM – midnight<br>
-      <strong>Numbers:</strong> ~50 guests<br>
-      <strong>Contact:</strong> J. Davies, 07XXX XXXXXX<br>
-      <strong>Deposit:</strong> £40 received
-    </div>
-    <div class="actions">
-      <button class="approve" onclick="resolve('req1')">Approve</button>
-      <button class="decline" onclick="resolve('req1')">Decline</button>
-    </div>
-  </div>
+  <div class="filter-row" id="filter-row"></div>
 
-  <div class="req" id="req2">
-    <div class="req-top">
-      <h3>Christening Buffet</h3>
-      <span class="status pending">Pending</span>
-    </div>
-    <div class="details">
-      <strong>Date:</strong> Sunday 6th September<br>
-      <strong>Time:</strong> 1:00 PM – 5:00 PM<br>
-      <strong>Numbers:</strong> ~30 guests<br>
-      <strong>Contact:</strong> R. Thomas, 07XXX XXXXXX<br>
-      <strong>Deposit:</strong> £40 received
-    </div>
-    <div class="actions">
-      <button class="approve" onclick="resolve('req2')">Approve</button>
-      <button class="decline" onclick="resolve('req2')">Decline</button>
-    </div>
-  </div>
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="req-list"></div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
-  function resolve(id){
-    document.getElementById(id).classList.add('resolved');
-    document.getElementById(id).querySelector('.status').textContent = 'Resolved';
-    document.getElementById(id).querySelector('.status').style.background = '#e4ece9';
-    document.getElementById(id).querySelector('.status').style.color = '#2c3f38';
-  }
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 </script>
 <script>
+  let ALL_DOCS = [];
+  let ACTIVE_FILTER = 'pending';
+  const FILTERS = ['pending', 'approved', 'declined', 'all'];
+  const FILTER_LABELS = { pending: 'Pending', approved: 'Approved', declined: 'Declined', all: 'All' };
+
+  function formatBookingDate(fd){
+    if(!fd) return '';
+    return new Date(fd + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function formatTime12h(t){
+    if(!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${m.toString().padStart(2, '0')} ${period}`;
+  }
+
+  function renderFilters(){
+    document.getElementById('filter-row').innerHTML = FILTERS.map(f =>
+      `<span class="filter-btn ${ACTIVE_FILTER === f ? 'active' : ''}" onclick="setFilter('${f}')">${FILTER_LABELS[f]}</span>`
+    ).join('');
+  }
+
+  function setFilter(f){
+    ACTIVE_FILTER = f;
+    renderFilters();
+    renderList();
+  }
+
+  function renderList(){
+    const listEl = document.getElementById('req-list');
+    const statusEl = document.getElementById('load-status');
+    let docs = ALL_DOCS;
+    if(ACTIVE_FILTER !== 'all'){
+      docs = docs.filter(doc => (doc.data().status || 'pending') === ACTIVE_FILTER);
+    }
+    if(docs.length === 0){
+      listEl.innerHTML = '';
+      statusEl.textContent = 'Nothing here.';
+      return;
+    }
+    statusEl.textContent = '';
+    listEl.innerHTML = docs.map(doc => {
+      const d = doc.data();
+      const status = d.status || 'pending';
+      const timeRange = (d.startTime || d.endTime) ? `${formatTime12h(d.startTime)} – ${formatTime12h(d.endTime)}` : 'Not specified';
+      return `
+        <div class="req">
+          <div class="req-top">
+            <h3>${d.eventName || 'Untitled Event'}</h3>
+            <span class="status ${status}">${FILTER_LABELS[status] || status}</span>
+          </div>
+          <div class="details">
+            <strong>Date:</strong> ${formatBookingDate(d.date)}<br>
+            <strong>Time:</strong> ${timeRange}<br>
+            <strong>Numbers:</strong> ${d.guests ? '~' + d.guests + ' guests' : 'Not specified'}<br>
+            <strong>Contact:</strong> ${d.contactName || ''}${d.contactPhone ? ', ' + d.contactPhone : ''}${d.contactEmail ? ' · ' + d.contactEmail : ''}<br>
+            ${d.notes ? `<strong>Notes:</strong> ${d.notes}` : ''}
+          </div>
+          ${status === 'pending' ? `
+            <div class="actions">
+              <button class="approve" onclick="approveRequest('${doc.id}')">Approve</button>
+              <button class="decline" onclick="declineRequest('${doc.id}')">Decline</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadRequests(){
+    const statusEl = document.getElementById('load-status');
+    try{
+      const snap = await db.collection('bookingRequests').get();
+      ALL_DOCS = snap.docs.sort((a, b) => (a.data().date || '').localeCompare(b.data().date || ''));
+      renderFilters();
+      renderList();
+    } catch(e){
+      statusEl.textContent = "Couldn't load requests right now — " + e.message;
+    }
+  }
+
+  async function approveRequest(id){
+    const doc = ALL_DOCS.find(d => d.id === id);
+    if(!doc) return;
+    const d = doc.data();
+    try{
+      await db.collection('bookingRequests').doc(id).update({ status: 'approved' });
+      if(d.date){
+        await db.collection('bookings').add({
+          date: d.date,
+          label: d.eventName || 'Private Function',
+          createdAtMs: Date.now(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      loadRequests();
+    } catch(e){
+      alert("Couldn't approve that — " + e.message);
+    }
+  }
+
+  async function declineRequest(id){
+    if(!confirm('Decline this booking request?')) return;
+    try{
+      await db.collection('bookingRequests').doc(id).update({ status: 'declined' });
+      loadRequests();
+    } catch(e){
+      alert("Couldn't decline that — " + e.message);
+    }
+  }
+
+  auth.onAuthStateChanged((user) => {
+    if(user){
+      loadRequests();
+    } else {
+      window.location.href = 'staff-area.html';
+    }
+  });
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');

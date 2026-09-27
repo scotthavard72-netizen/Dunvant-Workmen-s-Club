@@ -74,6 +74,33 @@
   .avail-row .label{color:var(--muted); font-size:0.84rem;}
   .avail-empty{padding:20px; text-align:center; color:var(--muted); font-size:0.86rem;}
 
+  .booking-form-card{
+    background:var(--card); border:1px solid var(--line); border-radius:4px;
+    padding:32px 30px; margin-top:24px; text-align:left;
+  }
+  .booking-form-card label{display:block; font-size:0.8rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .booking-form-card input, .booking-form-card textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.94rem;
+    padding:12px 14px; border:1px solid var(--line); border-radius:6px; background:var(--parchment); color:var(--ink);
+    margin-bottom:16px;
+  }
+  .booking-form-card textarea{min-height:80px; resize:vertical;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media(max-width:560px){ .form-grid{grid-template-columns:1fr;} }
+  .booking-submit-btn{
+    font-family:'Fraunces', serif; font-weight:600; font-size:0.92rem; cursor:pointer; border:none;
+    background:linear-gradient(180deg, var(--brass-light), var(--brass)); color:var(--coal);
+    padding:13px 26px; border-radius:2px; width:100%;
+  }
+  .booking-form-status{font-size:0.86rem; margin-top:12px; text-align:center; color:var(--muted);}
+  .booking-form-status.success{color:#3d8f6f; font-weight:600;}
+  .booking-form-status.error{color:#c25a4d; font-weight:600;}
+  .date-warning{
+    font-size:0.82rem; color:#8a2f2f; background:#fbe4e4; border:1px solid #e0b8b8;
+    border-radius:6px; padding:10px 12px; margin:-8px 0 16px; display:none;
+  }
+  [data-theme="dark"] .date-warning{background:#3a2020; color:#e0a0a0; border-color:#5a3030;}
+
   @media(max-width:640px){
     nav.clubnav{padding:0 12px; overflow-x:auto; justify-content:flex-start;}
     nav.clubnav a{padding:14px 12px; white-space:nowrap; font-size:0.8rem;}
@@ -104,7 +131,53 @@
       <div><strong style="font-family:'Fraunces', serif; font-size:1.2rem; display:block; color:var(--brass-light);">4 weeks</strong>notice for Saturdays</div>
       <div><strong style="font-family:'Fraunces', serif; font-size:1.2rem; display:block; color:var(--brass-light);">£40</strong>deposit</div>
     </div>
-    <a class="btn brass" href="https://forms.cloud.microsoft/r/xPbfry03VW" target="_blank" rel="noopener">Go to Booking Form</a>
+  </div>
+
+  <div class="booking-form-card">
+    <div class="form-grid">
+      <div>
+        <label for="bf-name">Event name</label>
+        <input type="text" id="bf-name" placeholder="e.g. 60th Birthday Party">
+      </div>
+      <div>
+        <label for="bf-guests">Approx. guests</label>
+        <input type="number" id="bf-guests" min="1" placeholder="e.g. 50">
+      </div>
+    </div>
+    <div class="form-grid">
+      <div>
+        <label for="bf-date">Date</label>
+        <input type="date" id="bf-date">
+      </div>
+      <div></div>
+    </div>
+    <div class="date-warning" id="bf-date-warning">⚠️ That date already has a confirmed booking — you're welcome to submit anyway, but it's likely to clash.</div>
+    <div class="form-grid">
+      <div>
+        <label for="bf-start">Start time</label>
+        <input type="time" id="bf-start">
+      </div>
+      <div>
+        <label for="bf-end">End time</label>
+        <input type="time" id="bf-end">
+      </div>
+    </div>
+    <div class="form-grid">
+      <div>
+        <label for="bf-contact-name">Your name</label>
+        <input type="text" id="bf-contact-name" placeholder="Full name">
+      </div>
+      <div>
+        <label for="bf-contact-phone">Phone number</label>
+        <input type="tel" id="bf-contact-phone" placeholder="07XXX XXXXXX">
+      </div>
+    </div>
+    <label for="bf-contact-email">Email (optional)</label>
+    <input type="email" id="bf-contact-email" placeholder="you@example.com">
+    <label for="bf-notes">Anything else we should know?</label>
+    <textarea id="bf-notes" placeholder="Catering, music, access needs, etc."></textarea>
+    <button class="booking-submit-btn" onclick="submitBookingRequest()">Submit Booking Request</button>
+    <p class="booking-form-status" id="booking-form-status"></p>
   </div>
 
   <div class="avail-wrap">
@@ -137,6 +210,53 @@
     return new Date(fd + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   }
 
+  let CONFIRMED_DATES = [];
+
+  document.getElementById('bf-date').addEventListener('change', function(){
+    const warning = document.getElementById('bf-date-warning');
+    warning.style.display = CONFIRMED_DATES.includes(this.value) ? 'block' : 'none';
+  });
+
+  async function submitBookingRequest(){
+    const eventName = document.getElementById('bf-name').value.trim();
+    const guests = document.getElementById('bf-guests').value.trim();
+    const date = document.getElementById('bf-date').value;
+    const startTime = document.getElementById('bf-start').value;
+    const endTime = document.getElementById('bf-end').value;
+    const contactName = document.getElementById('bf-contact-name').value.trim();
+    const contactPhone = document.getElementById('bf-contact-phone').value.trim();
+    const contactEmail = document.getElementById('bf-contact-email').value.trim();
+    const notes = document.getElementById('bf-notes').value.trim();
+    const statusEl = document.getElementById('booking-form-status');
+
+    if(!eventName || !date || !contactName || !contactPhone){
+      statusEl.textContent = 'Please fill in at least the event name, date, your name and phone number.';
+      statusEl.className = 'booking-form-status error';
+      return;
+    }
+
+    statusEl.textContent = 'Sending…';
+    statusEl.className = 'booking-form-status';
+    try{
+      await db.collection('bookingRequests').add({
+        eventName, guests, date, startTime, endTime,
+        contactName, contactPhone, contactEmail, notes,
+        status: 'pending',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      ['bf-name','bf-guests','bf-date','bf-start','bf-end','bf-contact-name','bf-contact-phone','bf-contact-email','bf-notes'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('bf-date-warning').style.display = 'none';
+      statusEl.textContent = "✓ Sent — we'll be in touch to confirm. A £40 deposit secures the date.";
+      statusEl.className = 'booking-form-status success';
+    } catch(e){
+      statusEl.textContent = "Couldn't send that right now — try again in a moment, or find us on Facebook.";
+      statusEl.className = 'booking-form-status error';
+    }
+  }
+
   async function loadAvailability(){
     const listEl = document.getElementById('avail-list');
     try{
@@ -146,6 +266,7 @@
         .map(d => d.data())
         .filter(d => d.date && d.date >= today)
         .sort((a, b) => a.date.localeCompare(b.date));
+      CONFIRMED_DATES = upcoming.map(d => d.date);
       if(upcoming.length === 0){
         listEl.innerHTML = '<div class="avail-empty">Nothing booked yet — ask away.</div>';
         return;
