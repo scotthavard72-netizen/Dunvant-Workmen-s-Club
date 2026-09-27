@@ -787,15 +787,17 @@
     ACCESSIBLE_ROLES = computeAccessibleRoles();
     updateAppBadge(ACCESSIBLE_ROLES);
 
+    const defaultTab = (MY_ROLES.includes('admin') && ACCESSIBLE_ROLES.includes('admin')) ? 'admin' : ACCESSIBLE_ROLES[0];
+
     const tabsContainer = document.getElementById('role-tabs');
     if(ACCESSIBLE_ROLES.length <= 1){
       tabsContainer.innerHTML = '';
       renderItems(ACCESSIBLE_ROLES[0] || 'bar');
     } else {
-      tabsContainer.innerHTML = ACCESSIBLE_ROLES.map((roleKey, i) =>
-        `<button class="role-tab-btn${i === 0 ? ' active' : ''}" data-role="${roleKey}" onclick="switchRoleTab('${roleKey}', this)">${MENUS[roleKey].label}</button>`
+      tabsContainer.innerHTML = ACCESSIBLE_ROLES.map((roleKey) =>
+        `<button class="role-tab-btn${roleKey === defaultTab ? ' active' : ''}" data-role="${roleKey}" onclick="switchRoleTab('${roleKey}', this)">${MENUS[roleKey].label}</button>`
       ).join('');
-      renderItems(ACCESSIBLE_ROLES[0]);
+      renderItems(defaultTab);
     }
 
     document.getElementById('menu-note').textContent = "Please don't share your login with anyone else.";
@@ -1523,14 +1525,6 @@
       MY_ROLES = data.roles || [];
     } catch(e){
       MY_NAME = localStorage.getItem('staffUserName') || 'You';
-    }
-
-    // Site Admin's own dashboard already covers every role and tool — send them
-    // straight there rather than showing the staff menu here too.
-    if(MY_ROLES.includes('admin')){
-      intentionalNavigation = true;
-      window.location.href = 'full-admin-dashboard.html';
-      return;
     }
 
     CAN_MODERATE = MY_ROLES.some(r => ['admin', 'mgmt', 'committee'].includes(r));

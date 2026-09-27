@@ -272,7 +272,7 @@
       localStorage.setItem('staffUserName', data.name);
       localStorage.setItem('staffUserRoles', JSON.stringify(data.roles));
       intentionalNavigation = true;
-      window.location.href = data.roles.includes('admin') ? 'full-admin-dashboard.html' : 'staff-hub.html';
+      window.location.href = 'staff-hub.html';
     } catch(e){
       errorEl.textContent = e.code === 'auth/requires-recent-login'
         ? "For security, sign out and back in with your old password once more, then try this again."
@@ -329,7 +329,7 @@
       localStorage.setItem('staffUserName', data.name);
       localStorage.setItem('staffUserRoles', JSON.stringify(data.roles));
       intentionalNavigation = true;
-      window.location.href = data.roles.includes('admin') ? 'full-admin-dashboard.html' : 'staff-hub.html';
+      window.location.href = 'staff-hub.html';
     } catch(e){
       document.getElementById('login-error').textContent = "Couldn't load your account — try again in a moment.";
       document.getElementById('login-error').style.display = 'block';
