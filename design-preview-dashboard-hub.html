@@ -43,25 +43,27 @@
   body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased;}
 
   header{
-    background:var(--forest); padding:22px 24px; text-align:center;
+    background:var(--forest); padding:10px 20px; text-align:center;
     border-bottom:3px solid var(--brass);
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
   }
-  .header-crest{width:52px; height:52px; border-radius:50%; margin:0 auto 10px; display:block; border:2px solid rgba(255,255,255,0.35);}
-  .eyebrow{display:block; font-size:0.7rem; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#e6dcc4; margin-bottom:6px;}
-  header h1{font-family:'Fraunces', serif; font-weight:700; font-size:1.42rem; color:#fff;}
-  header p{font-size:0.8rem; color:rgba(255,255,255,0.72); margin-top:5px;}
+  .header-crest{width:30px; height:30px; border-radius:50%; display:block; border:2px solid rgba(255,255,255,0.35); flex-shrink:0;}
+  .header-identity{display:flex; align-items:center; gap:10px; text-align:left;}
+  .eyebrow{display:none;}
+  header h1{font-family:'Fraunces', serif; font-weight:700; font-size:1.05rem; color:#fff; line-height:1.2;}
+  header p{font-size:0.72rem; color:rgba(255,255,255,0.65); margin-top:1px;}
   .logout-btn{
-    margin-top:12px; font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    margin-top:0; font-family:'Inter', sans-serif; font-size:0.72rem; font-weight:600;
     background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.5);
-    padding:7px 16px; border-radius:4px; cursor:pointer;
+    padding:6px 12px; border-radius:4px; cursor:pointer;
   }
   .logout-btn:hover{background:rgba(255,255,255,0.12);}
-  .header-actions{display:flex; gap:10px; justify-content:center; margin-top:12px;}
+  .header-actions{display:flex; gap:8px; justify-content:center; margin-top:0; flex-shrink:0;}
   .header-actions .logout-btn{margin-top:0;}
   .site-link-btn{
-    margin-top:0; font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600;
+    margin-top:0; font-family:'Inter', sans-serif; font-size:0.72rem; font-weight:600;
     background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.5);
-    padding:7px 16px; border-radius:4px; cursor:pointer;
+    padding:6px 12px; border-radius:4px; cursor:pointer;
     text-decoration:none; display:inline-block;
   }
   .site-link-btn:hover{background:rgba(255,255,255,0.12);}
@@ -130,25 +132,19 @@
   }
   .dash-search:focus{outline:none; border-color:var(--brass);}
 
-  /* ── At a Glance: the actual situation, not just links to it ── */
-  .glance-heading{
-    font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest);
-    margin:2px 0 10px;
+  /* ── At a Glance: one compact scrollable row, no separate section to scroll past ── */
+  .glance-strip{display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; margin-bottom:10px; padding-bottom:2px;}
+  .glance-strip::-webkit-scrollbar{display:none;}
+  .glance-tile{
+    flex:0 0 auto; min-width:112px; max-width:150px; text-decoration:none; color:var(--ink);
+    background:var(--card); border:1px solid var(--line); border-radius:4px; padding:8px 12px;
   }
-  .glance-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px;}
-  @media(max-width:640px){ .glance-grid{grid-template-columns:1fr;} }
-  .glance-widget{
-    background:var(--card); border:1px solid var(--line); border-radius:6px;
-    padding:14px 16px; display:flex; flex-direction:column;
-  }
-  .glance-widget-title{
-    font-family:'Fraunces', serif; font-size:0.86rem; font-weight:600; color:var(--forest);
-    display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
-  }
-  .glance-widget-title .glance-count{
-    font-family:'Inter', sans-serif; font-size:0.7rem; font-weight:700; color:var(--muted);
-  }
-  .glance-body{flex:1; margin-bottom:10px;}
+  .glance-tile:hover{border-color:var(--brass);}
+  .glance-tile-label{display:block; font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin-bottom:2px; white-space:nowrap;}
+  .glance-tile-value{display:block; font-family:'Fraunces', serif; font-weight:700; font-size:0.96rem; color:var(--forest); white-space:nowrap;}
+  [data-theme="dark"] .glance-tile-value{color:var(--brass-light);}
+  .glance-tile-sub{display:block; font-size:0.7rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px;}
+
   .glance-row{
     display:flex; align-items:baseline; justify-content:space-between; gap:10px;
     font-size:0.84rem; padding:6px 0; border-top:1px solid var(--line);
@@ -157,24 +153,6 @@
   .glance-row-name{font-weight:600;}
   .glance-row-meta{font-size:0.74rem; color:var(--muted); white-space:nowrap;}
   .glance-empty{font-size:0.82rem; color:var(--muted);}
-  .glance-widget-btn{
-    display:block; text-align:center; text-decoration:none;
-    font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600; color:var(--forest);
-    background:var(--paper); border:1px solid var(--line); border-radius:4px; padding:9px 12px;
-    margin-top:auto;
-  }
-  [data-theme="dark"] .glance-widget-btn{color:var(--brass-light);}
-  .glance-widget-btn:hover{border-color:var(--brass);}
-
-  .stats-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
-  .stat-tile{
-    flex:1 1 140px; display:flex; align-items:center; gap:10px; text-decoration:none;
-    background:var(--card); border:1px solid var(--line); border-radius:4px; padding:11px 14px;
-  }
-  .stat-tile:hover{border-color:var(--brass);}
-  .stat-num{font-family:'Fraunces', serif; font-weight:700; font-size:1.35rem; color:var(--forest); line-height:1;}
-  [data-theme="dark"] .stat-num{color:var(--brass-light);}
-  .stat-label{font-size:0.74rem; color:var(--muted); font-weight:600; line-height:1.25;}
 
   .quick-row-wrap{margin-bottom:16px;}
   .quick-row-title{font-family:'Fraunces', serif; font-size:0.78rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;}
@@ -300,17 +278,46 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <img src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest" class="header-crest">
-  <span class="eyebrow">Full Admin</span>
-  <h1>Admin Hub</h1>
-  <p id="header-subtitle">What's actually happening, at a glance</p>
+  <div class="header-identity">
+    <img src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest" class="header-crest">
+    <div>
+      <h1>Admin Hub</h1>
+      <p id="header-subtitle">What's actually happening</p>
+    </div>
+  </div>
   <div class="header-actions">
-    <a class="site-link-btn" href="club-website.html">View Main Site</a>
+    <a class="site-link-btn" href="club-website.html">Main Site</a>
     <button class="logout-btn" onclick="logoutFromDashboard()">Log Out</button>
   </div>
 </header>
 <main>
-  <div class="notice">The situation first, tools second — each box below shows what's actually going on right now, with a button underneath if you need to go and do something about it. Everything further down still works exactly as it did before.</div>
+  <div class="glance-strip">
+    <a class="glance-tile" href="weekly-rota-builder.html">
+      <span class="glance-tile-label">Rota</span>
+      <span class="glance-tile-value" id="glance-rota-value">Loading…</span>
+      <span class="glance-tile-sub" id="glance-rota-sub"></span>
+    </a>
+    <a class="glance-tile" href="bookings.html">
+      <span class="glance-tile-label">Next Booking</span>
+      <span class="glance-tile-value" id="glance-bookings-value">Loading…</span>
+      <span class="glance-tile-sub" id="glance-bookings-sub"></span>
+    </a>
+    <a class="glance-tile" href="tickets.html">
+      <span class="glance-tile-label">Tickets</span>
+      <span class="glance-tile-value" id="glance-tickets-value">…</span>
+      <span class="glance-tile-sub" id="glance-tickets-sub"></span>
+    </a>
+    <a class="glance-tile" href="shift-cover-requests-mgmt.html">
+      <span class="glance-tile-label">Cover Requests</span>
+      <span class="glance-tile-value" id="glance-cover-value">…</span>
+      <span class="glance-tile-sub" id="glance-cover-sub"></span>
+    </a>
+    <a class="glance-tile" href="member-suggestions-review.html">
+      <span class="glance-tile-label">Suggestions</span>
+      <span class="glance-tile-value" id="glance-suggestions-value">…</span>
+      <span class="glance-tile-sub" id="glance-suggestions-sub"></span>
+    </a>
+  </div>
 
   <div class="status-bar">
     <span class="status-pill"><span class="status-dot" id="activity-dot"></span><span id="activity-pill-text">Checking activity…</span></span>
@@ -320,6 +327,16 @@
   </div>
 
   <div class="status-details" id="status-details">
+    <div class="status-section">
+      <div class="status-section-title">Today's Team</div>
+      <div id="detail-rota-list"><p class="glance-empty">Loading…</p></div>
+    </div>
+
+    <div class="status-section">
+      <div class="status-section-title">Upcoming Bookings</div>
+      <div id="detail-bookings-list"><p class="glance-empty">Loading…</p></div>
+    </div>
+
     <div class="status-section">
       <div class="status-section-title">Recent Activity <button class="widget-refresh-btn" onclick="loadRecentActivity()">🔄</button></div>
       <div id="activity-list" class="activity-list">
@@ -343,37 +360,6 @@
       <p class="activity-empty" style="margin-top:6px; font-size:0.72rem;">Only affects the public site — Staff Area and all internal tools stay working either way. This link always previews the real site regardless: <a href="club-website.html?preview=1">club-website.html?preview=1</a></p>
     </div>
   </div>
-
-  <h2 class="glance-heading">At a Glance</h2>
-  <div class="glance-grid">
-    <div class="glance-widget">
-      <div class="glance-widget-title"><span>Today's Rota</span></div>
-      <div class="glance-body" id="glance-rota-body"><p class="glance-empty">Loading…</p></div>
-      <a class="glance-widget-btn" href="weekly-rota-builder.html">Open Rota Builder →</a>
-    </div>
-    <div class="glance-widget">
-      <div class="glance-widget-title"><span>Upcoming Bookings</span></div>
-      <div class="glance-body" id="glance-bookings-body"><p class="glance-empty">Loading…</p></div>
-      <a class="glance-widget-btn" href="bookings.html">Open Bookings →</a>
-    </div>
-    <div class="glance-widget">
-      <div class="glance-widget-title"><span>Open Tickets</span> <span class="glance-count" id="glance-tickets-count"></span></div>
-      <div class="glance-body" id="glance-tickets-body"><p class="glance-empty">Loading…</p></div>
-      <a class="glance-widget-btn" href="tickets.html">Open Tickets →</a>
-    </div>
-    <div class="glance-widget">
-      <div class="glance-widget-title"><span>Shift Cover Requests</span> <span class="glance-count" id="glance-cover-count"></span></div>
-      <div class="glance-body" id="glance-cover-body"><p class="glance-empty">Loading…</p></div>
-      <a class="glance-widget-btn" href="shift-cover-requests-mgmt.html">Open Shift Cover Requests →</a>
-    </div>
-    <div class="glance-widget">
-      <div class="glance-widget-title"><span>Member Suggestions</span> <span class="glance-count" id="glance-suggestions-count"></span></div>
-      <div class="glance-body" id="glance-suggestions-body"><p class="glance-empty">Loading…</p></div>
-      <a class="glance-widget-btn" href="member-suggestions-review.html">Open Member Suggestions Review →</a>
-    </div>
-  </div>
-
-  <div class="stats-row" id="stats-row"></div>
 
   <div class="quick-row-wrap" id="pinned-wrap" style="display:none;">
     <div class="quick-row-title">📌 Pinned</div>
@@ -659,35 +645,59 @@
   }
 
   async function loadGlanceRota(){
-    const body = document.getElementById('glance-rota-body');
+    const valueEl = document.getElementById('glance-rota-value');
+    const subEl = document.getElementById('glance-rota-sub');
+    const detailList = document.getElementById('detail-rota-list');
     try{
       const doc = await db.collection('rota').doc('current').get();
-      if(!doc.exists){ body.innerHTML = '<p class="glance-empty">No rota published yet.</p>'; return; }
+      if(!doc.exists){
+        valueEl.textContent = 'No rota';
+        subEl.textContent = '';
+        detailList.innerHTML = '<p class="glance-empty">No rota published yet.</p>';
+        return;
+      }
       const today = new Date().toISOString().split('T')[0];
       const shifts = (doc.data().shifts || []).filter(s => s.fd === today && s.n).sort((a, b) => (a.st || '').localeCompare(b.st || ''));
-      if(shifts.length === 0){ body.innerHTML = '<p class="glance-empty">Nobody scheduled today.</p>'; return; }
-      body.innerHTML = shifts.map(s => `
+      if(shifts.length === 0){
+        valueEl.textContent = 'None today';
+        subEl.textContent = '';
+        detailList.innerHTML = '<p class="glance-empty">Nobody scheduled today.</p>';
+        return;
+      }
+      valueEl.textContent = `${shifts.length} on today`;
+      subEl.textContent = shifts.length === 1 ? shifts[0].n : `${shifts[0].n} +${shifts.length - 1}`;
+      detailList.innerHTML = shifts.map(s => `
         <div class="glance-row">
           <span class="glance-row-name">${s.n}${s.r === 'K' ? ' 🔑' : ''}</span>
           <span class="glance-row-meta">${formatTime12h(s.st)}–${s.et === '23:59' ? 'Midnight' : formatTime12h(s.et)}</span>
         </div>
       `).join('');
     } catch(e){
-      body.innerHTML = '<p class="glance-empty">Couldn\'t load today\'s rota.</p>';
+      valueEl.textContent = 'Error';
+      detailList.innerHTML = '<p class="glance-empty">Couldn\'t load today\'s rota.</p>';
     }
   }
 
   async function loadGlanceBookings(){
-    const body = document.getElementById('glance-bookings-body');
+    const valueEl = document.getElementById('glance-bookings-value');
+    const subEl = document.getElementById('glance-bookings-sub');
+    const detailList = document.getElementById('detail-bookings-list');
     try{
       const snap = await db.collection('bookings').get();
       const today = new Date().toISOString().split('T')[0];
       const upcoming = snap.docs
         .filter(d => (d.data().date || '') >= today)
-        .sort((a, b) => a.data().date.localeCompare(b.data().date))
-        .slice(0, 3);
-      if(upcoming.length === 0){ body.innerHTML = '<p class="glance-empty">Nothing booked.</p>'; return; }
-      body.innerHTML = upcoming.map(d => {
+        .sort((a, b) => a.data().date.localeCompare(b.data().date));
+      if(upcoming.length === 0){
+        valueEl.textContent = 'None booked';
+        subEl.textContent = '';
+        detailList.innerHTML = '<p class="glance-empty">Nothing booked.</p>';
+        return;
+      }
+      const next = upcoming[0].data();
+      valueEl.textContent = new Date(next.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+      subEl.textContent = next.label || 'Private Function';
+      detailList.innerHTML = upcoming.slice(0, 3).map(d => {
         const b = d.data();
         const when = new Date(b.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
         return `
@@ -698,44 +708,40 @@
         `;
       }).join('');
     } catch(e){
-      body.innerHTML = '<p class="glance-empty">Couldn\'t load bookings.</p>';
+      valueEl.textContent = 'Error';
+      detailList.innerHTML = '<p class="glance-empty">Couldn\'t load bookings.</p>';
     }
   }
 
-  async function loadGlanceCount(collectionName, openValue, bodyId, countId, emptyLabel, foundLabel){
-    const body = document.getElementById(bodyId);
-    const countEl = document.getElementById(countId);
+  async function loadGlanceCount(collectionName, openValue, valueId, subId, emptyLabel, foundLabel){
+    const valueEl = document.getElementById(valueId);
+    const subEl = document.getElementById(subId);
     try{
       const snap = await db.collection(collectionName).get();
       const open = snap.docs.filter(d => (d.data().status || openValue) === openValue).length;
-      if(open === 0){
-        countEl.textContent = '';
-        body.innerHTML = `<p class="glance-empty">${emptyLabel}</p>`;
-      } else {
-        countEl.textContent = String(open);
-        body.innerHTML = `<p class="glance-row-name" style="font-size:1.3rem; font-family:'Fraunces', serif;">${open}</p><p class="glance-empty">${foundLabel}</p>`;
-      }
+      valueEl.textContent = String(open);
+      subEl.textContent = open === 0 ? emptyLabel : foundLabel;
     } catch(e){
-      body.innerHTML = '<p class="glance-empty">Couldn\'t load.</p>';
+      valueEl.textContent = '—';
+      subEl.textContent = "Couldn't load";
     }
   }
 
-  loadGlanceRota();
-  loadGlanceBookings();
-  loadGlanceCount('tickets', 'open', 'glance-tickets-body', 'glance-tickets-count', 'All clear.', 'open right now');
-  loadGlanceCount('shiftCoverRequests', 'open', 'glance-cover-body', 'glance-cover-count', 'Nothing outstanding.', 'still need covering');
-  loadGlanceCount('memberSuggestions', 'new', 'glance-suggestions-body', 'glance-suggestions-count', 'Nothing new.', 'awaiting review');
+  function loadAllGlances(){
+    loadGlanceRota();
+    loadGlanceBookings();
+    loadGlanceCount('tickets', 'open', 'glance-tickets-value', 'glance-tickets-sub', 'all clear', 'open now');
+    loadGlanceCount('shiftCoverRequests', 'open', 'glance-cover-value', 'glance-cover-sub', 'all covered', 'need covering');
+    loadGlanceCount('memberSuggestions', 'new', 'glance-suggestions-value', 'glance-suggestions-sub', 'nothing new', 'awaiting review');
+  }
+  loadAllGlances();
 
   // Refresh the live widgets automatically so nothing needs a manual reload to stay current
   setInterval(() => {
     loadRecentActivity();
     checkDeployStatus();
     checkMaintenanceStatus();
-    loadGlanceRota();
-    loadGlanceBookings();
-    loadGlanceCount('tickets', 'open', 'glance-tickets-body', 'glance-tickets-count', 'All clear.', 'open right now');
-    loadGlanceCount('shiftCoverRequests', 'open', 'glance-cover-body', 'glance-cover-count', 'Nothing outstanding.', 'still need covering');
-    loadGlanceCount('memberSuggestions', 'new', 'glance-suggestions-body', 'glance-suggestions-count', 'Nothing new.', 'awaiting review');
+    loadAllGlances();
   }, 300000);
 
   // Maintenance toggle now goes through the secure server-side connection — no token needed here at all
@@ -874,28 +880,6 @@
     recent = recent.slice(0, 6);
     setRecent(recent);
     renderRecent();
-  }
-
-  function renderStats(){
-    const statsRow = document.getElementById('stats-row');
-    const seen = new Set();
-    const tiles = [];
-    document.querySelectorAll('.grid a').forEach(a => {
-      const meta = toolMeta(a);
-      const num = parseInt(meta.badge, 10);
-      if(isNaN(num) || num <= 0) return;
-      if(seen.has(meta.href)) return;
-      seen.add(meta.href);
-      tiles.push(meta);
-    });
-    if(tiles.length === 0){ statsRow.style.display = 'none'; return; }
-    statsRow.style.display = 'flex';
-    statsRow.innerHTML = tiles.map(t => `
-      <a class="stat-tile" href="${t.href}">
-        <span class="stat-num">${t.badge}</span>
-        <span class="stat-label">${t.title}</span>
-      </a>
-    `).join('');
   }
 
   function enhanceToolCards(){
@@ -1092,7 +1076,7 @@
     const firstName = savedName.split(' ')[0];
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-    el.textContent = `${greeting}, ${firstName} — everything on the site, in one place`;
+    el.textContent = `${greeting}, ${firstName}`;
   }
 
   // ---- Keyboard shortcut: "/" jumps to search ----
@@ -1112,7 +1096,6 @@
   renderGreeting();
   renderPinned();
   renderRecent();
-  renderStats();
 
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
