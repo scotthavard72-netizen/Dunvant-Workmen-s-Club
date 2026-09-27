@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Publish File Update — Dunvant WMC</title>
+<title>Edit Site Content — Dunvant WMC</title>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
@@ -41,9 +41,19 @@
     display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
   }
   #offline-banner{display:none; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:#8a2f2f; color:#fff;}
-  main{max-width:760px; margin:0 auto; padding:30px 20px 60px;}
+  main{max-width:780px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
   [data-theme="dark"] .notice{background:#2a2318;}
+
+  .tab-row{display:flex; gap:6px; margin-bottom:22px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .tab-btn{
+    font-family:'Inter', sans-serif; font-size:0.86rem; font-weight:600; padding:10px 14px; cursor:pointer;
+    border:none; background:none; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tab-btn.active{color:var(--forest); border-bottom-color:var(--brass);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
   .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:12px;}
   .github-config{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:20px;}
   .config-row{margin-bottom:12px;}
@@ -61,7 +71,6 @@
     padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);
   }
   .config-hint{font-size:0.74rem; color:var(--muted); margin-top:8px; line-height:1.6;}
-  .remember-row{display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--muted); margin-top:6px;}
   .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
   .btn{
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.88rem;
@@ -69,6 +78,7 @@
   }
   .btn-fetch{background:var(--forest); color:#fff;}
   .btn-publish{background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;}
+  .btn-undo{background:var(--paper); color:var(--forest); border:1px solid var(--brass) !important;}
   .btn-list{
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.82rem;
     background:var(--card); color:var(--forest); border:1px solid var(--line);
@@ -88,6 +98,20 @@
   .mini-progress-pct{font-family:'Inter', sans-serif; font-size:0.74rem; font-weight:700; color:var(--muted); min-width:34px; text-align:right;}
   .status.success{color:#3d8f6f; font-weight:600;}
   .status.error{color:#c25a4d; font-weight:600;}
+
+  table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  th, td{text-align:left; padding:13px 16px; font-size:0.85rem; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{background:var(--forest); color:#fff; font-weight:600; font-size:0.74rem; text-transform:uppercase; letter-spacing:0.04em;}
+  tr:last-child td{border-bottom:none;}
+  td.file{font-family:'SFMono-Regular', Consolas, monospace; font-size:0.78rem; color:var(--brass); cursor:pointer;}
+  td.file:hover{text-decoration:underline;}
+  @media(max-width:600px){
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;}
+    tr{background:var(--card); border:1px solid var(--line); border-radius:10px; margin-bottom:10px; padding:6px 0;}
+    td{border:none; padding:6px 16px;}
+    td::before{content:attr(data-label); font-weight:700; display:block; font-size:0.7rem; color:var(--muted); text-transform:uppercase;}
+  }
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
 </style>
 </head>
@@ -97,39 +121,130 @@
 
 <header>
   <span class="eyebrow">Site Admin</span>
-  <h1>Publish File Update</h1>
-  <p>Update any file on the site directly — no manual GitHub editing needed</p>
+  <h1>Edit Site Content</h1>
+  <p>Where to make a change, and a live editor to make it — no GitHub needed</p>
 </header>
 <main>
-  <div class="notice">Works for any file in the repo, not just staff logins. Fetch pulls the current content so you're editing the real thing, not overwriting blind. Publishing and deleting go through a secure server-side connection now — no token to set up here at all, and only Site Admin can actually save or delete a file.</div>
-
-  <div class="section-label">File</div>
-  <div class="config-row">
-    <label>File path</label>
-    <input type="text" id="file-path" list="known-files" placeholder="Start typing or pick from the list..." autocomplete="off">
-    <datalist id="known-files"></datalist>
-    <div id="recent-files" class="recent-files"></div>
-    <button class="btn btn-list" onclick="loadFileListFromGitHub()">📋 Load Real File List from GitHub</button>
-    <p class="status" id="list-status"></p>
+  <div class="tab-row" id="tab-row">
+    <button class="tab-btn active" id="tab-btn-editor" onclick="setTab('editor')">Editor</button>
+    <button class="tab-btn" id="tab-btn-cheatsheet" onclick="setTab('cheatsheet')">Where to Change What</button>
   </div>
 
-  <div class="btn-row">
-    <button class="btn btn-fetch" onclick="fetchFile()">⬇️ Fetch Current Content</button>
+  <!-- ── Editor (was publish-file-update.html) ── -->
+  <div class="tab-panel active" id="panel-editor">
+    <div class="notice">Works for any file in the repo. Fetch pulls the current content so you're editing the real thing, not overwriting blind. Publishing and deleting go through a secure server-side connection — no token to set up, and only Site Admin can save or delete a file. Just published something you didn't mean to? Use "Undo Last Publish" below the status message to put the old version straight back.</div>
+
+    <div class="section-label">File</div>
+    <div class="config-row">
+      <label>File path</label>
+      <input type="text" id="file-path" list="known-files" placeholder="Start typing or pick from the list..." autocomplete="off">
+      <datalist id="known-files"></datalist>
+      <div id="recent-files" class="recent-files"></div>
+      <button class="btn btn-list" onclick="loadFileListFromGitHub()">📋 Load Real File List from GitHub</button>
+      <p class="status" id="list-status"></p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-fetch" onclick="fetchFile()">⬇️ Fetch Current Content</button>
+    </div>
+
+    <textarea id="file-content" placeholder="Fetched content will appear here — or paste new content directly if you already have it."></textarea>
+
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-publish" onclick="publishFile()">🚀 Publish This File</button>
+      <button class="btn btn-delete" onclick="deleteFile()">🗑️ Delete This File</button>
+    </div>
+    <p class="status" id="publish-status"></p>
+    <div class="btn-row" id="undo-row" style="display:none;">
+      <button class="btn btn-undo" onclick="undoLastPublish()">↩️ Undo Last Publish</button>
+    </div>
+    <div class="mini-progress" id="action-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="action-progress-bar"></div></div><span class="mini-progress-pct" id="action-progress-pct">0%</span></div>
   </div>
 
-  <textarea id="file-content" placeholder="Fetched content will appear here — or paste new content directly if you already have it."></textarea>
-
-  <div class="btn-row" style="margin-top:14px;">
-    <button class="btn btn-publish" onclick="publishFile()">🚀 Publish This File</button>
-    <button class="btn btn-delete" onclick="deleteFile()">🗑️ Delete This File</button>
+  <!-- ── Where to Change What (was content-quick-edit.html) ── -->
+  <div class="tab-panel" id="panel-cheatsheet">
+    <div class="notice">Search each file for the bolded text below (Ctrl/Cmd+F) to jump straight to the right spot — or just click a file name to load it in the Editor tab.</div>
+    <table>
+      <thead><tr><th>To change...</th><th>Edit this file</th><th>Search for</th></tr></thead>
+      <tbody>
+        <tr>
+          <td data-label="Change">Opening hours</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('club-website.html')">club-website.html</td>
+          <td data-label="Search">"Opening Hours"</td>
+        </tr>
+        <tr>
+          <td data-label="Change">Phone/email/address</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('club-website.html')">club-website.html</td>
+          <td data-label="Search">"Get in Touch"</td>
+        </tr>
+        <tr>
+          <td data-label="Change">Upcoming events</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('club-website.html')">club-website.html</td>
+          <td data-label="Search">"What's On"</td>
+        </tr>
+        <tr>
+          <td data-label="Change">Gallery photos</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('club-website.html')">club-website.html</td>
+          <td data-label="Search">"Gallery"</td>
+        </tr>
+        <tr>
+          <td data-label="Change">FAQ questions/answers</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('club-website.html')">club-website.html</td>
+          <td data-label="Search">"faq-item"</td>
+        </tr>
+        <tr>
+          <td data-label="Change">Function room booking dates</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('bookings.html')">bookings.html</td>
+          <td data-label="Search">Use the Confirmed Bookings tab, not a code edit</td>
+        </tr>
+        <tr>
+          <td data-label="Change">Staff logins/passwords</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('manage-staff-logins.html')">manage-staff-logins.html</td>
+          <td data-label="Search">Use that page directly, not a code edit</td>
+        </tr>
+        <tr>
+          <td data-label="Change">Who can see what (roles)</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('staff-area.html')">staff-area.html</td>
+          <td data-label="Search">"ROLE_EXTRAS"</td>
+        </tr>
+        <tr>
+          <td data-label="Change">Staff menu items themselves</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('staff-area.html')">staff-area.html</td>
+          <td data-label="Search">"const MENUS"</td>
+        </tr>
+        <tr>
+          <td data-label="Change">To-do list items</td>
+          <td data-label="File" class="file" onclick="editFromCheatSheet('site-todos.html')">site-todos.html</td>
+          <td data-label="Search">"item-text"</td>
+        </tr>
+        <tr>
+          <td data-label="Change">Colour theme</td>
+          <td data-label="File" class="file">any page, top of &lt;style&gt;</td>
+          <td data-label="Search">":root{"</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
-  <p class="status" id="publish-status"></p>
-  <div class="mini-progress" id="action-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="action-progress-bar"></div></div><span class="mini-progress-pct" id="action-progress-pct">0%</span></div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
 <script>
   let currentSha = null;
+  let lastPublishUndo = null; // { path, hadPreviousVersion, previousContent }
+
+  function setTab(tab){
+    const isEditor = tab === 'editor';
+    document.getElementById('tab-btn-editor').classList.toggle('active', isEditor);
+    document.getElementById('tab-btn-cheatsheet').classList.toggle('active', !isEditor);
+    document.getElementById('panel-editor').classList.toggle('active', isEditor);
+    document.getElementById('panel-cheatsheet').classList.toggle('active', !isEditor);
+  }
+
+  function editFromCheatSheet(path){
+    document.getElementById('file-path').value = path;
+    setTab('editor');
+    fetchFile();
+  }
 
   // ── Every real file on the site, for the searchable dropdown ──
   const KNOWN_FILES = [
@@ -144,10 +259,10 @@
     "entertainment-tracker.html", "licensing-compliance.html", "weekly-rota-builder.html",
     "finances-accounts.html", "agm-planning.html", "membership-numbers.html",
     "club-constitution.html", "funding-opportunities.html",
-    "edit-site-files.html", "publish-file-update.html", "manage-staff-logins.html",
-    "site-todos.html", "tickets.html", "google-analytics.html", "content-quick-edit.html",
+    "edit-site-content.html", "manage-staff-logins.html",
+    "site-todos.html", "tickets.html", "google-analytics.html",
     "site-changelog.html", "overall-changelog.html", "backup-reminder.html", "hosting-status.html",
-    "full-admin-dashboard.html", "facebook-page-admin.html",
+    "full-admin-dashboard.html", "facebook-page-admin.html", "staff-hub.html",
     "sw.js", "staff-manifest.json", "site-manifest.json", "robots.txt", "staff-logins.md"
   ];
 
@@ -206,6 +321,8 @@
       pollDeployStatus(statusEl, `✓ Deleted "${path}".`);
       document.getElementById('file-content').value = '';
       currentSha = null;
+      document.getElementById('undo-row').style.display = 'none';
+      lastPublishUndo = null;
     } catch(err){
       statusEl.textContent = err.message;
       statusEl.className = 'status error';
@@ -258,8 +375,7 @@
         const result = await githubProxy({ action: 'pagesStatus' });
         const build = result.data;
         if(build.status === 'built'){
-          statusEl.textContent = `${baseMessage} 🟢 Live now — refreshing the page…`;
-          setTimeout(() => window.location.reload(), 1800);
+          statusEl.textContent = `${baseMessage} 🟢 Live now.`;
           statusEl.className = 'status success';
           return;
         }
@@ -332,13 +448,15 @@
     setProgress('action-progress', 10);
     try{
       let sha = currentSha;
-      if(!sha){
-        setProgress('action-progress', 25);
-        try{
-          const getResult = await githubProxy({ action: 'get', path });
-          sha = getResult.data.sha;
-        } catch(e){ /* fine — file might be genuinely new */ }
-      }
+      let previousContent = null;
+      let hadPreviousVersion = false;
+      setProgress('action-progress', 25);
+      try{
+        const getResult = await githubProxy({ action: 'get', path });
+        sha = getResult.data.sha;
+        previousContent = decodeURIComponent(escape(atob(getResult.data.content)));
+        hadPreviousVersion = true;
+      } catch(e){ /* fine — file might be genuinely new */ }
       setProgress('action-progress', 50);
 
       const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
@@ -353,6 +471,55 @@
       statusEl.className = 'status success';
       pollDeployStatus(statusEl, '✓ Published.');
       addRecentFile(path);
+
+      // Remember what it looked like before, so this can be backed out of.
+      lastPublishUndo = { path, hadPreviousVersion, previousContent };
+      document.getElementById('undo-row').style.display = 'flex';
+    } catch(err){
+      statusEl.textContent = err.message;
+      statusEl.className = 'status error';
+    } finally {
+      document.getElementById('action-progress').classList.remove('active');
+    }
+  }
+
+  async function undoLastPublish(){
+    if(!lastPublishUndo){
+      alert('Nothing to undo yet.');
+      return;
+    }
+    const { path, hadPreviousVersion, previousContent } = lastPublishUndo;
+    const statusEl = document.getElementById('publish-status');
+
+    if(!hadPreviousVersion){
+      if(!confirm(`"${path}" didn't exist before your last publish — undoing means deleting it. Continue?`)) return;
+      document.getElementById('file-path').value = path;
+      await deleteFile();
+      lastPublishUndo = null;
+      document.getElementById('undo-row').style.display = 'none';
+      return;
+    }
+
+    if(!confirm(`Put "${path}" back to how it was just before your last publish?`)) return;
+    statusEl.textContent = 'Undoing…';
+    statusEl.className = 'status';
+    document.getElementById('action-progress').classList.add('active');
+    setProgress('action-progress', 20);
+    try{
+      const getResult = await githubProxy({ action: 'get', path });
+      setProgress('action-progress', 55);
+      const content = btoa(unescape(encodeURIComponent(previousContent)));
+      const loggedInName = localStorage.getItem('staffUserName') || 'unknown user';
+      const putResult = await githubProxy({ action: 'put', path, content, sha: getResult.data.sha, message: `Undo last publish to ${path} — by ${loggedInName}` });
+      currentSha = putResult.data.content.sha;
+      document.getElementById('file-path').value = path;
+      document.getElementById('file-content').value = previousContent;
+      setProgress('action-progress', 100);
+      statusEl.textContent = '✓ Reverted — checking deployment status…';
+      statusEl.className = 'status success';
+      pollDeployStatus(statusEl, '✓ Reverted.');
+      lastPublishUndo = null;
+      document.getElementById('undo-row').style.display = 'none';
     } catch(err){
       statusEl.textContent = err.message;
       statusEl.className = 'status error';
