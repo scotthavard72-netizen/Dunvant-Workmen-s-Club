@@ -713,24 +713,39 @@
   const MENUS = {
     bar: {
       label: "Bar Staff",
-      items: [
-        ["current-rota.html", "Current Rota", "Bookmark this — always shows the latest week"],
-        ["this-weeks-rota.html", "This Week's Rota", "See your shifts and confirm you've seen them"],
-        ["staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
-        ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
-        ["till-card-lookup.html", "Till &amp; Card Lookup Guide", "How to scan and apply the member discount"],
-        ["closing-checklist.html", "Closing Checklist", "Cleaning down the bar, cellar, bandits &amp; mopping"],
-        ["whats-on-this-week.html", "What's On This Week", "Upcoming bookings and events"],
-        ["shift-cover-request.html", "Shift Cover Request", "Can't make a shift? Flag it here"],
-        ["shift-swap.html", "Shift Swap", "Ask a named colleague to take one of your shifts"],
-        ["shift-handover-notes.html", "Shift Handover Notes", "What the next person on needs to know"],
-        ["staff-directory.html", "Staff Directory", "Everyone with access, their role, and how to reach them"],
-        ["staff-availability.html", "Availability", "Flag days you can't work, so the rota avoids them"],
-        ["qr-code-generator.html", "QR Code Generator", "Turn a link into a scannable code for posters"],
-        ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"],
-        ["submit-ticket.html", "Submit a Ticket", "Report a problem or request something from management"],
-        ["price-list.html", "Price List", "Quick reference for drink prices"],
-        ["incident-report.html", "Accident / Incident Report", "For health &amp; safety, not till issues"]
+      groups: [
+        {
+          label: "Rota &amp; Shifts",
+          items: [
+            ["current-rota.html", "Current Rota", "Bookmark this — always shows the latest week"],
+            ["this-weeks-rota.html", "This Week's Rota", "See your shifts and confirm you've seen them"],
+            ["staff-rota.html", "Full Rota Calendar", "Opens the live Outlook rota calendar"],
+            ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
+            ["staff-availability.html", "Availability", "Flag days you can't work, so the rota avoids them"],
+            ["shift-cover-request.html", "Shift Cover Request", "Can't make a shift? Flag it here"],
+            ["shift-swap.html", "Shift Swap", "Ask a named colleague to take one of your shifts"]
+          ]
+        },
+        {
+          label: "On Shift",
+          items: [
+            ["till-card-lookup.html", "Till &amp; Card Lookup Guide", "How to scan and apply the member discount"],
+            ["price-list.html", "Price List", "Quick reference for drink prices"],
+            ["whats-on-this-week.html", "What's On This Week", "Upcoming bookings and events"],
+            ["closing-checklist.html", "Closing Checklist", "Cleaning down the bar, cellar, bandits &amp; mopping"],
+            ["shift-handover-notes.html", "Shift Handover Notes", "What the next person on needs to know"]
+          ]
+        },
+        {
+          label: "Reference &amp; Support",
+          items: [
+            ["staff-directory.html", "Staff Directory", "Everyone with access, their role, and how to reach them"],
+            ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"],
+            ["qr-code-generator.html", "QR Code Generator", "Turn a link into a scannable code for posters"],
+            ["submit-ticket.html", "Submit a Ticket", "Report a problem or request something from management"],
+            ["incident-report.html", "Accident / Incident Report", "For health &amp; safety, not till issues"]
+          ]
+        }
       ]
     },
     keyholder: {
