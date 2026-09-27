@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Shift Swap — Dunvant WMC</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:560px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  h2.section-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem; color:var(--forest); margin:28px 0 12px;}
+  h2.section-title:first-of-type{margin-top:0;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px;}
+  .field{margin-bottom:16px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:block; font-size:0.82rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .field .readonly-name{
+    font-size:0.92rem; font-weight:600; padding:12px 14px; background:var(--paper);
+    border:1px solid var(--line); border-radius:8px; color:var(--muted);
+  }
+  .field select, .field input, .field textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
+    padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+  }
+  .field textarea{resize:vertical; min-height:70px;}
+  .field select:focus, .field input:focus, .field textarea:focus{outline:none; border-color:var(--brass);}
+  .hint{font-size:0.76rem; color:var(--muted); margin-top:6px;}
+  button.submit{
+    width:100%; font-family:'Inter', sans-serif; font-weight:600; font-size:0.95rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; padding:15px 16px; border-radius:8px; cursor:pointer; margin-top:6px;
+  }
+  .form-status{font-size:0.82rem; margin-top:12px; text-align:center; display:none;}
+  .form-status.ok{color:var(--forest); display:block;}
+  .form-status.err{color:#a24339; display:block;}
+
+  .swap-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:16px 18px; margin-bottom:10px;
+  }
+  .swap-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .swap-title{font-weight:600; font-size:0.9rem;}
+  .swap-meta{font-size:0.78rem; color:var(--muted); margin-top:3px;}
+  .swap-message{font-size:0.82rem; color:var(--ink); margin-top:8px; font-style:italic;}
+  .status-tag{
+    font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+    padding:3px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0;
+  }
+  .status-tag.pending{background:#fff2d9; color:#8a6a1f;}
+  .status-tag.accepted{background:#e4ece9; color:#2c3f38;}
+  .status-tag.declined{background:#f6e2df; color:#8a2f2f;}
+  .status-tag.cancelled{background:var(--line); color:var(--muted);}
+  [data-theme="dark"] .status-tag.pending{background:#3a2f10; color:#e0bd82;}
+  [data-theme="dark"] .status-tag.accepted{background:#1e2d24; color:#a8d4bb;}
+  [data-theme="dark"] .status-tag.declined{background:#3a1e1a; color:#e0a89e;}
+  .swap-actions{display:flex; gap:8px; margin-top:12px;}
+  .swap-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.8rem;
+    border:none; border-radius:6px; padding:9px 14px; cursor:pointer; flex:1;
+  }
+  .swap-btn.accept{background:var(--forest); color:#fff;}
+  .swap-btn.decline{background:var(--line); color:var(--ink);}
+  .swap-btn.cancel{background:var(--line); color:var(--ink); flex:none;}
+  .swap-btn:hover{opacity:0.85;}
+  .empty-note{font-size:0.84rem; color:var(--muted); padding:6px 2px;}
+
+  a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Bar Staff</span>
+  <h1>Shift Swap</h1>
+  <p>Ask a colleague to take a shift for you</p>
+</header>
+<main>
+  <div class="notice">Pick one of your upcoming shifts, name who you're asking, and they'll see it here to accept or decline. This is between the two of you — let a keyholder or management know once it's agreed, so the rota stays accurate.</div>
+
+  <h2 class="section-title">Propose a Swap</h2>
+  <div class="form-card">
+    <form id="swap-form" onsubmit="return submitSwap(event)">
+      <div class="field">
+        <label>Your Name</label>
+        <div class="readonly-name" id="my-name-display">—</div>
+      </div>
+      <div class="field">
+        <label>Your Shift</label>
+        <select id="swap-shift" required>
+          <option value="">Loading your shifts…</option>
+        </select>
+        <p class="hint" id="shift-hint"></p>
+      </div>
+      <div class="field">
+        <label>Ask</label>
+        <input type="text" id="swap-colleague" list="colleague-list" placeholder="Colleague's name" required>
+        <datalist id="colleague-list"></datalist>
+      </div>
+      <div class="field">
+        <label>Message (optional)</label>
+        <textarea id="swap-message" placeholder="Anything they should know"></textarea>
+      </div>
+      <button class="submit" type="submit">Send Swap Request</button>
+      <p class="form-status" id="form-status"></p>
+    </form>
+  </div>
+
+  <h2 class="section-title">Requests For You</h2>
+  <div id="for-me-list"><p class="empty-note">Loading…</p></div>
+
+  <h2 class="section-title">Your Requests</h2>
+  <div id="mine-list"><p class="empty-note">Loading…</p></div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  let MY_NAME = '';
+  let MY_SHIFTS = [];
+
+  function formatTime12h(t){
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${m.toString().padStart(2, '0')} ${period}`;
+  }
+
+  function shiftLabel(s){
+    return `${s.d}, ${s.dt} — ${formatTime12h(s.st)}–${s.et === '23:59' ? 'Midnight' : formatTime12h(s.et)}`;
+  }
+
+  async function loadRotaAndShifts(){
+    const shiftSelect = document.getElementById('swap-shift');
+    const colleagueList = document.getElementById('colleague-list');
+    const hint = document.getElementById('shift-hint');
+    try{
+      const doc = await db.collection('rota').doc('current').get();
+      const shifts = doc.exists ? (doc.data().shifts || []) : [];
+
+      MY_SHIFTS = shifts.filter(s => (s.n || '').trim().toLowerCase() === MY_NAME.trim().toLowerCase());
+      if(MY_SHIFTS.length === 0){
+        shiftSelect.innerHTML = '<option value="">No shifts found on the current rota</option>';
+        hint.textContent = "Can't see your shift listed? Just message your colleague directly and let a keyholder know once you've agreed.";
+      } else {
+        shiftSelect.innerHTML = MY_SHIFTS.map((s, i) => `<option value="${i}">${shiftLabel(s)}</option>`).join('');
+        hint.textContent = '';
+      }
+
+      const otherNames = [...new Set(shifts.map(s => s.n).filter(n => n && n.trim().toLowerCase() !== MY_NAME.trim().toLowerCase()))];
+      colleagueList.innerHTML = otherNames.map(n => `<option value="${n}"></option>`).join('');
+    } catch(e){
+      shiftSelect.innerHTML = '<option value="">Couldn\'t load the rota — enter details in the message box instead</option>';
+    }
+  }
+
+  function renderSwapCard(doc, viewerIsRecipient){
+    const d = doc.data();
+    const statusLabel = d.status.charAt(0).toUpperCase() + d.status.slice(1);
+    const who = viewerIsRecipient ? `From ${d.requesterName}` : `To ${d.colleagueName}`;
+    const actions = (viewerIsRecipient && d.status === 'pending')
+      ? `<div class="swap-actions">
+           <button class="swap-btn accept" onclick="respondSwap('${doc.id}','accepted')">Accept</button>
+           <button class="swap-btn decline" onclick="respondSwap('${doc.id}','declined')">Decline</button>
+         </div>`
+      : (!viewerIsRecipient && d.status === 'pending')
+      ? `<div class="swap-actions"><button class="swap-btn cancel" onclick="cancelSwap('${doc.id}')">Cancel</button></div>`
+      : '';
+    return `
+      <div class="swap-card">
+        <div class="swap-top">
+          <div>
+            <div class="swap-title">${who}</div>
+            <div class="swap-meta">${d.shiftLabel || ''}</div>
+          </div>
+          <span class="status-tag ${d.status}">${statusLabel}</span>
+        </div>
+        ${d.message ? `<div class="swap-message">"${d.message}"</div>` : ''}
+        ${actions}
+      </div>
+    `;
+  }
+
+  async function loadSwapLists(){
+    const forMeEl = document.getElementById('for-me-list');
+    const mineEl = document.getElementById('mine-list');
+    try{
+      const [forMeSnap, mineSnap] = await Promise.all([
+        db.collection('shiftSwaps').where('colleagueName', '==', MY_NAME).get(),
+        db.collection('shiftSwaps').where('requesterName', '==', MY_NAME).get()
+      ]);
+
+      const forMeDocs = forMeSnap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+      const mineDocs = mineSnap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+
+      forMeEl.innerHTML = forMeDocs.length
+        ? forMeDocs.map(d => renderSwapCard(d, true)).join('')
+        : '<p class="empty-note">No one has asked you to cover a shift.</p>';
+
+      mineEl.innerHTML = mineDocs.length
+        ? mineDocs.map(d => renderSwapCard(d, false)).join('')
+        : '<p class="empty-note">You haven\'t asked anyone to swap yet.</p>';
+    } catch(e){
+      forMeEl.innerHTML = '<p class="empty-note">Couldn\'t load requests right now — try refreshing.</p>';
+      mineEl.innerHTML = '';
+    }
+  }
+
+  async function respondSwap(id, status){
+    try{
+      await db.collection('shiftSwaps').doc(id).update({ status, respondedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      loadSwapLists();
+    } catch(e){
+      alert("Couldn't update that request — try again in a moment.");
+    }
+  }
+
+  async function cancelSwap(id){
+    if(!confirm('Cancel this swap request?')) return;
+    try{
+      await db.collection('shiftSwaps').doc(id).update({ status: 'cancelled', respondedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      loadSwapLists();
+    } catch(e){
+      alert("Couldn't cancel that request — try again in a moment.");
+    }
+  }
+
+  async function submitSwap(e){
+    e.preventDefault();
+    const statusEl = document.getElementById('form-status');
+    const shiftIdx = document.getElementById('swap-shift').value;
+    const colleague = document.getElementById('swap-colleague').value.trim();
+    const message = document.getElementById('swap-message').value.trim();
+
+    if(!colleague){
+      statusEl.textContent = "Enter who you're asking first.";
+      statusEl.className = 'form-status err';
+      return false;
+    }
+    if(colleague.trim().toLowerCase() === MY_NAME.trim().toLowerCase()){
+      statusEl.textContent = "You can't swap a shift with yourself.";
+      statusEl.className = 'form-status err';
+      return false;
+    }
+
+    const shift = shiftIdx !== '' ? MY_SHIFTS[shiftIdx] : null;
+    const submitBtn = e.target.querySelector('button.submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    try{
+      await db.collection('shiftSwaps').add({
+        requesterName: MY_NAME,
+        colleagueName: colleague,
+        shiftLabel: shift ? shiftLabel(shift) : 'See message for details',
+        message,
+        status: 'pending',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      statusEl.textContent = `✓ Sent to ${colleague}.`;
+      statusEl.className = 'form-status ok';
+      document.getElementById('swap-colleague').value = '';
+      document.getElementById('swap-message').value = '';
+      loadSwapLists();
+    } catch(e){
+      statusEl.textContent = "Couldn't send that — try again in a moment.";
+      statusEl.className = 'form-status err';
+    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Send Swap Request';
+    return false;
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      window.location.href = 'staff-area.html';
+      return;
+    }
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      MY_NAME = doc.exists ? (doc.data().name || 'You') : (localStorage.getItem('staffUserName') || 'You');
+    } catch(e){
+      MY_NAME = localStorage.getItem('staffUserName') || 'You';
+    }
+    document.getElementById('my-name-display').textContent = MY_NAME;
+    loadRotaAndShifts();
+    loadSwapLists();
+  });
+
+  // Dark mode
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>
