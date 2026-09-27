@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dunvant-site-v10';
+const CACHE_NAME = 'dunvant-site-v11';
 const URLS_TO_CACHE = [
   "agm-planning.html",
   "alarm-fault.html",
@@ -72,6 +72,28 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Page loads (including a plain refresh): always try the network first,
+  // so a normal refresh shows the latest content immediately — no more
+  // needing a second refresh or a close-and-reopen. Only fall back to the
+  // cached copy if there's no connection.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Everything else (scripts, styles, etc.): serve from cache instantly for
+  // speed, and refresh the cache in the background for next time.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
