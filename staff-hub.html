@@ -43,6 +43,23 @@
   .glance-value{font-family:'Fraunces', serif; font-size:1.05rem; font-weight:600; color:var(--forest); line-height:1.3;}
   .glance-sub{font-size:0.74rem; color:var(--muted); margin-top:3px;}
 
+  .home-section{margin-bottom:26px;}
+  .home-section:empty{display:none;}
+  .team-list{display:flex; flex-direction:column; gap:8px;}
+  .team-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 16px;
+  }
+  .team-name{font-weight:600; font-size:0.9rem;}
+  .team-name .key-flag{margin-left:4px;}
+  .team-time{font-size:0.78rem; color:var(--muted); white-space:nowrap;}
+  .quicklink-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .quicklink-chip{
+    display:block; text-decoration:none; color:var(--forest); font-weight:600; font-size:0.84rem;
+    background:var(--card); border:1px solid var(--line); border-radius:20px; padding:9px 16px;
+  }
+  .quicklink-chip:hover{border-color:var(--brass);}
+
   .tab-row{display:flex; gap:6px; margin-bottom:22px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
   .tab-btn{
     font-family:'Inter', sans-serif; font-size:0.86rem; font-weight:600; padding:10px 14px; cursor:pointer;
@@ -132,37 +149,73 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Staff</span>
+  <span class="eyebrow" id="hub-greeting">Staff</span>
   <h1>Staff Hub</h1>
-  <p>Suggestions, shout-outs, the diary — and what's coming up</p>
+  <p id="hub-subtitle">Your home base — today's team, quick links, suggestions, shout-outs, and the diary</p>
 </header>
 <main>
-  <div class="glance-grid" id="glance-grid">
-    <a class="glance-card" href="current-rota.html">
-      <div class="glance-label">My Next Shift</div>
-      <div class="glance-value" id="glance-shift">Loading…</div>
-      <div class="glance-sub" id="glance-shift-sub"></div>
-    </a>
-    <a class="glance-card" href="bookings.html">
-      <div class="glance-label">Next Booking</div>
-      <div class="glance-value" id="glance-booking">Loading…</div>
-      <div class="glance-sub" id="glance-booking-sub"></div>
-    </a>
-    <a class="glance-card" href="tickets.html" id="glance-tickets-card" style="display:none;">
-      <div class="glance-label">Open Tickets</div>
-      <div class="glance-value" id="glance-tickets">Loading…</div>
-      <div class="glance-sub">Public + staff</div>
-    </a>
-  </div>
-
   <div class="tab-row" id="tab-row">
-    <button class="tab-btn active" id="tab-btn-suggestions" onclick="setTab('suggestions')">Suggestions</button>
+    <button class="tab-btn active" id="tab-btn-home" onclick="setTab('home')">Home</button>
+    <button class="tab-btn" id="tab-btn-suggestions" onclick="setTab('suggestions')">Suggestions</button>
     <button class="tab-btn" id="tab-btn-shoutouts" onclick="setTab('shoutouts')">Shout-Outs</button>
     <button class="tab-btn" id="tab-btn-diary" onclick="setTab('diary')">Diary</button>
   </div>
 
+  <!-- ── Home (role-specific) ── -->
+  <div class="tab-panel active" id="panel-home">
+    <div class="glance-grid" id="glance-grid">
+      <a class="glance-card" href="current-rota.html">
+        <div class="glance-label">My Next Shift</div>
+        <div class="glance-value" id="glance-shift">Loading…</div>
+        <div class="glance-sub" id="glance-shift-sub"></div>
+      </a>
+      <a class="glance-card" href="bookings.html">
+        <div class="glance-label">Next Booking</div>
+        <div class="glance-value" id="glance-booking">Loading…</div>
+        <div class="glance-sub" id="glance-booking-sub"></div>
+      </a>
+      <a class="glance-card" href="tickets.html" id="glance-tickets-card" style="display:none;">
+        <div class="glance-label">Open Tickets</div>
+        <div class="glance-value" id="glance-tickets">Loading…</div>
+        <div class="glance-sub">Public + staff</div>
+      </a>
+    </div>
+
+    <div class="glance-grid" id="mgmt-stats-grid" style="display:none;">
+      <a class="glance-card" href="bookings.html">
+        <div class="glance-label">Pending Bookings</div>
+        <div class="glance-value" id="stat-pending-bookings">…</div>
+      </a>
+      <a class="glance-card" href="shift-cover-requests-mgmt.html">
+        <div class="glance-label">Open Cover Requests</div>
+        <div class="glance-value" id="stat-open-cover">…</div>
+      </a>
+      <a class="glance-card" href="staff-availability.html">
+        <div class="glance-label">Unavailable This Week</div>
+        <div class="glance-value" id="stat-unavailable">…</div>
+      </a>
+    </div>
+
+    <div class="glance-grid" id="committee-stats-grid" style="display:none;">
+      <a class="glance-card" href="member-suggestions-review.html">
+        <div class="glance-label">New Member Suggestions</div>
+        <div class="glance-value" id="stat-member-suggestions">…</div>
+      </a>
+    </div>
+
+    <div class="home-section" id="home-team-section" style="display:none;">
+      <h2 class="section-title" id="home-team-title">Today's Team</h2>
+      <div class="team-list" id="home-team-list"><p class="empty-note">Loading…</p></div>
+    </div>
+
+    <div class="home-section">
+      <h2 class="section-title">Quick Links</h2>
+      <div class="quicklink-row" id="home-quicklinks"></div>
+    </div>
+  </div>
+
   <!-- ── Suggestions ── -->
-  <div class="tab-panel active" id="panel-suggestions">
+  <div class="tab-panel" id="panel-suggestions">
     <div class="notice">Anything you think could work better — a process, a tool, the rota, anything. Visible to all staff; post anonymously if you'd rather. Upvote ones you agree with so management can see what matters most.</div>
     <div class="form-card">
       <form id="suggestion-form" onsubmit="return submitSuggestion(event)">
@@ -255,7 +308,7 @@
   let CAN_MODERATE = false;
 
   function setTab(tab){
-    const tabs = ['suggestions', 'shoutouts', 'diary'];
+    const tabs = ['home', 'suggestions', 'shoutouts', 'diary'];
     tabs.forEach(t => {
       document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
       document.getElementById('panel-' + t).classList.toggle('active', t === tab);
@@ -328,6 +381,120 @@
     } catch(e){
       valueEl.textContent = 'Couldn\'t load';
     }
+  }
+
+  // ── Home: role-specific widgets ──
+  let ROLE_KIND = 'bar';
+  const QUICKLINKS = {
+    bar: [
+      ["closing-checklist.html", "Closing Checklist"],
+      ["whats-on-this-week.html", "What's On This Week"],
+      ["shift-cover-request.html", "Shift Cover Request"],
+      ["shift-swap.html", "Shift Swap"],
+      ["price-list.html", "Price List"]
+    ],
+    keyholder: [
+      ["emergency-procedures.html", "Emergency &amp; Procedures"],
+      ["cash-up-log.html", "Cash-Up Log"],
+      ["closing-checklist.html", "Closing Checklist"],
+      ["whats-on-this-week.html", "What's On This Week"]
+    ],
+    mgmt: [
+      ["weekly-rota-builder.html", "Weekly Rota Builder"],
+      ["bookings.html", "Bookings"],
+      ["shift-cover-requests-mgmt.html", "Shift Cover Requests"],
+      ["manage-staff-logins.html", "Manage Staff Logins"],
+      ["staff-availability.html", "Staff Availability"]
+    ],
+    committee: [
+      ["member-suggestions-review.html", "Member Suggestions Review"],
+      ["membership-numbers.html", "Membership Numbers"],
+      ["finances-accounts.html", "Finances &amp; Accounts"],
+      ["agm-planning.html", "AGM Planning"],
+      ["club-constitution.html", "Club Constitution"],
+      ["funding-opportunities.html", "Funding Opportunities"]
+    ]
+  };
+
+  function computeRoleKind(){
+    if(MY_ROLES.includes('mgmt') || MY_ROLES.includes('admin')) return 'mgmt';
+    if(MY_ROLES.includes('committee')) return 'committee';
+    if(MY_ROLES.includes('keyholder')) return 'keyholder';
+    return 'bar';
+  }
+
+  function renderQuickLinks(){
+    const list = QUICKLINKS[ROLE_KIND] || QUICKLINKS.bar;
+    document.getElementById('home-quicklinks').innerHTML = list.map(([href, label]) =>
+      `<a class="quicklink-chip" href="${href}">${label}</a>`
+    ).join('');
+  }
+
+  async function loadTodayTeam(){
+    if(!['bar', 'keyholder', 'mgmt'].includes(ROLE_KIND)) return;
+    const section = document.getElementById('home-team-section');
+    const listEl = document.getElementById('home-team-list');
+    section.style.display = 'block';
+    try{
+      const doc = await db.collection('rota').doc('current').get();
+      if(!doc.exists){
+        listEl.innerHTML = '<p class="empty-note">No rota published yet.</p>';
+        return;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      const shifts = (doc.data().shifts || []).filter(s => s.fd === today && s.n).sort((a, b) => (a.st || '').localeCompare(b.st || ''));
+      if(shifts.length === 0){
+        listEl.innerHTML = '<p class="empty-note">Nobody scheduled today.</p>';
+        return;
+      }
+      listEl.innerHTML = shifts.map(s => `
+        <div class="team-row">
+          <div class="team-name">${s.n}${s.r === 'K' ? ' <span class="key-flag">🔑</span>' : ''}</div>
+          <div class="team-time">${formatTime12h(s.st)} – ${s.et === '23:59' ? 'Midnight' : formatTime12h(s.et)}</div>
+        </div>
+      `).join('');
+    } catch(e){
+      listEl.innerHTML = '<p class="empty-note">Couldn\'t load today\'s rota.</p>';
+    }
+  }
+
+  async function loadMgmtStats(){
+    if(ROLE_KIND !== 'mgmt') return;
+    document.getElementById('mgmt-stats-grid').style.display = 'grid';
+    try{
+      const snap = await db.collection('bookingRequests').get();
+      const pending = snap.docs.filter(d => (d.data().status || 'pending') === 'pending').length;
+      document.getElementById('stat-pending-bookings').textContent = pending === 0 ? 'None' : pending;
+    } catch(e){ document.getElementById('stat-pending-bookings').textContent = '—'; }
+    try{
+      const snap = await db.collection('shiftCoverRequests').get();
+      const open = snap.docs.filter(d => (d.data().status || 'open') === 'open').length;
+      document.getElementById('stat-open-cover').textContent = open === 0 ? 'None' : open;
+    } catch(e){ document.getElementById('stat-open-cover').textContent = '—'; }
+    try{
+      const snap = await db.collection('availability').get();
+      const today = new Date().toISOString().split('T')[0];
+      const weekAhead = new Date();
+      weekAhead.setDate(weekAhead.getDate() + 7);
+      const weekAheadFd = weekAhead.toISOString().split('T')[0];
+      const flagged = snap.docs.filter(d => {
+        const data = d.data();
+        const from = data.from || '';
+        const to = data.to || from;
+        return from && to >= today && from <= weekAheadFd;
+      }).length;
+      document.getElementById('stat-unavailable').textContent = flagged === 0 ? 'None' : flagged;
+    } catch(e){ document.getElementById('stat-unavailable').textContent = '—'; }
+  }
+
+  async function loadCommitteeStats(){
+    if(ROLE_KIND !== 'committee') return;
+    document.getElementById('committee-stats-grid').style.display = 'grid';
+    try{
+      const snap = await db.collection('memberSuggestions').get();
+      const fresh = snap.docs.filter(d => (d.data().status || 'new') === 'new').length;
+      document.getElementById('stat-member-suggestions').textContent = fresh === 0 ? 'None' : fresh;
+    } catch(e){ document.getElementById('stat-member-suggestions').textContent = '—'; }
   }
 
   // ── Suggestions (was staff-suggestions.html) ──
@@ -634,10 +801,17 @@
       MY_NAME = localStorage.getItem('staffUserName') || 'You';
     }
     CAN_MODERATE = MY_ROLES.some(r => ['admin', 'mgmt', 'committee'].includes(r));
+    ROLE_KIND = computeRoleKind();
+    const firstName = (MY_NAME || '').trim().split(' ')[0];
+    document.getElementById('hub-greeting').textContent = firstName ? `Hi, ${firstName} 👋` : 'Staff';
 
     loadGlanceShift();
     loadGlanceBooking();
     loadGlanceTickets();
+    renderQuickLinks();
+    loadTodayTeam();
+    loadMgmtStats();
+    loadCommitteeStats();
     loadSuggestions();
     loadShoutouts();
     loadColleagueNames();
