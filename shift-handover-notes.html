@@ -196,7 +196,9 @@
         ? docs.map(renderNoteCard).join('')
         : '<p class="empty-note">No handover notes yet.</p>';
     } catch(e){
-      statusEl.textContent = "Couldn't load notes — try refreshing.";
+      statusEl.textContent = e.code === 'permission-denied'
+        ? "Couldn't load notes — Site Admin needs to update Firestore's access rules for this to work."
+        : "Couldn't load notes — try refreshing.";
     }
   }
 
@@ -232,7 +234,9 @@
       loadHandoverNotes();
       logActivity('Shift Handover Note', shift + ' shift, ' + date);
     } catch(e){
-      statusEl.textContent = "Couldn't add that — try again in a moment.";
+      statusEl.textContent = e.code === 'permission-denied'
+        ? "Couldn't add — Site Admin needs to update Firestore's access rules for this to work."
+        : "Couldn't add that — try again in a moment.";
       statusEl.className = 'form-status err';
     }
     submitBtn.disabled = false;

@@ -125,7 +125,9 @@
         ? docs.map(renderActivityRow).join('')
         : '<p class="empty-note">Nothing logged yet.</p>';
     } catch(e){
-      if(showSpinner) statusEl.textContent = "Couldn't load activity — try refreshing.";
+      if(showSpinner) statusEl.textContent = e.code === 'permission-denied'
+        ? "Couldn't load activity — Site Admin needs to update Firestore's access rules for this to work."
+        : "Couldn't load activity — try refreshing.";
     }
   }
 
