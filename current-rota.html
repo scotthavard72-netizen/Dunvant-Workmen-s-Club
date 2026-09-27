@@ -72,6 +72,17 @@
     background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
     border:none; border-radius:8px; padding:13px 22px; cursor:pointer; text-decoration:none; display:inline-block;
   }
+  .cal-export-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:16px 20px; margin-top:14px; text-align:center;
+  }
+  .cal-export-card p{font-size:0.82rem; color:var(--muted); margin-bottom:12px;}
+  .cal-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.86rem;
+    background:none; color:var(--forest); border:1px solid var(--brass);
+    border-radius:8px; padding:11px 18px; cursor:pointer; text-decoration:none; display:inline-block;
+  }
+  .cal-btn:hover{background:var(--brass); color:#fff;}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
 </style>
 </head>
@@ -92,6 +103,11 @@
   <div class="confirm-card">
     <p>Once you've checked your shifts, let management know you've seen the rota.</p>
     <a class="confirm-btn" href="#confirm-rota-form-link" target="_blank" rel="noopener">✓ Confirm You've Seen the Rota</a>
+  </div>
+
+  <div class="cal-export-card" id="cal-export-card" style="display:none;">
+    <p>Add your own shifts to your phone's calendar so they show up automatically.</p>
+    <button class="cal-btn" id="cal-export-btn" onclick="exportMyShiftsToCalendar()">📅 Add My Shifts to Calendar</button>
   </div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
@@ -118,6 +134,7 @@
   let CURRENT_SHIFTS = [];
   let PUBLISHED_DATE = "";
   let PUBLISHED_TIMESTAMP = "";
+  let MY_NAME = "";
 
   function formatTime12h(t){
     const [h, m] = t.split(':').map(Number);
@@ -194,10 +211,66 @@
       return;
     }
     renderRota();
+    const exportCard = document.getElementById('cal-export-card');
+    if(exportCard && CURRENT_SHIFTS.some(s => s.n === MY_NAME)){
+      exportCard.style.display = 'block';
+    }
   }
 
-  auth.onAuthStateChanged((user) => {
+  function pad2(n){ return n.toString().padStart(2, '0'); }
+
+  function icsTimestamp(fd, time){
+    // fd: "YYYY-MM-DD", time: "HH:MM" — builds a floating local-time ICS stamp
+    const [y, m, d] = fd.split('-');
+    const [h, min] = time.split(':');
+    return `${y}${m}${d}T${pad2(h)}${pad2(min)}00`;
+  }
+
+  function exportMyShiftsToCalendar(){
+    const mine = CURRENT_SHIFTS.filter(s => s.n === MY_NAME && s.fd);
+    if(mine.length === 0){
+      alert("Couldn't find dated shifts for you to export — ask management to re-publish this week's rota if this keeps happening.");
+      return;
+    }
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const events = mine.map((s, i) => {
+      const endTime = s.et === '23:59' ? '23:59' : s.et;
+      return [
+        'BEGIN:VEVENT',
+        `UID:dunvant-shift-${s.fd}-${s.st}-${i}@dunvantwmc`,
+        `DTSTAMP:${stamp}`,
+        `DTSTART:${icsTimestamp(s.fd, s.st)}`,
+        `DTEND:${icsTimestamp(s.fd, endTime)}`,
+        `SUMMARY:Shift at Dunvant WMC${s.r === 'K' ? ' (Keyholder)' : ''}`,
+        'LOCATION:Dunvant Workingmens Club',
+        'END:VEVENT'
+      ].join('\r\n');
+    });
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Dunvant WMC//Rota//EN',
+      'CALSCALE:GREGORIAN',
+      ...events,
+      'END:VCALENDAR'
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dunvant-my-shifts.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  auth.onAuthStateChanged(async (user) => {
     if(user){
+      try{
+        const doc = await db.collection('staff').doc(user.uid).get();
+        MY_NAME = doc.exists ? (doc.data().name || '') : '';
+      } catch(e){ /* export button just stays hidden */ }
       loadAndRenderRota();
     } else {
       window.location.href = 'staff-area.html';

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Staff Directory — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:680px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:20px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  .search-row{margin-bottom:18px;}
+  .search-row input{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.95rem;
+    padding:12px 16px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink);
+  }
+  .role-filters{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;}
+  .role-filter{
+    font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600; padding:7px 14px; border-radius:16px; cursor:pointer;
+    border:1px solid var(--line); background:var(--card); color:var(--muted); user-select:none;
+  }
+  .role-filter.active{background:var(--brass); color:#fff; border-color:var(--brass);}
+
+  .load-status{font-size:0.86rem; color:var(--muted); text-align:center; padding:20px 0;}
+
+  .person-card{
+    display:flex; align-items:center; gap:14px;
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; margin-bottom:10px;
+  }
+  .avatar{
+    width:44px; height:44px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass));
+    color:#fff; font-family:'Fraunces', serif; font-weight:700; font-size:1.05rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .person-info{flex:1; min-width:0;}
+  .person-name{font-weight:600; font-size:0.95rem;}
+  .person-roles{display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;}
+  .role-chip{
+    font-size:0.66rem; font-weight:700; padding:3px 9px; border-radius:10px;
+    background:var(--line); color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;
+  }
+  .role-chip.admin{background:var(--brass); color:#fff;}
+  .person-contact{display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;}
+  .contact-link{
+    font-size:0.76rem; font-weight:600; color:var(--forest); text-decoration:none;
+    border:1px solid var(--line); border-radius:8px; padding:6px 10px; white-space:nowrap;
+  }
+  .contact-link:hover{border-color:var(--brass);}
+
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Staff</span>
+  <h1>Staff Directory</h1>
+  <p>Everyone with access, at a glance</p>
+</header>
+<main>
+  <div class="notice">Every current staff login, with their role(s) and email. Tap the email to message them directly.</div>
+
+  <div class="search-row">
+    <input type="text" id="search-input" placeholder="Search by name…" oninput="renderList()">
+  </div>
+  <div class="role-filters" id="role-filters"></div>
+
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="people-list"></div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  const ROLE_LABELS = {bar:"Bar", keyholder:"Keyholder", mgmt:"Mgmt", admin:"Admin", committee:"Committee"};
+  const ROLE_ORDER = ["admin", "mgmt", "committee", "keyholder", "bar"];
+  let ALL_PEOPLE = [];
+  let ACTIVE_ROLE_FILTER = null;
+
+  function initials(name){
+    if(!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+  }
+
+  function renderRoleFilters(){
+    const used = new Set();
+    ALL_PEOPLE.forEach(p => (p.roles || []).forEach(r => used.add(r)));
+    const roles = ROLE_ORDER.filter(r => used.has(r));
+    const el = document.getElementById('role-filters');
+    el.innerHTML = roles.map(r =>
+      `<span class="role-filter ${ACTIVE_ROLE_FILTER === r ? 'active' : ''}" onclick="toggleRoleFilter('${r}')">${ROLE_LABELS[r] || r}</span>`
+    ).join('');
+  }
+
+  function toggleRoleFilter(role){
+    ACTIVE_ROLE_FILTER = (ACTIVE_ROLE_FILTER === role) ? null : role;
+    renderRoleFilters();
+    renderList();
+  }
+
+  function renderList(){
+    const q = document.getElementById('search-input').value.trim().toLowerCase();
+    let filtered = ALL_PEOPLE.filter(p => (p.name || '').toLowerCase().includes(q));
+    if(ACTIVE_ROLE_FILTER){
+      filtered = filtered.filter(p => (p.roles || []).includes(ACTIVE_ROLE_FILTER));
+    }
+    const listEl = document.getElementById('people-list');
+    const statusEl = document.getElementById('load-status');
+    if(filtered.length === 0){
+      listEl.innerHTML = '';
+      statusEl.textContent = ALL_PEOPLE.length === 0 ? 'No staff found.' : 'No one matches that search.';
+      return;
+    }
+    statusEl.textContent = '';
+    listEl.innerHTML = filtered.map(p => {
+      const roles = (p.roles || []);
+      const chips = ROLE_ORDER.filter(r => roles.includes(r))
+        .map(r => `<span class="role-chip ${r === 'admin' ? 'admin' : ''}">${ROLE_LABELS[r] || r}</span>`).join('');
+      const emailLink = p.email
+        ? `<a class="contact-link" href="mailto:${p.email}">✉️ Email</a>`
+        : '';
+      return `
+        <div class="person-card">
+          <div class="avatar">${initials(p.name)}</div>
+          <div class="person-info">
+            <div class="person-name">${p.name || 'Unnamed'}</div>
+            <div class="person-roles">${chips}</div>
+          </div>
+          <div class="person-contact">${emailLink}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadStaff(){
+    const statusEl = document.getElementById('load-status');
+    try{
+      const snapshot = await db.collection('staff').orderBy('name').get();
+      ALL_PEOPLE = snapshot.docs.map(doc => doc.data());
+      if(ALL_PEOPLE.length === 0){
+        statusEl.textContent = 'No staff found.';
+        return;
+      }
+      renderRoleFilters();
+      renderList();
+    } catch(e){
+      statusEl.textContent = "Couldn't load the staff directory right now — " + e.message;
+    }
+  }
+
+  auth.onAuthStateChanged((user) => {
+    if(user){
+      loadStaff();
+    } else {
+      window.location.href = 'staff-area.html';
+    }
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>

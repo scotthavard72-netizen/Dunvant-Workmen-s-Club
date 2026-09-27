@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Availability — Dunvant WMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
+  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:26px 24px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  .theme-toggle:hover{border-color:var(--brass-light);}
+  main{max-width:640px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:26px;}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+  @media(max-width:520px){ .form-row{grid-template-columns:1fr;} }
+  .form-card label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .form-card input{
+    width:100%; font-family:'Inter', sans-serif; font-size:0.92rem;
+    padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+  }
+  .submit-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.9rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; border-radius:8px; padding:12px 20px; cursor:pointer; width:100%;
+  }
+  .form-status{font-size:0.82rem; color:var(--muted); margin-top:10px; text-align:center;}
+  .form-status.success{color:#3d8f6f; font-weight:600;}
+  .form-status.error{color:#c25a4d; font-weight:600;}
+
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin-bottom:14px;}
+  .section-label:not(:first-of-type){margin-top:30px;}
+  .load-status{font-size:0.86rem; color:var(--muted); text-align:center; padding:16px 0;}
+
+  .avail-row{
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:12px 16px; margin-bottom:8px;
+  }
+  .avail-info .date{font-weight:600; font-size:0.9rem;}
+  .avail-info .reason{font-size:0.8rem; color:var(--muted); margin-top:2px;}
+  .avail-info .who{font-size:0.78rem; color:var(--forest); font-weight:600; margin-bottom:2px;}
+  .remove-btn{
+    background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.76rem; font-weight:600;
+    cursor:pointer; padding:6px 10px; border-radius:6px; white-space:nowrap; flex-shrink:0;
+  }
+
+  a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Staff</span>
+  <h1>Availability</h1>
+  <p>Flag days you can't work, so the rota avoids them</p>
+</header>
+<main>
+  <div class="notice">Add a date (or date range) you know you can't work. Management can see everyone's flagged dates here when building the weekly rota — it doesn't change anything automatically, it's just visibility.</div>
+
+  <div class="form-card">
+    <div class="form-row">
+      <div>
+        <label for="avail-from">From</label>
+        <input type="date" id="avail-from">
+      </div>
+      <div>
+        <label for="avail-to">To (optional)</label>
+        <input type="date" id="avail-to">
+      </div>
+    </div>
+    <label for="avail-reason">Reason (optional)</label>
+    <input type="text" id="avail-reason" placeholder="Holiday, appointment, etc." style="margin-bottom:14px;">
+    <button class="submit-btn" onclick="submitAvailability()">Flag as Unavailable</button>
+    <p class="form-status" id="form-status"></p>
+  </div>
+
+  <div class="section-label">Your Flagged Dates</div>
+  <div id="mine-list"></div>
+
+  <div class="section-label">Everyone Coming Up</div>
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="all-list"></div>
+
+  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  let MY_UID = "";
+  let MY_NAME = "";
+
+  function formatDateRange(from, to){
+    const opts = { weekday: 'short', day: 'numeric', month: 'short' };
+    const fromStr = new Date(from + 'T00:00:00').toLocaleDateString('en-GB', opts);
+    if(!to || to === from) return fromStr;
+    const toStr = new Date(to + 'T00:00:00').toLocaleDateString('en-GB', opts);
+    return `${fromStr} – ${toStr}`;
+  }
+
+  function isPastEntry(to, from){
+    const end = to || from;
+    const endDate = new Date(end + 'T23:59:59');
+    return endDate < new Date();
+  }
+
+  function renderMine(docs){
+    const el = document.getElementById('mine-list');
+    const mine = docs.filter(doc => doc.data().staffUid === MY_UID && !isPastEntry(doc.data().to, doc.data().from));
+    if(mine.length === 0){
+      el.innerHTML = '<p style="font-size:0.86rem; color:var(--muted);">Nothing flagged right now.</p>';
+      return;
+    }
+    el.innerHTML = mine.map(doc => {
+      const d = doc.data();
+      return `
+        <div class="avail-row">
+          <div class="avail-info">
+            <div class="date">${formatDateRange(d.from, d.to)}</div>
+            ${d.reason ? `<div class="reason">${d.reason}</div>` : ''}
+          </div>
+          <button class="remove-btn" onclick="removeAvailability('${doc.id}')">✕ Remove</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderAll(docs){
+    const el = document.getElementById('all-list');
+    const statusEl = document.getElementById('load-status');
+    const upcoming = docs
+      .filter(doc => !isPastEntry(doc.data().to, doc.data().from))
+      .sort((a, b) => a.data().from.localeCompare(b.data().from));
+    if(upcoming.length === 0){
+      el.innerHTML = '';
+      statusEl.textContent = 'No one has flagged upcoming dates.';
+      return;
+    }
+    statusEl.textContent = '';
+    el.innerHTML = upcoming.map(doc => {
+      const d = doc.data();
+      return `
+        <div class="avail-row">
+          <div class="avail-info">
+            <div class="who">${d.staffName || 'Someone'}</div>
+            <div class="date">${formatDateRange(d.from, d.to)}</div>
+            ${d.reason ? `<div class="reason">${d.reason}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadAvailability(){
+    const statusEl = document.getElementById('load-status');
+    try{
+      const snap = await db.collection('availability').get();
+      const docs = snap.docs;
+      renderMine(docs);
+      renderAll(docs);
+    } catch(e){
+      statusEl.textContent = "Couldn't load availability right now — " + e.message;
+    }
+  }
+
+  async function submitAvailability(){
+    const from = document.getElementById('avail-from').value;
+    const to = document.getElementById('avail-to').value;
+    const reason = document.getElementById('avail-reason').value.trim();
+    const statusEl = document.getElementById('form-status');
+    if(!from){
+      statusEl.textContent = 'Pick at least a "From" date.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+    if(to && to < from){
+      statusEl.textContent = '"To" can\'t be before "From".';
+      statusEl.className = 'form-status error';
+      return;
+    }
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'form-status';
+    try{
+      await db.collection('availability').add({
+        staffUid: MY_UID,
+        staffName: MY_NAME,
+        from,
+        to: to || from,
+        reason,
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('avail-from').value = '';
+      document.getElementById('avail-to').value = '';
+      document.getElementById('avail-reason').value = '';
+      statusEl.textContent = '✓ Flagged.';
+      statusEl.className = 'form-status success';
+      loadAvailability();
+    } catch(e){
+      statusEl.textContent = "Couldn't save that — " + e.message;
+      statusEl.className = 'form-status error';
+    }
+  }
+
+  async function removeAvailability(id){
+    if(!confirm('Remove this flagged date?')) return;
+    try{
+      await db.collection('availability').doc(id).delete();
+      loadAvailability();
+    } catch(e){
+      alert("Couldn't remove it — " + e.message);
+    }
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      window.location.href = 'staff-area.html';
+      return;
+    }
+    MY_UID = user.uid;
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      MY_NAME = doc.exists ? (doc.data().name || '') : '';
+    } catch(e){ /* keep going without a name */ }
+    loadAvailability();
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(initialTheme);
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>
