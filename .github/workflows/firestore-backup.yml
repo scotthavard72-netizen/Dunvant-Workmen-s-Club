@@ -10,58 +10,25 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - name: Check required secrets are set
+      - name: Check required secret is set
         run: |
           if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
             echo "::error::FIREBASE_SERVICE_ACCOUNT secret is not set. See docs/backups.md."
             exit 1
           fi
-          if [ -z "${{ secrets.BACKUP_REPO_TOKEN }}" ]; then
-            echo "::error::BACKUP_REPO_TOKEN secret is not set. See docs/backups.md."
-            exit 1
-          fi
-          if [ -z "${{ vars.BACKUP_REPO }}" ]; then
-            echo "::error::BACKUP_REPO repository variable is not set (e.g. yourname/dunvant-wmc-backups). See docs/backups.md."
-            exit 1
-          fi
 
-      - name: Check out site repo
-        uses: actions/checkout@v4
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          sparse-checkout: |
-            scripts/backup-firestore.js
-          sparse-checkout-cone-mode: false
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Install firebase-admin
-        run: npm install firebase-admin@12
-
-      - name: Export Firestore to JSON
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: node scripts/backup-firestore.js backup-out
-
-      - name: Push export to the private backup repo
-        env:
-          BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
-          BACKUP_REPO: ${{ vars.BACKUP_REPO }}
+      - name: Export Firestore to Cloud Storage
         run: |
           set -e
-          STAMP=$(date -u +%Y-%m-%d)
-          git clone "https://x-access-token:${BACKUP_REPO_TOKEN}@github.com/${BACKUP_REPO}.git" backup-repo
-          mkdir -p "backup-repo/$STAMP"
-          cp backup-out/*.json "backup-repo/$STAMP/"
-          cd backup-repo
-          git config user.name "Dunvant WMC Backup Bot"
-          git config user.email "actions@users.noreply.github.com"
-          git add "$STAMP"
-          if git diff --cached --quiet; then
-            echo "Nothing changed since last backup — skipping commit."
-          else
-            git commit -m "Backup for $STAMP"
-            git push
-          fi
+          STAMP=$(date -u +%Y-%m-%dT%H-%M-%S)
+          gcloud firestore export "gs://dunvantwmc-36de5.firebasestorage.app/firestore-backups/$STAMP" \
+            --project=dunvantwmc-36de5
+          echo "Exported to gs://dunvantwmc-36de5.firebasestorage.app/firestore-backups/$STAMP"

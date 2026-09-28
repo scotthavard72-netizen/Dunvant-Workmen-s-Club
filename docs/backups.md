@@ -1,72 +1,85 @@
 # Automated Firestore backups — setup
 
 A GitHub Actions workflow (`.github/workflows/firestore-backup.yml`) runs
-every day at 03:00 UTC, exports every Firestore collection to JSON, and
-pushes it into a **separate private repo** you create (this site's repo is
-public, so backups can't live here).
+every day at 03:00 UTC and triggers Firestore's own built-in export, which
+writes a full snapshot of every collection into Cloud Storage **inside your
+own Firebase project** — no external repo or service involved.
 
-You need to do four things once, in the GitHub UI. I can't do any of these
-myself — they involve creating credentials and a new repo.
+This uses Google's native export/import feature, so restoring later is a
+single command rather than replaying JSON files by hand.
 
-## 1. Create the private backup repo
+⚠️ **This requires the Blaze (pay-as-you-go) plan.** Cloud Storage for
+Firebase — and the export feature — isn't available on the free Spark plan.
+For a club site this size, the actual monthly cost of storing nightly
+backups should only be a few pence, but you do need a billing account
+attached to the project. You won't be charged anything extra for Firestore
+or Hosting usage just by being on Blaze — it only bills for what goes over
+the (generous) free quota, same as now.
 
-On GitHub: **New repository** → name it something like `dunvant-wmc-backups`
-→ set visibility to **Private** → tick "Add a README" → Create.
+I can't upgrade the plan, create IAM roles, or generate keys myself — three
+one-time steps below need you.
 
-Note the full name, e.g. `scotthavard72-netizen/dunvant-wmc-backups` — you'll
-need it in step 4.
+## 1. Upgrade to the Blaze plan
 
-## 2. Get a Firebase service account key
+[Firebase Console](https://console.firebase.google.com/) → `dunvantwmc-36de5`
+→ bottom-left **"Spark" plan badge** → **Upgrade** → **Blaze** → attach a
+billing account (a card, even if you expect to stay within the free tier).
 
-In the [Firebase Console](https://console.firebase.google.com/) →
-`dunvantwmc-36de5` project → gear icon → **Project settings** → **Service
-accounts** tab → **Generate new private key**. This downloads a `.json`
-file — keep it safe, and delete it once step 3 is done.
+## 2. Get a service account key
 
-## 3. Add secrets to this repo
+Same project → gear icon → **Project settings** → **Service accounts** tab →
+**Generate new private key**. This downloads a `.json` file.
 
-In this repo: **Settings** → **Secrets and variables** → **Actions**:
+## 3. Grant it the two extra permissions it needs
 
-- **New repository secret** named `FIREBASE_SERVICE_ACCOUNT` — paste the
-  *entire contents* of the JSON file from step 2.
-- **New repository secret** named `BACKUP_REPO_TOKEN` — a GitHub personal
-  access token that can push to the backup repo. Easiest: go to
-  [Fine-grained tokens](https://github.com/settings/personal-access-tokens/new),
-  set **Repository access** to only the backup repo from step 1, and under
-  **Permissions** grant **Contents: Read and write**. Copy the token value
-  in as the secret.
+The key from step 2 already has admin rights over your Firestore *data*, but
+running an *export* needs two extra project-level roles. In the
+[Google Cloud Console IAM page](https://console.cloud.google.com/iam-admin/iam?project=dunvantwmc-36de5)
+(same project):
 
-Then, still under **Secrets and variables** → **Actions**, switch to the
-**Variables** tab:
+- Find the service account (its email ends in
+  `@dunvantwmc-36de5.iam.gserviceaccount.com`) → pencil/edit icon → **Add
+  another role** → add both:
+  - **Cloud Datastore Import Export Admin**
+  - **Storage Admin**
+- Save.
 
-- **New repository variable** named `BACKUP_REPO` — the full name from
-  step 1, e.g. `scotthavard72-netizen/dunvant-wmc-backups`.
+## 4. Add the secret to this repo
 
-## 4. Run it once to check it works
+**Settings** → **Secrets and variables** → **Actions** → **New repository
+secret** named `FIREBASE_SERVICE_ACCOUNT` → paste the *entire contents* of
+the JSON file from step 2. Then delete that file from your computer.
+
+## 5. Run it once to check it works
 
 **Actions** tab (top of this repo) → **Firestore backup** workflow →
-**Run workflow** → **Run workflow**. After a minute or two it should go
-green, and the backup repo will have a new dated folder full of `.json`
-files (one per collection, plus `_summary.json` with row counts).
+**Run workflow** → **Run workflow**. After a minute it should go green. To
+see the result: [Cloud Storage browser](https://console.firebase.google.com/project/dunvantwmc-36de5/storage)
+→ open the `firestore-backups/` folder → there should be a new dated
+subfolder.
 
-After that it just runs on its own every night — nothing more to do unless
-GitHub ever emails you that a scheduled run failed (usually means a secret
-expired or was rotated).
+After that it runs on its own every night — nothing more to do unless
+GitHub emails you that a scheduled run failed (usually a permission or
+billing issue — re-check steps 1 and 3).
 
 ## Restoring from a backup
 
-Each dated folder has one JSON file per collection: `{ "docId": { ...fields
-... } }`. To restore a collection, write a small script with `firebase-admin`
-that reads the file and calls `.doc(id).set(data)` for each entry. This
-isn't automated on purpose — restoring should be a deliberate, reviewed
-action, not a one-click button.
+Each dated folder is a complete Firestore export in Google's native format.
+To restore it:
 
-## Security notes
+```
+gcloud firestore import gs://dunvantwmc-36de5.firebasestorage.app/firestore-backups/<the-dated-folder>/ --project=dunvantwmc-36de5
+```
 
-- The backup repo must stay **private** — it contains real staff and member
-  data (chat messages, cash-up figures, suggestions, etc).
-- Delete the downloaded service-account JSON file from your computer once
-  it's saved as a secret.
-- If the token or key ever leaks, revoke it immediately (Firebase Console
-  for the service account, GitHub token settings for the PAT) and generate
-  fresh ones.
+This **merges** the backup's documents back into whatever's currently in
+Firestore (it doesn't wipe anything first) — run it from the
+[Google Cloud Shell](https://console.cloud.google.com/) if you don't have
+`gcloud` installed. Restoring should be a deliberate, reviewed action, so
+this isn't wired up as a one-click button anywhere on the site.
+
+## Keeping storage costs down (optional)
+
+Nightly exports build up over time. To auto-delete old ones after, say, 60
+days: Cloud Storage browser → bucket settings → **Lifecycle** → add a rule
+that deletes objects under `firestore-backups/` older than 60 days. Not
+required, just tidy.
