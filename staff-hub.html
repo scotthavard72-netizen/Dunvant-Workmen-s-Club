@@ -1246,6 +1246,98 @@
     }
   }
 
+  const NOTIFY_ICON = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect width=\'192\' height=\'192\' rx=\'34\' fill=\'%232c3f38\'/%3E%3Ctext x=\'96\' y=\'132\' font-family=\'Georgia,serif\' font-size=\'112\' font-weight=\'700\' fill=\'%23e0b56a\' text-anchor=\'middle\'%3ED%3C/text%3E%3C/svg%3E';
+
+  // Same channel-access mapping as staff-chat.html — kept in sync there and
+  // here since this only needs the accessible key set, not the full channel
+  // list with labels.
+  const CHAT_ROLE_EXTRAS = {
+    bar: ['bar'],
+    keyholder: ['bar', 'keyholder'],
+    mgmt: ['bar', 'keyholder', 'mgmt'],
+    admin: ['bar', 'keyholder', 'mgmt', 'admin', 'committee'],
+    committee: ['committee']
+  };
+  function myAccessibleChatChannels(){
+    const extra = new Set(['everyone']);
+    MY_ROLES.forEach(r => (CHAT_ROLE_EXTRAS[r] || []).forEach(k => extra.add(k)));
+    return extra;
+  }
+
+  // New Staff Chat messages — a real browser notification for any message
+  // posted (by someone else) to a channel this person can see, so Chat
+  // actually reaches people instead of relying on them remembering to check
+  // it. Reuses the same permission as the rota notifications above.
+  async function checkForNewChatMessages(){
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    try{
+      const channels = myAccessibleChatChannels();
+      const snap = await db.collection('staffChat').get();
+      const mine = snap.docs
+        .filter(d => channels.has(d.data().channel || 'everyone') && d.data().authorUid !== MY_UID)
+        .sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+
+      const latestMs = mine.length ? (mine[0].data().createdAtMs || 0) : 0;
+      const lastSeenKey = 'lastSeenChatNotifyMs';
+      const hasBaseline = localStorage.getItem(lastSeenKey) !== null;
+
+      if(!hasBaseline){
+        // First time this has ever run on this device — just set the
+        // baseline (even if there's nothing here yet), don't fire a
+        // notification for the entire chat history.
+        localStorage.setItem(lastSeenKey, String(latestMs));
+        return;
+      }
+      const lastSeen = Number(localStorage.getItem(lastSeenKey) || 0);
+      const unseen = mine.filter(d => (d.data().createdAtMs || 0) > lastSeen);
+      if(unseen.length === 0) return;
+
+      if(unseen.length === 1){
+        const d = unseen[0].data();
+        new Notification(`${d.authorName || 'Someone'} — Staff Chat`, { body: d.text || '', icon: NOTIFY_ICON });
+      } else {
+        new Notification('New messages in Staff Chat', { body: `${unseen.length} new messages since you last checked.`, icon: NOTIFY_ICON });
+      }
+      localStorage.setItem(lastSeenKey, String(latestMs));
+    } catch(e){
+      // Fine if this fails — just no notification this round
+    }
+  }
+
+  // New Tickets — for Management/Admin/Committee only (whoever actually
+  // reviews them), so a submitted ticket doesn't just sit unseen.
+  async function checkForNewTickets(){
+    if(!CAN_MODERATE || !('Notification' in window) || Notification.permission !== 'granted') return;
+    try{
+      const snap = await db.collection('tickets').get();
+      const docs = snap.docs
+        .filter(d => (d.data().authorName || '') !== MY_NAME)
+        .sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+
+      const latestMs = docs.length ? (docs[0].data().createdAtMs || 0) : 0;
+      const lastSeenKey = 'lastSeenTicketNotifyMs';
+      const hasBaseline = localStorage.getItem(lastSeenKey) !== null;
+
+      if(!hasBaseline){
+        localStorage.setItem(lastSeenKey, String(latestMs));
+        return;
+      }
+      const lastSeen = Number(localStorage.getItem(lastSeenKey) || 0);
+      const unseen = docs.filter(d => (d.data().createdAtMs || 0) > lastSeen);
+      if(unseen.length === 0) return;
+
+      if(unseen.length === 1){
+        const d = unseen[0].data();
+        new Notification('New ticket submitted', { body: `${d.authorName || 'Someone'}: ${(d.description || '').slice(0, 100)}`, icon: NOTIFY_ICON });
+      } else {
+        new Notification('New tickets submitted', { body: `${unseen.length} new tickets since you last checked.`, icon: NOTIFY_ICON });
+      }
+      localStorage.setItem(lastSeenKey, String(latestMs));
+    } catch(e){
+      // Fine if this fails — just no notification this round
+    }
+  }
+
   function updateNotifyButtonState(){
     const btn = document.getElementById('notify-permission-btn');
     if(!btn) return;
@@ -1822,6 +1914,19 @@
     loadShoutouts();
     loadColleagueNames();
     loadDiary();
+
+    // Notifications for new Staff Chat messages and (mgmt/admin/committee
+    // only) new Tickets — reuses the same browser permission as the rota
+    // notifications above, so there's nothing extra to ask for. Checked once
+    // now, then on a light poll while this tab stays open and visible.
+    checkForNewChatMessages();
+    checkForNewTickets();
+    setInterval(() => {
+      if(document.visibilityState === 'visible'){
+        checkForNewChatMessages();
+        checkForNewTickets();
+      }
+    }, 45000);
   });
 
   const themeToggle = document.getElementById('theme-toggle');
