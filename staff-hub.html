@@ -818,9 +818,9 @@
         {
           label: "Requests &amp; Bookings",
           items: [
-            ["bookings.html", "Bookings", "Function room requests, and confirming dates on the public Book page", "2"],
+            ["bookings.html", "Bookings", "Function room requests, and confirming dates on the public Book page", "pendingBookings"],
             ["manage-shows.html", "Manage Shows / Box Office", "Add, edit, or remove what's listed on the public Box Office page"],
-            ["shift-cover-requests-mgmt.html", "Shift Cover Requests", "Track cover requests submitted by bar staff", "2"],
+            ["shift-cover-requests-mgmt.html", "Shift Cover Requests", "Track cover requests submitted by bar staff", "openCover"],
             ["expense-requests.html", "Expense / Petty Cash Requests", "Claiming back costs"]
           ]
         },
@@ -856,7 +856,7 @@
         ["manage-shows.html", "Manage Shows / Box Office", "Add, edit, or remove what's listed on the public Box Office page"],
         ["staff-chat.html", "Staff Chat", "Quick messages between shifts, by channel"],
         ["team-activity.html", "Team Activity", "What's been happening around the site recently"],
-        ["site-status.html", "Site Status", "To-do list, health check, and both changelogs — one tabbed page", "16"],
+        ["site-status.html", "Site Status", "To-do list, health check, and both changelogs — one tabbed page", "siteTodo"],
         ["tickets.html", "Tickets", "Issues and requests from the public and staff"],
         ["google-analytics.html", "Google Analytics", "See how many people visit, and which pages"],
         ["backup-reminder.html", "Backup Reminder", "Keep a fresh copy somewhere safe"],
@@ -872,7 +872,7 @@
         ["staff-directory.html", "Staff Directory", "Everyone with access, their role, and how to reach them"],
         ["member-suggestions-review.html", "Member Suggestions Review", "What members have submitted via the public site"],
         ["qr-code-generator.html", "QR Code Generator", "Turn a link into a scannable code for posters"],
-        ["bookings.html", "Bookings", "Function room requests, for visibility", "2"],
+        ["bookings.html", "Bookings", "Function room requests, for visibility", "pendingBookings"],
         ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
         ["#meeting-minutes-link", "Meeting Minutes &amp; Agendas", "Past minutes and upcoming meeting agendas"],
         ["finances-accounts.html", "Finances &amp; Accounts", "Club accounts and financial oversight"],
@@ -942,14 +942,50 @@
     checkShiftReminder(MY_NAME);
   }
 
+  // Badges in MENUS are symbolic keys (e.g. "pendingBookings"), resolved here
+  // against live counts loaded by loadLiveBadges(). This is what lets a badge
+  // actually clear once the underlying item is dealt with, instead of being a
+  // number typed into the menu that never changes.
+  let LIVE_BADGES = {};
+  function resolveBadge(badgeKey){
+    return badgeKey ? (LIVE_BADGES[badgeKey] || 0) : 0;
+  }
+
+  async function loadLiveBadges(){
+    const badges = {};
+    try{
+      const snap = await db.collection('bookingRequests').get();
+      const pending = snap.docs.filter(d => (d.data().status || 'pending') === 'pending').length;
+      if(pending > 0) badges.pendingBookings = pending;
+    } catch(e){ /* leave unset — no badge rather than a wrong one */ }
+    try{
+      const snap = await db.collection('shiftCoverRequests').get();
+      const open = snap.docs.filter(d => (d.data().status || 'open') === 'open').length;
+      if(open > 0) badges.openCover = open;
+    } catch(e){}
+    try{
+      const TOTAL_TODO_ITEMS = 16; // keep in sync with the checklist in site-status.html
+      const checked = new Set(JSON.parse(localStorage.getItem('siteTodosChecked_v2') || '[]'));
+      const remaining = Math.max(0, TOTAL_TODO_ITEMS - checked.size);
+      if(remaining > 0) badges.siteTodo = remaining;
+    } catch(e){}
+    LIVE_BADGES = badges;
+    renderToolsSection();
+  }
+
   function updateAppBadge(accessibleRoles){
     if(!('setAppBadge' in navigator)) return;
+    const seen = new Set();
     let total = 0;
     accessibleRoles.forEach(roleKey => {
       const roleData = MENUS[roleKey];
       const items = roleData.groups ? roleData.groups.flatMap(g => g.items) : roleData.items;
-      items.forEach(([, , , badge]) => {
-        if(badge) total += parseInt(badge, 10) || 0;
+      items.forEach(([href, , , badgeKey]) => {
+        const badgeVal = resolveBadge(badgeKey);
+        if(badgeVal && !seen.has(href)){
+          seen.add(href);
+          total += badgeVal;
+        }
       });
     });
     if(total > 0){
@@ -961,23 +997,25 @@
 
   function buildSummaryBar(accessibleRoles){
     const summaryEl = document.getElementById('summary-bar');
-    const chips = [];
+    const chipMap = new Map();
     accessibleRoles.forEach(roleKey => {
       const roleData = MENUS[roleKey];
       const items = roleData.groups ? roleData.groups.flatMap(g => g.items) : roleData.items;
-      items.forEach(([href, title, , badge]) => {
-        if(badge){
-          chips.push(`<a href="${href}" class="summary-chip">${title} <span class="num">${badge}</span></a>`);
+      items.forEach(([href, title, , badgeKey]) => {
+        const badgeVal = resolveBadge(badgeKey);
+        if(badgeVal){
+          chipMap.set(href, `<a href="${href}" class="summary-chip">${title} <span class="num">${badgeVal}</span></a>`);
         }
       });
     });
-    summaryEl.innerHTML = chips.join('');
+    summaryEl.innerHTML = [...chipMap.values()].join('');
   }
 
   function renderMenuItem(item, orderKey){
-    const [href, title, desc, badge] = item;
+    const [href, title, desc, badgeKey] = item;
+    const badgeVal = resolveBadge(badgeKey);
     const external = href.startsWith('http');
-    const badgeHtml = badge ? `<span class="item-badge">${badge}</span>` : '';
+    const badgeHtml = badgeVal ? `<span class="item-badge">${badgeVal}</span>` : '';
     const plainTitle = title.replace(/&amp;/g, '&').replace(/"/g, '&quot;');
     const pinned = getPinnedTools().some(p => p.href === href);
     return `<a href="${href}"${external ? ' target="_blank" rel="noopener"' : ''} data-href="${href}" data-title="${plainTitle}" data-order-key="${orderKey}">
@@ -1906,6 +1944,7 @@
     loadGlanceBooking();
     loadGlanceTickets();
     renderToolsSection();
+    loadLiveBadges();
     loadTodayTeam();
     loadMgmtStats();
     loadCommitteeStats();
