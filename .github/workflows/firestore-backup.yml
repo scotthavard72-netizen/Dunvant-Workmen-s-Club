@@ -29,6 +29,6 @@ jobs:
         run: |
           set -e
           STAMP=$(date -u +%Y-%m-%dT%H-%M-%S)
-          gcloud firestore export "gs://dunvantwmc-36de5.firebasestorage.app/firestore-backups/$STAMP" \
+          gcloud firestore export "gs://dunvantwmc-36de5-firestore-backups/firestore-backups/$STAMP" \
             --project=dunvantwmc-36de5
-          echo "Exported to gs://dunvantwmc-36de5.firebasestorage.app/firestore-backups/$STAMP"
+          echo "Exported to gs://dunvantwmc-36de5-firestore-backups/firestore-backups/$STAMP"

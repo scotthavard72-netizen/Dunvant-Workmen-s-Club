@@ -1,74 +1,45 @@
-# Automated Firestore backups — setup
+# Automated Firestore backups
 
-A GitHub Actions workflow (`.github/workflows/firestore-backup.yml`) runs
-every day at 03:00 UTC and triggers Firestore's own built-in export, which
-writes a full snapshot of every collection into Cloud Storage **inside your
-own Firebase project** — no external repo or service involved.
+**Status: set up and running.** A GitHub Actions workflow
+(`.github/workflows/firestore-backup.yml`) runs every day at 03:00 UTC and
+triggers Firestore's own built-in export, which writes a full snapshot of
+every collection into a Cloud Storage bucket **inside the Firebase
+project** — no external repo or service involved.
 
-This uses Google's native export/import feature, so restoring later is a
-single command rather than replaying JSON files by hand.
+- Bucket: `dunvantwmc-36de5-firestore-backups`, region `europe-west2`
+  (London). It has to be in an EU region because the Firestore database
+  itself is EU-based — a bucket in the US region (like the project's
+  default Storage bucket) is rejected by the export with a location-mismatch
+  error.
+- Auth: the `firebase-adminsdk-fbsvc@dunvantwmc-36de5.iam.gserviceaccount.com`
+  service account, with two extra IAM roles beyond its normal Firestore
+  access — **Cloud Datastore Import Export Admin** and **Storage Admin** —
+  granted at the project level in
+  [Google Cloud IAM](https://console.cloud.google.com/iam-admin/iam?project=dunvantwmc-36de5).
+  Its key is stored as the `FIREBASE_SERVICE_ACCOUNT` secret on this repo
+  (Settings → Secrets and variables → Actions).
+- Requires the **Blaze** (pay-as-you-go) plan, already active on this
+  project — Cloud Storage for Firebase isn't available on the free Spark
+  plan.
 
-⚠️ **This requires the Blaze (pay-as-you-go) plan.** Cloud Storage for
-Firebase — and the export feature — isn't available on the free Spark plan.
-For a club site this size, the actual monthly cost of storing nightly
-backups should only be a few pence, but you do need a billing account
-attached to the project. You won't be charged anything extra for Firestore
-or Hosting usage just by being on Blaze — it only bills for what goes over
-the (generous) free quota, same as now.
+Nothing more to do day-to-day. If GitHub emails that a scheduled run failed,
+open **Actions** → **Firestore backup** → the failed run → the red step, and
+check:
 
-I can't upgrade the plan, create IAM roles, or generate keys myself — three
-one-time steps below need you.
-
-## 1. Upgrade to the Blaze plan
-
-[Firebase Console](https://console.firebase.google.com/) → `dunvantwmc-36de5`
-→ bottom-left **"Spark" plan badge** → **Upgrade** → **Blaze** → attach a
-billing account (a card, even if you expect to stay within the free tier).
-
-## 2. Get a service account key
-
-Same project → gear icon → **Project settings** → **Service accounts** tab →
-**Generate new private key**. This downloads a `.json` file.
-
-## 3. Grant it the two extra permissions it needs
-
-The key from step 2 already has admin rights over your Firestore *data*, but
-running an *export* needs two extra project-level roles. In the
-[Google Cloud Console IAM page](https://console.cloud.google.com/iam-admin/iam?project=dunvantwmc-36de5)
-(same project):
-
-- Find the service account (its email ends in
-  `@dunvantwmc-36de5.iam.gserviceaccount.com`) → pencil/edit icon → **Add
-  another role** → add both:
-  - **Cloud Datastore Import Export Admin**
-  - **Storage Admin**
-- Save.
-
-## 4. Add the secret to this repo
-
-**Settings** → **Secrets and variables** → **Actions** → **New repository
-secret** named `FIREBASE_SERVICE_ACCOUNT` → paste the *entire contents* of
-the JSON file from step 2. Then delete that file from your computer.
-
-## 5. Run it once to check it works
-
-**Actions** tab (top of this repo) → **Firestore backup** workflow →
-**Run workflow** → **Run workflow**. After a minute it should go green. To
-see the result: [Cloud Storage browser](https://console.firebase.google.com/project/dunvantwmc-36de5/storage)
-→ open the `firestore-backups/` folder → there should be a new dated
-subfolder.
-
-After that it runs on its own every night — nothing more to do unless
-GitHub emails you that a scheduled run failed (usually a permission or
-billing issue — re-check steps 1 and 3).
+- Has the `FIREBASE_SERVICE_ACCOUNT` secret expired or been rotated? Re-issue
+  a key (Firebase Console → Project settings → Service accounts → Generate
+  new private key) and update the secret.
+- Do the two IAM roles above still show on the service account in Cloud
+  Console → IAM?
+- Is the project still on the Blaze plan?
 
 ## Restoring from a backup
 
-Each dated folder is a complete Firestore export in Google's native format.
-To restore it:
+Each dated folder under `gs://dunvantwmc-36de5-firestore-backups/firestore-backups/`
+is a complete Firestore export in Google's native format. To restore one:
 
 ```
-gcloud firestore import gs://dunvantwmc-36de5.firebasestorage.app/firestore-backups/<the-dated-folder>/ --project=dunvantwmc-36de5
+gcloud firestore import gs://dunvantwmc-36de5-firestore-backups/firestore-backups/<the-dated-folder>/ --project=dunvantwmc-36de5
 ```
 
 This **merges** the backup's documents back into whatever's currently in
