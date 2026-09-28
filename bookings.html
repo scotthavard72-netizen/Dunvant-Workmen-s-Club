@@ -65,6 +65,11 @@
   }
   .approve{background:var(--forest); color:#fff;}
   .decline{background:var(--paper); color:var(--ink); border:1px solid var(--line) !important;}
+  .req-delete{
+    margin-top:10px; font-family:'Inter', sans-serif; font-size:0.76rem; font-weight:600; cursor:pointer;
+    border:1px solid #a24339; color:#a24339; background:none; border-radius:6px; padding:6px 12px;
+  }
+  .req-delete:hover{background:#a24339; color:#fff;}
 
   .form-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:26px;}
   .form-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
@@ -244,7 +249,7 @@
               <button class="approve" onclick="approveRequest('${doc.id}')">Approve</button>
               <button class="decline" onclick="declineRequest('${doc.id}')">Decline</button>
             </div>
-          ` : ''}
+          ` : `<button class="req-delete" onclick="deleteRequest('${doc.id}')">Delete</button>`}
         </div>
       `;
     }).join('');
@@ -290,6 +295,16 @@
       loadRequests();
     } catch(e){
       alert("Couldn't decline that — " + e.message);
+    }
+  }
+
+  async function deleteRequest(id){
+    if(!confirm('Delete this request for good? This can\'t be undone.')) return;
+    try{
+      await db.collection('bookingRequests').doc(id).delete();
+      loadRequests();
+    } catch(e){
+      alert("Couldn't delete that — " + e.message);
     }
   }
 

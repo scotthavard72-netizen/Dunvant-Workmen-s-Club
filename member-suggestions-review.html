@@ -50,6 +50,8 @@
     font-family:'Inter', sans-serif; font-size:0.74rem; font-weight:600; cursor:pointer;
     border:1px solid var(--line); background:var(--paper); color:var(--forest); border-radius:6px; padding:6px 10px;
   }
+  .mod-btn.danger{color:#a24339; border-color:#a24339;}
+  .mod-btn.danger:hover{background:#a24339; color:#fff;}
 
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
 </style>
@@ -144,6 +146,7 @@
             ${status !== 'reviewed' ? `<button class="mod-btn" onclick="setStatus('${doc.id}', 'reviewed')">Mark Reviewed</button>` : ''}
             ${status !== 'actioned' ? `<button class="mod-btn" onclick="setStatus('${doc.id}', 'actioned')">Mark Actioned</button>` : ''}
             ${status !== 'new' ? `<button class="mod-btn" onclick="setStatus('${doc.id}', 'new')">Reopen</button>` : ''}
+            <button class="mod-btn danger" onclick="deleteSuggestion('${doc.id}')">Delete</button>
           </div>
         </div>
       `;
@@ -168,6 +171,16 @@
       loadSuggestions();
     } catch(e){
       alert("Couldn't update that — " + e.message);
+    }
+  }
+
+  async function deleteSuggestion(id){
+    if(!confirm('Delete this suggestion for good? This can\'t be undone.')) return;
+    try{
+      await db.collection('memberSuggestions').doc(id).delete();
+      loadSuggestions();
+    } catch(e){
+      alert("Couldn't delete that — " + e.message);
     }
   }
 
