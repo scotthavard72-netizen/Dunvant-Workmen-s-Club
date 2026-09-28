@@ -67,16 +67,16 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Site Admin · Example</span>
+  <span class="eyebrow">Site Admin</span>
   <h1>Backup Reminder</h1>
   <p>Keep a fresh copy of the whole site somewhere safe</p>
 </header>
 <main>
 
-  <div class="notice">This is an example page — a simple habit tracker rather than anything automatic, since backups need a person to actually do them.</div>
-  <div class="step"><div class="num">1</div><div class="body"><h3>Download the whole repo</h3><p>From GitHub: Code → Download ZIP — takes seconds.</p></div></div>
-  <div class="step"><div class="num">2</div><div class="body"><h3>Store it somewhere separate</h3><p>OneDrive, a USB drive, anywhere other than just GitHub — so there's a copy even if something happens to the account.</p></div></div>
-  <div class="step"><div class="num">3</div><div class="body"><h3>Last backup</h3><p>[Date] — update this manually each time, or check Site Changelog for the real commit history instead.</p></div></div>
+  <div class="notice">The <strong>data</strong> (Staff Chat, rota, tickets, cash-ups and everything else in Firestore) now backs itself up automatically every night into a private repo, via a scheduled GitHub Action. See <code>docs/backups.md</code> in the repo for the one-time setup and how to restore from a backup if it's ever needed.</div>
+  <div class="step"><div class="num">1</div><div class="body"><h3>Data backups — automatic</h3><p>Every collection in Firestore is exported to JSON and pushed to a separate private repo each night at 03:00 UTC. Nothing to do here day-to-day.</p></div></div>
+  <div class="step"><div class="num">2</div><div class="body"><h3>Website code backups</h3><p>The site's own code lives in Git history already — every change is a commit. For an extra offline copy: GitHub → Code → Download ZIP.</p></div></div>
+  <div class="step"><div class="num">3</div><div class="body"><h3>If a scheduled backup ever fails</h3><p>GitHub will email whoever set it up. It's almost always a secret that expired or was rotated — see the setup doc for how to fix it.</p></div></div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
