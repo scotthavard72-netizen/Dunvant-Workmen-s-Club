@@ -58,6 +58,17 @@
     border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink);
   }
 
+  .glance-panel{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:22px;}
+  @media(max-width:700px){ .glance-panel{grid-template-columns:1fr;} }
+  .glance-card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+  .glance-title{font-family:'Fraunces', serif; font-weight:600; font-size:0.86rem; color:var(--forest); margin-bottom:8px;}
+  .glance-row{font-size:0.8rem; color:var(--ink); margin-bottom:6px; line-height:1.4;}
+  .glance-row:last-child{margin-bottom:0;}
+  .glance-empty{font-size:0.8rem; color:var(--muted);}
+  .conflict-msg{font-size:0.74rem; color:#c25a4d; font-weight:600; grid-column:1/-1; margin-top:-2px;}
+  .shift-row.conflict-row .s-name{border-color:#c25a4d; background:#fdeceb;}
+  [data-theme="dark"] .shift-row.conflict-row .s-name{background:#3a2220;}
+
   .day-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:12px;}
   .day-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
   .day-name{font-family:'Fraunces', serif; font-weight:600; font-size:1rem; color:var(--forest);}
@@ -125,6 +136,9 @@
     <label>Week starting (Monday)</label>
     <input type="date" id="week-start" onchange="updateDayDates()">
   </div>
+
+  <div class="section-label">This Week at a Glance</div>
+  <div id="glance-panel" class="glance-panel"></div>
 
   <button class="edit-current-btn" onclick="loadCurrentRotaForEditing()">✏️ Made a mistake? Load the Current Rota to Fix It</button>
   <p class="action-status" id="edit-load-status"></p>
@@ -221,6 +235,7 @@
 
       statusEl.textContent = `✓ Loaded ${shifts.length} shifts from the published rota — edit as needed, then Publish to correct it.`;
       statusEl.className = 'action-status success';
+      recheckAllConflicts();
     } catch(err){
       statusEl.textContent = "Couldn't load the current rota — " + err.message;
       statusEl.className = 'action-status error';
@@ -247,7 +262,7 @@
     const row = document.createElement('div');
     row.className = 'shift-row';
     row.innerHTML = `
-      <input type="text" class="s-name" placeholder="Name">
+      <input type="text" class="s-name" placeholder="Name" oninput="checkRowConflict(this)">
       <select class="s-role" onchange="this.classList.toggle('role-keyholder', this.value === 'Keyholder')">
         <option value="Bar Staff">Bar Staff</option>
         <option value="Keyholder">Keyholder</option>
@@ -255,6 +270,7 @@
       <input type="time" class="s-start" value="18:00">
       <input type="time" class="s-end" value="23:00">
       <button class="remove-shift" onclick="this.closest('.shift-row').remove()">✕</button>
+      <div class="conflict-msg" style="display:none;"></div>
     `;
     list.appendChild(row);
   }
@@ -267,6 +283,127 @@
       const d = new Date(start);
       d.setDate(start.getDate() + i);
       document.getElementById(`date-${i}`).textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    });
+    renderGlance();
+    recheckAllConflicts();
+  }
+
+  // ── Availability / diary / bookings context, so the rota isn't built blind ──
+  let AVAILABILITY_DOCS = [];
+  let DIARY_ENTRIES = [];
+  let WEEK_EVENTS_ALL = [];
+
+  async function loadWeekContext(){
+    try{
+      const snap = await db.collection('availability').get();
+      AVAILABILITY_DOCS = snap.docs.map(d => d.data()).filter(d => d.from);
+    } catch(e){ AVAILABILITY_DOCS = []; }
+    try{
+      const snap = await db.collection('diaryEntries').get();
+      DIARY_ENTRIES = snap.docs.map(d => d.data()).filter(d => d.date);
+    } catch(e){ DIARY_ENTRIES = []; }
+    try{
+      const [bSnap, sSnap] = await Promise.all([
+        db.collection('bookings').get(),
+        db.collection('shows').get()
+      ]);
+      const bookings = bSnap.docs.map(d => ({ date: d.data().date, label: d.data().label || 'Private Function' }));
+      const shows = sSnap.docs.map(d => ({ date: d.data().date, label: (d.data().title || 'Show') + (d.data().time ? ' at ' + d.data().time : '') }));
+      WEEK_EVENTS_ALL = [...bookings, ...shows].filter(e => e.date);
+    } catch(e){ WEEK_EVENTS_ALL = []; }
+    renderGlance();
+    recheckAllConflicts();
+  }
+
+  function fmtGlanceDate(dateStr){
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function renderGlance(){
+    const panel = document.getElementById('glance-panel');
+    const startVal = document.getElementById('week-start').value;
+    if(!startVal){ panel.innerHTML = ''; return; }
+    const start = new Date(startVal + 'T00:00:00');
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    const startStr = toLocalISODate(start);
+    const endStr = toLocalISODate(end);
+
+    const unavailable = AVAILABILITY_DOCS
+      .filter(a => (a.from) <= endStr && (a.to || a.from) >= startStr)
+      .sort((a, b) => a.from.localeCompare(b.from));
+
+    const diaryThisWeek = DIARY_ENTRIES
+      .filter(d => d.date >= startStr && d.date <= endStr)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const eventsThisWeek = WEEK_EVENTS_ALL
+      .filter(e => e.date >= startStr && e.date <= endStr)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    panel.innerHTML = `
+      <div class="glance-card">
+        <div class="glance-title">⚠️ Flagged unavailable</div>
+        ${unavailable.length ? unavailable.map(a => `<div class="glance-row"><strong>${a.staffName || 'Someone'}</strong> — ${fmtGlanceDate(a.from)}${a.to && a.to !== a.from ? ' to ' + fmtGlanceDate(a.to) : ''}${a.reason ? ' (' + a.reason + ')' : ''}</div>`).join('') : '<div class="glance-empty">No one has flagged this week.</div>'}
+      </div>
+      <div class="glance-card">
+        <div class="glance-title">📔 Diary notes</div>
+        ${diaryThisWeek.length ? diaryThisWeek.map(d => `<div class="glance-row">${fmtGlanceDate(d.date)} — ${d.note}</div>`).join('') : '<div class="glance-empty">Nothing noted this week.</div>'}
+      </div>
+      <div class="glance-card">
+        <div class="glance-title">🎉 Bookings &amp; shows</div>
+        ${eventsThisWeek.length ? eventsThisWeek.map(e => `<div class="glance-row">${fmtGlanceDate(e.date)} — ${e.label}</div>`).join('') : '<div class="glance-empty">Nothing on this week.</div>'}
+      </div>
+    `;
+  }
+
+  function findAvailabilityConflict(name, dateStr){
+    const n = (name || '').trim().toLowerCase();
+    if(!n) return null;
+    return AVAILABILITY_DOCS.find(a => {
+      const an = (a.staffName || '').trim().toLowerCase();
+      if(an !== n) return false;
+      const from = a.from, to = a.to || a.from;
+      return dateStr >= from && dateStr <= to;
+    }) || null;
+  }
+
+  function applyConflictCheck(row, dateStr){
+    const nameInput = row.querySelector('.s-name');
+    const msgEl = row.querySelector('.conflict-msg');
+    const conflict = findAvailabilityConflict(nameInput.value, dateStr);
+    if(conflict){
+      row.classList.add('conflict-row');
+      msgEl.style.display = 'block';
+      msgEl.textContent = `⚠️ ${nameInput.value.trim()} flagged unavailable${conflict.reason ? ' — ' + conflict.reason : ''}`;
+    } else {
+      row.classList.remove('conflict-row');
+      msgEl.style.display = 'none';
+      msgEl.textContent = '';
+    }
+  }
+
+  function checkRowConflict(nameInput){
+    const row = nameInput.closest('.shift-row');
+    const list = nameInput.closest('.shifts-list');
+    const dayIndex = parseInt(list.id.replace('shifts-', ''), 10);
+    const startVal = document.getElementById('week-start').value;
+    if(!startVal) return;
+    const start = new Date(startVal + 'T00:00:00');
+    const dayDate = new Date(start);
+    dayDate.setDate(start.getDate() + dayIndex);
+    applyConflictCheck(row, toLocalISODate(dayDate));
+  }
+
+  function recheckAllConflicts(){
+    const startVal = document.getElementById('week-start').value;
+    if(!startVal) return;
+    const start = new Date(startVal + 'T00:00:00');
+    DAYS.forEach((_, i) => {
+      const dayDate = new Date(start);
+      dayDate.setDate(start.getDate() + i);
+      const dateStr = toLocalISODate(dayDate);
+      document.querySelectorAll(`#shifts-${i} .shift-row`).forEach(row => applyConflictCheck(row, dateStr));
     });
   }
 
@@ -408,6 +545,7 @@
 
   buildDayCards();
   loadConfirmations();
+  loadWeekContext();
 
   const loggedInName = localStorage.getItem('staffUserName');
   document.getElementById('audit-note').textContent = loggedInName
@@ -442,6 +580,11 @@
     if(shifts.length === 0){
       document.getElementById('publish-status').textContent = 'Add at least one shift first.';
       return false;
+    }
+    const conflicts = shifts.filter(s => findAvailabilityConflict(s.name, toLocalISODate(s.date)));
+    if(conflicts.length > 0){
+      const list = conflicts.map(s => `${s.name} (${s.date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })})`).join(', ');
+      if(!confirm(`Heads up — these shifts clash with flagged unavailability: ${list}.\n\nPublish anyway?`)) return false;
     }
     const statusEl = document.getElementById('publish-status');
     statusEl.textContent = 'Publishing…';
