@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>What's On — Dunvant WMC</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -62,6 +76,19 @@
   footer{text-align:center; padding:36px 20px 50px; font-size:0.8rem; color:var(--muted); border-top:1px solid var(--line);}
   footer a{color:var(--brass); text-decoration:none; font-weight:600;}
 
+  .load-status{padding:30px 4px; color:var(--muted); font-size:0.9rem;}
+  .empty-state{padding:40px 4px; color:var(--muted); font-size:0.9rem; line-height:1.6;}
+  .event-row{display:grid; grid-template-columns:90px 1fr auto; gap:20px; align-items:center; padding:22px 4px; border-bottom:1px solid var(--line);}
+  .event-row.soon{background:var(--card);}
+  .event-date{text-align:center;}
+  .event-daynum{font-family:'Fraunces', serif; font-weight:900; font-size:1.8rem; color:var(--forest); line-height:1;}
+  .event-month{font-size:0.68rem; letter-spacing:0.08em; color:var(--muted);}
+  .event-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem;}
+  .event-meta{font-size:0.82rem; color:var(--muted); margin-top:2px;}
+  .event-fblink{font-size:0.78rem; color:var(--brass); font-weight:600; text-decoration:none; margin-top:4px; display:inline-block;}
+  .event-badge{font-size:0.74rem; font-weight:600; color:var(--brass); border:1px solid var(--brass); padding:5px 12px; border-radius:2px; white-space:nowrap;}
+  @media(max-width:480px){ .event-row{grid-template-columns:60px 1fr; row-gap:6px;} .event-badge{grid-column:2; justify-self:start;} }
+
   @media(max-width:640px){
     nav.clubnav{padding:0 12px; overflow-x:auto; justify-content:flex-start;}
     nav.clubnav a{padding:14px 12px; white-space:nowrap; font-size:0.8rem;}
@@ -85,24 +112,9 @@
 
 <main>
   <div class="section-head"><span class="num">1</span><h1>What's on</h1></div>
-  <div style="border-top:1px solid var(--line);">
-    <div style="display:grid; grid-template-columns:90px 1fr auto; gap:20px; align-items:center; padding:22px 4px; border-bottom:1px solid var(--line); background:var(--card);">
-      <div style="text-align:center;"><div style="font-family:'Fraunces', serif; font-weight:900; font-size:1.8rem; color:var(--forest); line-height:1;">?</div><div style="font-size:0.68rem; letter-spacing:0.08em; color:var(--muted);">SOON</div></div>
-      <div>
-        <div style="font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem;">🎤 [Event name — e.g. Live music night]</div>
-        <div style="font-size:0.82rem; color:var(--muted); margin-top:2px;">This week</div>
-      </div>
-      <div style="font-size:0.74rem; font-weight:600; color:var(--brass); border:1px solid var(--brass); padding:5px 12px; border-radius:2px; white-space:nowrap;">This week</div>
-    </div>
-    <div style="display:grid; grid-template-columns:90px 1fr auto; gap:20px; align-items:center; padding:22px 4px; border-bottom:1px solid var(--line);">
-      <div style="text-align:center;"><div style="font-family:'Fraunces', serif; font-weight:900; font-size:1.8rem; color:var(--forest); line-height:1;">?</div><div style="font-size:0.68rem; letter-spacing:0.08em; color:var(--muted);">TBC</div></div>
-      <div><div style="font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem;">🎯 [Event name]</div></div>
-    </div>
-    <div style="display:grid; grid-template-columns:90px 1fr auto; gap:20px; align-items:center; padding:22px 4px; border-bottom:1px solid var(--line);">
-      <div style="text-align:center;"><div style="font-family:'Fraunces', serif; font-weight:900; font-size:1.8rem; color:var(--forest); line-height:1;">?</div><div style="font-size:0.68rem; letter-spacing:0.08em; color:var(--muted);">TBC</div></div>
-      <div><div style="font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem;">🎉 [Event name]</div></div>
-    </div>
-  </div>
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="events-wrap" style="border-top:1px solid var(--line); display:none;"></div>
+  <div class="empty-state" id="empty-state" style="display:none;">Nothing confirmed here just yet — check the club's <a href="https://www.facebook.com/profile.php?id=61563877044858" target="_blank" rel="noopener" style="color:var(--brass); font-weight:600;">Facebook page</a> for the latest, or check back soon.</div>
   <p style="margin-top:24px; font-size:0.86rem; color:var(--muted);">Looking for tickets to a show? Visit the <a href="box-office.html" style="color:var(--brass); font-weight:600;">Box Office</a>.</p>
 </main>
 
@@ -112,6 +124,64 @@
   <p style="margin-top:6px;"><a href="report-issue.html" style="color:var(--muted); font-weight:400;">Spotted a problem with this website? Let us know →</a></p>
 </footer>
 <script>
+  function localISODate(d){
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function renderEvent(data){
+    const dateObj = new Date(data.date + 'T00:00:00');
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const daysUntil = Math.round((dateObj - today) / (1000 * 60 * 60 * 24));
+    const soon = daysUntil <= 7;
+
+    let badge = '';
+    if(daysUntil === 0) badge = 'Today';
+    else if(daysUntil === 1) badge = 'Tomorrow';
+    else if(soon) badge = 'This week';
+
+    const metaParts = [];
+    if(data.time) metaParts.push(data.time);
+    if(data.description) metaParts.push(data.description);
+
+    return `
+      <div class="event-row${soon ? ' soon' : ''}">
+        <div class="event-date">
+          <div class="event-daynum">${dateObj.getDate()}</div>
+          <div class="event-month">${dateObj.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()}</div>
+        </div>
+        <div>
+          <div class="event-title">${data.emoji ? data.emoji + ' ' : ''}${data.title}</div>
+          ${metaParts.length ? `<div class="event-meta">${metaParts.join(' · ')}</div>` : ''}
+          ${data.facebookLink ? `<a class="event-fblink" href="${data.facebookLink}" target="_blank" rel="noopener">More on Facebook →</a>` : ''}
+        </div>
+        ${badge ? `<div class="event-badge">${badge}</div>` : '<div></div>'}
+      </div>
+    `;
+  }
+
+  async function loadEvents(){
+    const statusEl = document.getElementById('load-status');
+    const wrap = document.getElementById('events-wrap');
+    const emptyEl = document.getElementById('empty-state');
+    try{
+      const snapshot = await db.collection('whatsOnEvents').orderBy('date').get();
+      const today = localISODate(new Date());
+      const upcoming = [];
+      snapshot.forEach(doc => { if(doc.data().date >= today) upcoming.push(doc.data()); });
+
+      statusEl.style.display = 'none';
+      if(upcoming.length === 0){
+        emptyEl.style.display = 'block';
+        return;
+      }
+      wrap.innerHTML = upcoming.map(renderEvent).join('');
+      wrap.style.display = 'block';
+    } catch(e){
+      statusEl.textContent = "Couldn't load events right now — try again shortly.";
+    }
+  }
+  loadEvents();
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
