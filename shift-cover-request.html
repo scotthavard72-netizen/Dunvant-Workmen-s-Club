@@ -48,6 +48,29 @@
   .form-status.ok{color:var(--forest); display:block;}
   .form-status.err{color:#a24339; display:block;}
   a.back{display:inline-block; margin-top:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+  .section-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem; color:var(--forest); margin:32px 0 12px;}
+  .empty-note{font-size:0.84rem; color:var(--muted); padding:6px 2px;}
+  .open-cover-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px 18px; margin-bottom:10px;
+  }
+  .oc-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .oc-title{font-weight:600; font-size:0.9rem;}
+  .oc-meta{font-size:0.78rem; color:var(--muted); margin-top:3px;}
+  .oc-reason{font-size:0.82rem; color:var(--ink); margin-top:8px; font-style:italic;}
+  .urgent-tag{
+    font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+    padding:3px 10px; border-radius:20px; white-space:nowrap; background:#fbe4e4; color:#8a2f2f; flex-shrink:0;
+  }
+  [data-theme="dark"] .urgent-tag{background:#3a1e1a; color:#e0a89e;}
+  .oc-availability-warning{font-size:0.76rem; color:#a24339; margin-top:8px;}
+  [data-theme="dark"] .oc-availability-warning{color:#e0a89e;}
+  .cover-claim-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.8rem;
+    background:var(--forest); color:#fff; border:none; border-radius:6px;
+    padding:9px 14px; cursor:pointer; margin-top:10px;
+  }
+  .cover-claim-btn:hover{opacity:0.85;}
   .theme-toggle{
     position:fixed; top:16px; right:16px; z-index:100;
     background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
@@ -86,6 +109,10 @@
       <p class="form-status" id="form-status"></p>
     </form>
   </div>
+
+  <h2 class="section-title">Open — Can You Cover?</h2>
+  <div class="notice" style="margin-bottom:16px;">Other people's open requests, in case you can step in. Claiming one puts your name on that shift on the rota automatically.</div>
+  <div id="open-cover-list"><p class="empty-note">Loading…</p></div>
 
   <a class="back" href="staff-area.html">← Back to Staff Area</a>
 </main>
@@ -164,6 +191,115 @@
     return false;
   }
 
+  // ── Open cover requests — self-serve claiming ──
+  let MY_AVAILABILITY = [];
+
+  function findMyAvailabilityConflict(fd){
+    if(!fd) return null;
+    return MY_AVAILABILITY.find(a => {
+      const from = a.from, to = a.to || a.from;
+      return from && fd >= from && fd <= to;
+    }) || null;
+  }
+
+  async function loadMyAvailability(){
+    try{
+      const snap = await db.collection('availability').where('staffUid', '==', MY_UID).get();
+      MY_AVAILABILITY = snap.docs.map(d => d.data()).filter(d => d.from);
+    } catch(e){ MY_AVAILABILITY = []; }
+  }
+
+  function formatCoverDate(fd){
+    if(!fd) return '';
+    return new Date(fd + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function renderOpenCoverCard(doc){
+    const d = doc.data();
+    const conflict = findMyAvailabilityConflict(d.date);
+    return `
+      <div class="open-cover-card">
+        <div class="oc-top">
+          <div>
+            <div class="oc-title">${d.name || 'Someone'}</div>
+            <div class="oc-meta">${formatCoverDate(d.date)}</div>
+          </div>
+          ${d.urgent ? '<span class="urgent-tag">Urgent</span>' : ''}
+        </div>
+        ${d.reason ? `<div class="oc-reason">"${d.reason}"</div>` : ''}
+        ${conflict ? `<div class="oc-availability-warning">⚠️ You flagged yourself unavailable that day${conflict.reason ? ' (' + conflict.reason + ')' : ''}. Check before claiming.</div>` : ''}
+        <button class="cover-claim-btn" onclick="claimCoverRequest('${doc.id}')">I'll Cover This</button>
+      </div>
+    `;
+  }
+
+  async function loadOpenCoverRequests(){
+    const listEl = document.getElementById('open-cover-list');
+    try{
+      const snap = await db.collection('shiftCoverRequests').get();
+      const docs = snap.docs
+        .filter(d => (d.data().status || 'open') === 'open' && (d.data().name || '').trim().toLowerCase() !== MY_NAME.trim().toLowerCase())
+        .sort((a, b) => {
+          const au = a.data().urgent ? 1 : 0, bu = b.data().urgent ? 1 : 0;
+          if(au !== bu) return bu - au;
+          return (a.data().date || '').localeCompare(b.data().date || '');
+        });
+      if(docs.length === 0){
+        listEl.innerHTML = '<p class="empty-note">Nothing open right now.</p>';
+        return;
+      }
+      listEl.innerHTML = docs.map(renderOpenCoverCard).join('');
+    } catch(e){
+      listEl.innerHTML = '<p class="empty-note">Couldn\'t load open requests right now.</p>';
+    }
+  }
+
+  // Best-effort — updates the shift on the live rota to your name once you
+  // claim it. If the rota's moved on since (republished, shift removed) this
+  // just leaves a note rather than failing the claim itself.
+  async function applyClaimToRota(name, date){
+    try{
+      const rotaRef = db.collection('rota').doc('current');
+      const rotaDoc = await rotaRef.get();
+      if(!rotaDoc.exists) return false;
+      const shifts = rotaDoc.data().shifts || [];
+      const idx = shifts.findIndex(s => s.fd === date && (s.n || '').trim().toLowerCase() === name.trim().toLowerCase());
+      if(idx === -1) return false;
+      const updatedShifts = shifts.slice();
+      updatedShifts[idx] = { ...updatedShifts[idx], n: MY_NAME };
+      await rotaRef.update({ shifts: updatedShifts });
+      return true;
+    } catch(e){ return false; }
+  }
+
+  async function claimCoverRequest(id){
+    try{
+      const doc = await db.collection('shiftCoverRequests').doc(id).get();
+      if(!doc.exists || (doc.data().status || 'open') !== 'open'){
+        alert("That one's already been taken care of — refreshing the list.");
+        loadOpenCoverRequests();
+        return;
+      }
+      const d = doc.data();
+      const conflict = findMyAvailabilityConflict(d.date);
+      if(conflict){
+        const reason = conflict.reason ? ` (${conflict.reason})` : '';
+        if(!confirm(`Heads up — you flagged yourself unavailable that day${reason}.\n\nClaim it anyway?`)) return;
+      } else if(!confirm(`Cover ${d.name}'s shift on ${formatCoverDate(d.date)}?`)){
+        return;
+      }
+      const rotaUpdated = await applyClaimToRota(d.name, d.date);
+      await db.collection('shiftCoverRequests').doc(id).update({
+        status: 'covered', coveredBy: MY_NAME, coveredAtMs: Date.now(), rotaUpdated
+      });
+      logActivity('Shift Cover Claimed', `${d.date} (was ${d.name})`);
+      loadOpenCoverRequests();
+      alert(rotaUpdated ? "✓ You're on the rota for that shift now." : "✓ Marked as covered — the rota didn't have an exact match to update automatically, so check it manually.");
+    } catch(e){
+      alert("Couldn't claim that — try again in a moment.");
+    }
+  }
+
   auth.onAuthStateChanged(async (user) => {
     if(!user){
       window.location.href = 'staff-area.html';
@@ -174,6 +310,8 @@
       const doc = await db.collection('staff').doc(user.uid).get();
       MY_NAME = doc.exists ? (doc.data().name || '') : '';
     } catch(e){ /* keep going without a name */ }
+    await loadMyAvailability();
+    loadOpenCoverRequests();
   });
 
   const themeToggle = document.getElementById('theme-toggle');
