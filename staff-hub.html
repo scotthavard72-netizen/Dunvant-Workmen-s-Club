@@ -50,11 +50,16 @@
 
   .home-section{margin-bottom:26px;}
   .home-section:empty{display:none;}
-  #home-team-section{
+  #home-team-section, #home-diary-section{
     background:var(--card); border:1px solid var(--line); border-radius:14px;
     padding:16px 18px;
   }
   #home-team-title .day-sub{font-weight:500; color:var(--muted); font-size:0.82rem;}
+  .diary-note-row{
+    background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    padding:12px 16px; font-size:0.86rem; line-height:1.4;
+  }
+  .diary-note-row .diary-author{display:block; font-size:0.72rem; color:var(--muted); margin-top:4px;}
   .team-list{display:flex; flex-direction:column; gap:8px;}
   .team-row{
     display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -437,6 +442,11 @@
     <div class="home-section" id="home-team-section" style="display:none;">
       <h2 class="section-title" id="home-team-title">Today's Team</h2>
       <div class="team-list" id="home-team-list"><p class="empty-note">Loading…</p></div>
+    </div>
+
+    <div class="home-section" id="home-diary-section" style="display:none;">
+      <h2 class="section-title" id="home-diary-title">Today's Diary</h2>
+      <div class="team-list" id="home-diary-list"></div>
     </div>
 
     <div class="home-section" id="mytools-section">
@@ -977,7 +987,39 @@
       if(remaining > 0) badges.siteTodo = remaining;
     } catch(e){}
     LIVE_BADGES = badges;
+    notifyAboutNewRequests(badges);
     renderToolsSection();
+  }
+
+  // Push notification (not just the badge) for mgmt/admin when a new booking
+  // or cover request comes in — reuses the same permission already asked for
+  // above ("Get notified when the rota's out"), so there's nothing extra to
+  // grant. Diffs against what was last seen in this browser so it only fires
+  // for genuinely new ones, and never on the very first run (nothing to
+  // compare against yet, so it just quietly baselines instead of notifying
+  // about everything already pending).
+  function notifyAboutNewRequests(badges){
+    if(ROLE_KIND !== 'mgmt') return;
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    const checks = [
+      { key: 'pendingBookings', seenKey: 'notifySeenPendingBookings', singular: 'booking request', plural: 'booking requests' },
+      { key: 'openCover', seenKey: 'notifySeenOpenCover', singular: 'shift cover request', plural: 'shift cover requests' }
+    ];
+    checks.forEach(c => {
+      const current = badges[c.key] || 0;
+      const seenRaw = localStorage.getItem(c.seenKey);
+      if(seenRaw === null){
+        localStorage.setItem(c.seenKey, String(current));
+        return;
+      }
+      const seen = parseInt(seenRaw, 10) || 0;
+      if(current > seen){
+        const delta = current - seen;
+        const label = delta === 1 ? c.singular : c.plural;
+        new Notification(`🔔 New ${label}`, { body: `${delta} new ${label} waiting.` });
+      }
+      localStorage.setItem(c.seenKey, String(current));
+    });
   }
 
   function updateAppBadge(accessibleRoles){
@@ -1389,6 +1431,7 @@
       btn.style.display = 'none';
       return;
     }
+    const mgmtSuffix = ROLE_KIND === 'mgmt' ? ' and new requests' : '';
     if(Notification.permission === 'granted'){
       btn.textContent = '🔔 Notifications on';
       btn.disabled = true;
@@ -1396,7 +1439,7 @@
       btn.textContent = '🔕 Notifications blocked in browser settings';
       btn.disabled = true;
     } else {
-      btn.textContent = "🔔 Get notified when the rota's out";
+      btn.textContent = `🔔 Get notified when the rota's out${mgmtSuffix}`;
       btn.disabled = false;
     }
   }
@@ -1872,6 +1915,32 @@
     }).join('');
   }
 
+  // Home tab preview — just today's note(s), if any. The Diary tab itself
+  // still shows the full list; this is so it doesn't need a tab switch to
+  // notice something was left for today.
+  async function loadTodayDiary(){
+    const section = document.getElementById('home-diary-section');
+    const listEl = document.getElementById('home-diary-list');
+    try{
+      const today = localISODate(new Date());
+      const snap = await db.collection('diaryEntries').get();
+      const todays = snap.docs.map(d => d.data()).filter(d => d.date === today);
+      if(todays.length === 0){
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = 'block';
+      listEl.innerHTML = todays.map(d => `
+        <div class="diary-note-row">
+          ${d.note}
+          <span class="diary-author">— ${d.authorName || 'Someone'}</span>
+        </div>
+      `).join('');
+    } catch(e){
+      section.style.display = 'none';
+    }
+  }
+
   async function loadDiary(){
     const statusEl = document.getElementById('di-load-status');
     try{
@@ -1907,6 +1976,7 @@
       statusEl.textContent = '✓ Added.';
       statusEl.className = 'form-status success';
       loadDiary();
+      loadTodayDiary();
     } catch(e){
       statusEl.textContent = "Couldn't save that — " + e.message;
       statusEl.className = 'form-status error';
@@ -1918,6 +1988,7 @@
     try{
       await db.collection('diaryEntries').doc(id).delete();
       loadDiary();
+      loadTodayDiary();
     } catch(e){
       alert("Couldn't remove it — " + e.message);
     }
@@ -1959,6 +2030,7 @@
     loadShoutouts();
     loadColleagueNames();
     loadDiary();
+    loadTodayDiary();
 
     // Notifications for new Staff Chat messages and (mgmt/admin/committee
     // only) new Tickets — reuses the same browser permission as the rota
