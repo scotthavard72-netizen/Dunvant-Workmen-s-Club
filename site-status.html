@@ -182,6 +182,10 @@
 
   <!-- HEALTH CHECK -->
   <div class="tab-panel" id="panel-health">
+    <div class="notice" style="margin-bottom:14px;">
+      <strong>Backups:</strong> <span id="bk-status">Checking…</span>
+    </div>
+
     <div class="notice">Pulls the actual files from your repo and checks every link inside each one — catching things like a link pointing to a folder that doesn't exist on the flat site, or a link to a file that's since been renamed or deleted. Takes a minute or two. Goes through a secure server-side connection — no token to set up here.</div>
 
     <button class="run-btn" onclick="hcRunHealthCheck()">🩺 Run Health Check</button>
@@ -402,6 +406,33 @@
       document.getElementById('hc-scan-progress').classList.remove('active');
     }
   }
+
+  // ---- Backup status (pulled from the firestore-backup.yml scheduled workflow) ----
+  async function bkLoadStatus(){
+    const el = document.getElementById('bk-status');
+    try{
+      const res = await fetch('https://api.github.com/repos/scotthavard72-netizen/Dunvant-Workmen-s-Club/actions/workflows/firestore-backup.yml/runs?per_page=1');
+      if(!res.ok) throw new Error('lookup failed');
+      const data = await res.json();
+      const latest = (data.workflow_runs || [])[0];
+      if(!latest){
+        el.textContent = "No backup runs found yet — check docs/backups.md.";
+        return;
+      }
+      const when = new Date(latest.run_started_at || latest.created_at);
+      const whenStr = when.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      if(latest.status !== 'completed'){
+        el.textContent = `Currently running (started ${whenStr})…`;
+      } else if(latest.conclusion === 'success'){
+        el.textContent = `✓ Last run succeeded — ${whenStr}.`;
+      } else {
+        el.innerHTML = `⚠️ Last run <strong>${latest.conclusion || 'failed'}</strong> — ${whenStr}. Check the Actions tab on GitHub.`;
+      }
+    } catch(e){
+      el.textContent = "Couldn't check backup status right now — try again shortly.";
+    }
+  }
+  bkLoadStatus();
 
   // ---- Site Changelog ----
   const SC_OWNER = 'scotthavard72-netizen';

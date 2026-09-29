@@ -415,6 +415,7 @@
       setProgress('action-progress', 100);
       statusEl.textContent = '✓ Loaded — edit below, then Publish when ready.';
       addRecentFile(path);
+      Presence.start('edit-site-content:' + path, 'editing ' + path);
       statusEl.className = 'status success';
     } catch(err){
       statusEl.textContent = err.message;
@@ -556,6 +557,7 @@
     localStorage.setItem('theme', newTheme);
   });
 </script>
+<script src="presence.js"></script>
 <script src="update-banner.js"></script>
 </body>
 </html>

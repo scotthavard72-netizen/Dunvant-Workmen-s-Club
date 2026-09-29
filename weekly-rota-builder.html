@@ -258,6 +258,7 @@
     document.getElementById('edit-load-status').textContent = '';
     renderGlance();
     recheckAllConflicts();
+    logActivity('Rota Draft Cleared', document.getElementById('week-start').value || '');
   }
 
   function buildDayCards(){
@@ -704,6 +705,10 @@
     applyTheme(newTheme);
     localStorage.setItem('theme', newTheme);
   });
+</script>
+<script src="presence.js"></script>
+<script>
+  Presence.start('weekly-rota-builder', 'building the rota');
 </script>
 <script src="update-banner.js"></script>
 </body>
