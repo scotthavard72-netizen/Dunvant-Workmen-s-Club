@@ -118,14 +118,14 @@
   }
   .sub{font-size:0.9rem; color:rgba(255,255,255,0.55); margin-bottom:28px;}
 
-  #screen-login input{
+  #screen-login input:not([type="checkbox"]){
     width:100%; font-family:'Inter', sans-serif; font-size:0.95rem;
     padding:15px 18px; margin-bottom:12px; border-radius:12px;
     background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff;
     transition:border-color 0.2s ease, background 0.2s ease;
   }
-  #screen-login input::placeholder{color:rgba(255,255,255,0.4);}
-  #screen-login input:focus{outline:none; border-color:var(--brass-light); background:rgba(255,255,255,0.09);}
+  #screen-login input:not([type="checkbox"])::placeholder{color:rgba(255,255,255,0.4);}
+  #screen-login input:not([type="checkbox"]):focus{outline:none; border-color:var(--brass-light); background:rgba(255,255,255,0.09);}
 
   .forgot-link{display:block; text-align:right; font-size:0.78rem; color:rgba(255,255,255,0.5); margin:-2px 0 20px; text-decoration:none;}
   .forgot-link:hover{color:var(--brass-light);}
@@ -146,6 +146,7 @@
     font-size:0.76rem; color:rgba(255,255,255,0.55); margin:4px 0 20px; cursor:pointer;
   }
   .shared-device-toggle input{width:auto; margin:2px 0 0; accent-color:var(--brass-light); flex-shrink:0;}
+  .shared-device-toggle span{min-width:0;}
 
   .quick-login{margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,0.1);}
   .quick-login-label{font-size:0.78rem; color:rgba(255,255,255,0.5); margin-bottom:10px;}
@@ -185,7 +186,7 @@
     <a href="#" id="forgot-password-link" class="forgot-link" onclick="sendForgotPassword(event)">Forgot password?</a>
     <label class="shared-device-toggle" for="shared-device-checkbox">
       <input type="checkbox" id="shared-device-checkbox" onchange="setSharedDevice(this.checked)">
-      This is a shared or bar computer — sign out automatically when it's closed
+      <span>This is a shared or bar computer — sign out automatically when it's closed</span>
     </label>
     <button class="enter" onclick="attemptLogin()">Sign In</button>
     <p class="error" id="login-error">Username or password not recognised</p>
