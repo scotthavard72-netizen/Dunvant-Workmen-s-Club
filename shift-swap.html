@@ -187,6 +187,26 @@
   let MY_UID = '';
   let MY_ROLES = [];
   let MY_SHIFTS = [];
+  let MY_AVAILABILITY = [];
+
+  // Flagged unavailability doesn't block a swap outright (someone might still
+  // want to help out), but it should be surfaced before you accept one for a
+  // day you've said you can't work — this is the piece that was missing.
+  function findMyAvailabilityConflict(fd){
+    if(!fd) return null;
+    return MY_AVAILABILITY.find(a => {
+      const from = a.from, to = a.to || a.from;
+      return from && fd >= from && fd <= to;
+    }) || null;
+  }
+
+  async function loadMyAvailability(){
+    try{
+      const snap = await db.collection('availability').where('staffUid', '==', MY_UID).get();
+      MY_AVAILABILITY = snap.docs.map(d => d.data()).filter(d => d.from);
+    } catch(e){ MY_AVAILABILITY = []; }
+    loadSwapLists();
+  }
 
   // Best-effort entry in the shared Team Activity feed — never blocks the
   // real action if it fails.
@@ -264,6 +284,11 @@
       && !MY_ROLES.includes('keyholder') && !MY_ROLES.includes('admin')
       ? '<div class="role-warning">⚠️ This shift needs a keyholder — you\'re not marked as one. Check before accepting.</div>'
       : '';
+    const availConflict = viewerIsRecipient && d.status === 'pending' && d.shift
+      ? findMyAvailabilityConflict(d.shift.fd) : null;
+    const availWarning = availConflict
+      ? `<div class="role-warning">⚠️ You flagged yourself unavailable that day${availConflict.reason ? ' (' + availConflict.reason + ')' : ''}. Check before accepting.</div>`
+      : '';
     let rotaNote = '';
     if(d.status === 'accepted'){
       if(d.rotaUpdated) rotaNote = '<div class="rota-note">✓ Rota updated automatically</div>';
@@ -280,6 +305,7 @@
         </div>
         ${d.message ? `<div class="swap-message">"${d.message}"</div>` : ''}
         ${needsKeyholderWarning}
+        ${availWarning}
         ${rotaNote}
         ${actions}
       </div>
@@ -393,6 +419,16 @@
   }
 
   async function respondSwap(id, status){
+    if(status === 'accepted'){
+      try{
+        const doc = await db.collection('shiftSwaps').doc(id).get();
+        const conflict = findMyAvailabilityConflict((doc.data() || {}).shift?.fd);
+        if(conflict){
+          const reason = conflict.reason ? ` (${conflict.reason})` : '';
+          if(!confirm(`Heads up — you flagged yourself unavailable that day${reason}.\n\nAccept anyway?`)) return;
+        }
+      } catch(e){ /* if the check fails, fall through rather than block the accept */ }
+    }
     try{
       await db.collection('shiftSwaps').doc(id).update({ status, respondedAt: firebase.firestore.FieldValue.serverTimestamp() });
       if(status === 'accepted') await applySwapToRota(id);
@@ -441,7 +477,7 @@
       await db.collection('shiftSwaps').add({
         requesterName: MY_NAME,
         colleagueName: colleague,
-        shift: shift ? { d: shift.d, dt: shift.dt, st: shift.st, et: shift.et, r: shift.r || '' } : null,
+        shift: shift ? { d: shift.d, dt: shift.dt, fd: shift.fd || '', st: shift.st, et: shift.et, r: shift.r || '' } : null,
         shiftLabel: shift ? shiftLabel(shift) : 'See message for details',
         role,
         message,
@@ -481,7 +517,7 @@
     document.getElementById('my-name-display').textContent = MY_NAME;
     updateNotifyButtonState();
     loadRotaAndShifts();
-    loadSwapLists();
+    loadMyAvailability(); // also triggers the first loadSwapLists() once it resolves
     setInterval(loadSwapLists, 60000);
   });
 
