@@ -561,7 +561,22 @@
     }
   }
 
+  // Default "Week starting" to the next Monday on or after today, so the
+  // page opens already knowing which week it's building instead of making
+  // you pick a date every time. (If today IS Monday, that's this week.)
+  function defaultWeekStartMonday(){
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dow = today.getDay(); // 0 = Sun .. 6 = Sat
+    const diffToMonday = dow === 0 ? 1 : (dow === 1 ? 0 : 8 - dow);
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diffToMonday);
+    return monday;
+  }
+
   buildDayCards();
+  document.getElementById('week-start').value = toLocalISODate(defaultWeekStartMonday());
+  updateDayDates();
   loadConfirmations();
   loadWeekContext();
 
