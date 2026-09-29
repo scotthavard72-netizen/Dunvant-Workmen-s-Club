@@ -50,6 +50,11 @@
 
   .home-section{margin-bottom:26px;}
   .home-section:empty{display:none;}
+  #home-team-section{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:16px 18px;
+  }
+  #home-team-title .day-sub{font-weight:500; color:var(--muted); font-size:0.82rem;}
   .team-list{display:flex; flex-direction:column; gap:8px;}
   .team-row{
     display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -669,6 +674,8 @@
     const section = document.getElementById('home-team-section');
     const listEl = document.getElementById('home-team-list');
     section.style.display = 'block';
+    const todayLabel = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
+    document.getElementById('home-team-title').innerHTML = `Today's Team <span class="day-sub">— ${todayLabel}</span>`;
     try{
       const doc = await db.collection('rota').doc('current').get();
       if(!doc.exists){
