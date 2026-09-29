@@ -141,6 +141,7 @@
   <div id="glance-panel" class="glance-panel"></div>
 
   <button class="edit-current-btn" onclick="loadCurrentRotaForEditing()">✏️ Made a mistake? Load the Current Rota to Fix It</button>
+  <button class="edit-current-btn" onclick="copyLastWeek()">📋 Copy Last Week (as a starting point)</button>
   <button class="edit-current-btn" onclick="clearAllShifts()">🗑️ Clear All Shifts Below (start this week blank)</button>
   <p class="action-status" id="edit-load-status"></p>
 
@@ -242,6 +243,81 @@
       recheckAllConflicts();
     } catch(err){
       statusEl.textContent = "Couldn't load the current rota — " + err.message;
+      statusEl.className = 'action-status error';
+    }
+  }
+
+  // Pulls in whatever's currently published as a starting point for the
+  // NEXT week, shifting every date forward by 7 days — for the common case
+  // of building next week's rota while this week's is still live. Only
+  // works if what's published actually is last week relative to the
+  // selected "Week starting" date; there's no history beyond the one
+  // currently-published rota to copy from otherwise.
+  async function copyLastWeek(){
+    const statusEl = document.getElementById('edit-load-status');
+    const startVal = document.getElementById('week-start').value;
+    if(!startVal){
+      statusEl.textContent = 'Pick a week starting date first.';
+      statusEl.className = 'action-status error';
+      return;
+    }
+    statusEl.textContent = 'Loading last week…';
+    statusEl.className = 'action-status';
+    try{
+      const doc = await db.collection('rota').doc('current').get();
+      const shifts = doc.exists ? (doc.data().shifts || []) : [];
+      if(shifts.length === 0){
+        statusEl.textContent = 'Nothing published to copy from.';
+        statusEl.className = 'action-status error';
+        return;
+      }
+      if(!shifts[0].fd){
+        statusEl.textContent = "That published rota is from before this feature — can't copy it.";
+        statusEl.className = 'action-status error';
+        return;
+      }
+
+      const dates = shifts.map(s => new Date(s.fd + 'T00:00:00')).sort((a, b) => a - b);
+      const earliest = dates[0];
+      const dow = earliest.getDay();
+      const diffToMonday = dow === 0 ? -6 : 1 - dow;
+      const publishedMonday = new Date(earliest);
+      publishedMonday.setDate(earliest.getDate() + diffToMonday);
+
+      const selectedMonday = new Date(startVal + 'T00:00:00');
+      const expectedPreviousMonday = new Date(selectedMonday);
+      expectedPreviousMonday.setDate(selectedMonday.getDate() - 7);
+
+      if(toLocalISODate(publishedMonday) !== toLocalISODate(expectedPreviousMonday)){
+        statusEl.textContent = `The currently published rota is for the week starting ${publishedMonday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} — that's not last week, so nothing was copied.`;
+        statusEl.className = 'action-status error';
+        return;
+      }
+
+      DAYS.forEach((_, i) => { document.getElementById(`shifts-${i}`).innerHTML = ''; });
+      shifts.forEach(s => {
+        const dayIndex = DAYS.findIndex(d => d.slice(0, 3) === s.d);
+        if(dayIndex === -1) return;
+        addShiftRow(dayIndex);
+        const rows = document.querySelectorAll(`#shifts-${dayIndex} .shift-row`);
+        const row = rows[rows.length - 1];
+        row.querySelector('.s-name').value = s.n;
+        const roleSelect = row.querySelector('.s-role');
+        roleSelect.value = s.r === 'K' ? 'Keyholder' : 'Bar Staff';
+        roleSelect.classList.toggle('role-keyholder', s.r === 'K');
+        row.querySelector('.s-start').value = s.st;
+        row.querySelector('.s-end').value = s.et;
+      });
+      DAYS.forEach((_, i) => {
+        if(document.querySelectorAll(`#shifts-${i} .shift-row`).length === 0) addShiftRow(i);
+      });
+
+      statusEl.textContent = `✓ Copied ${shifts.length} shifts from last week — adjust names/times as needed, then Publish.`;
+      statusEl.className = 'action-status success';
+      recheckAllConflicts();
+      logActivity('Rota Copied From Last Week', '');
+    } catch(err){
+      statusEl.textContent = "Couldn't copy last week — " + err.message;
       statusEl.className = 'action-status error';
     }
   }
