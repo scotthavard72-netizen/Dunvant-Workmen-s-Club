@@ -74,7 +74,7 @@
   .status-banner button{font-family:'Inter',sans-serif; font-weight:700; background:rgba(0,0,0,0.15); color:inherit; border:none; border-radius:6px; padding:5px 12px; cursor:pointer;}
 
   .theme-toggle{
-    position:fixed; top:20px; right:20px; z-index:100;
+    position:fixed; top:calc(20px + env(safe-area-inset-top)); right:20px; z-index:100;
     background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16);
     border-radius:50%; width:42px; height:42px;
     display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem;

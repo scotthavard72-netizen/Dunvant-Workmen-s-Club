@@ -67,7 +67,7 @@
   }
   .site-link-btn:hover{border-color:var(--brass-light); color:var(--brass-light);}
   .theme-toggle{
-    position:fixed; top:16px; right:16px; z-index:150;
+    position:fixed; top:calc(16px + env(safe-area-inset-top)); right:16px; z-index:150;
     background:var(--card); border:1px solid var(--line);
     border-radius:2px; width:36px; height:32px;
     display:flex; align-items:center; justify-content:center;
