@@ -141,6 +141,7 @@
   <div id="glance-panel" class="glance-panel"></div>
 
   <button class="edit-current-btn" onclick="loadCurrentRotaForEditing()">✏️ Made a mistake? Load the Current Rota to Fix It</button>
+  <button class="edit-current-btn" onclick="clearAllShifts()">🗑️ Clear All Shifts Below (start this week blank)</button>
   <p class="action-status" id="edit-load-status"></p>
 
   <div id="days-container"></div>
@@ -154,7 +155,10 @@
   <div class="section-label" style="margin-top:30px;">Publish to Current Rota (permanent link)</div>
   <div class="notice" style="margin-bottom:16px;">Publishes this week straight onto the site's one permanent bookmarkable link — live immediately, no deploy wait and no GitHub connection needed. Anyone who's opted into rota notifications in Staff Area gets pinged automatically once this goes live. Only Management and Site Admin can publish.</div>
   <p class="action-status" id="audit-note"></p>
-  <button class="action-btn primary" onclick="publishRota()">🚀 Publish Rota</button>
+  <div class="action-row">
+    <button class="action-btn primary" onclick="publishRota()">🚀 Publish Rota</button>
+    <button class="action-btn secondary" style="background:#8a2f2f;" onclick="unpublishRota()">🗑️ Unpublish Current Rota</button>
+  </div>
   <p class="action-status" id="publish-status"></p>
   <div class="mini-progress" id="publish-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="publish-progress-bar"></div></div><span class="mini-progress-pct" id="publish-progress-pct">0%</span></div>
 
@@ -240,6 +244,20 @@
       statusEl.textContent = "Couldn't load the current rota — " + err.message;
       statusEl.className = 'action-status error';
     }
+  }
+
+  // Wipes what's typed into the builder below — doesn't touch anything
+  // already published. Each day gets one fresh blank row back, same as
+  // starting the page from scratch.
+  function clearAllShifts(){
+    if(!confirm("Clear every shift typed in below? This only affects this page — nothing published is touched until you hit Publish.")) return;
+    DAYS.forEach((_, i) => {
+      document.getElementById(`shifts-${i}`).innerHTML = '';
+      addShiftRow(i);
+    });
+    document.getElementById('edit-load-status').textContent = '';
+    renderGlance();
+    recheckAllConflicts();
   }
 
   function buildDayCards(){
@@ -623,6 +641,29 @@
       return false;
     } finally {
       setTimeout(() => document.getElementById('publish-progress').classList.remove('active'), 1000);
+    }
+  }
+
+  // Removes the currently published rota entirely, so Current Rota shows
+  // nothing until a new one is published. This is the "unpublish" side of
+  // clearing — separate from clearAllShifts(), which only wipes the draft
+  // below and never touches what's actually live.
+  async function unpublishRota(){
+    if(!confirm("Remove the currently published rota? Staff will see no shifts on Current Rota until you publish a new one.\n\nThis can't be undone.")) return;
+    const statusEl = document.getElementById('publish-status');
+    statusEl.textContent = 'Removing published rota…';
+    statusEl.className = 'action-status';
+    try{
+      await db.collection('rota').doc('current').delete();
+      statusEl.textContent = '✓ Removed — Current Rota is empty until you publish again.';
+      statusEl.className = 'action-status success';
+      loadConfirmations();
+      logActivity('Rota Unpublished', '');
+    } catch(err){
+      statusEl.textContent = err.code === 'permission-denied'
+        ? "You don't have permission to do this — Management or Site Admin only."
+        : err.message;
+      statusEl.className = 'action-status error';
     }
   }
 
