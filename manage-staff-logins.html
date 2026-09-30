@@ -81,6 +81,15 @@
     .remove-btn, .reset-btn{flex:1;}
   }
 
+  .pending-item{background:var(--card); border:1px solid var(--brass); border-radius:12px; padding:16px 18px; margin-bottom:12px;}
+  .pending-item .pending-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
+  .pending-item .pending-name{font-family:'Fraunces', serif; font-weight:600; font-size:1rem;}
+  .pending-item .pending-email{font-size:0.8rem; color:var(--muted);}
+  .pending-item .pending-when{font-size:0.74rem; color:var(--muted);}
+  .pending-item label{display:block; font-size:0.74rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .approve-btn{background:var(--forest); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:0.8rem; font-weight:600; cursor:pointer;}
+  .decline-btn{background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.8rem; font-weight:600; cursor:pointer; padding:9px 14px; border-radius:6px;}
+
   .add-person-card{background:var(--card); border:1px dashed var(--brass); border-radius:12px; padding:20px; margin-top:16px; margin-bottom:24px;}
   .add-person-card.hidden{display:none;}
   .add-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;}
@@ -122,6 +131,18 @@
 <main>
   <div class="notice">Add, edit, or remove staff directly here. Adding someone creates a real login for them — they'll be asked to choose their own password the first time they sign in, so the one you set here is only ever temporary. "Send Password Reset" lets an existing person set a new one by email at any time. For anyone with the Admin role, set their Site Admin passcode here too — that's the code they enter to unlock the Site Admin tab in Staff Hub, separate from their login password.</div>
 
+  <div class="section-label">Staff Signup Code</div>
+  <p class="load-status" id="code-load-status" style="margin-bottom:10px;">People can also request their own login from Staff Area — they still need this code to get as far as submitting a request, and won't have any access at all until you approve them below. Share this with new starters; change it any time.</p>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:28px;">
+    <input type="text" id="signup-code-input" placeholder="e.g. a shared word or PIN" style="flex:1; min-width:200px; font-family:'Inter', sans-serif; font-size:0.95rem; padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink);">
+    <button class="btn btn-save" id="save-signup-code-btn" onclick="saveSignupCode()">💾 Save Code</button>
+  </div>
+  <p class="status" id="signup-code-status"></p>
+
+  <div class="section-label">Pending Signups</div>
+  <p class="load-status" id="pending-load-status">Loading…</p>
+  <div id="pending-list" style="margin-bottom:28px;"></div>
+
   <div class="section-label">Current Staff</div>
   <p class="load-status" id="load-status">Loading…</p>
   <div class="table-scroll">
@@ -135,7 +156,7 @@
 
   <div class="btn-row">
     <button class="btn btn-add" onclick="showAddForm()">+ Add Person</button>
-    <button class="btn btn-save" onclick="saveAllChanges()">💾 Save All Changes</button>
+    <button class="btn btn-save" id="save-all-btn" onclick="saveAllChanges()">💾 Save All Changes</button>
   </div>
   <div class="mini-progress" id="save-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="save-progress-bar"></div></div><span class="mini-progress-pct" id="save-progress-pct">0%</span></div>
   <p class="status" id="save-status"></p>
@@ -217,6 +238,113 @@
       </td>
     `;
     return tr;
+  }
+
+  async function loadSignupCode(){
+    try{
+      const doc = await db.collection('settings').doc('staffSignup').get();
+      document.getElementById('signup-code-input').value = doc.exists ? (doc.data().code || '') : '';
+    } catch(e){
+      document.getElementById('code-load-status').textContent = "Couldn't load the current code — " + e.message;
+    }
+  }
+
+  async function saveSignupCode(){
+    const code = document.getElementById('signup-code-input').value.trim();
+    const statusEl = document.getElementById('signup-code-status');
+    if(!code){
+      statusEl.textContent = 'Enter a code first.';
+      statusEl.className = 'status error';
+      return;
+    }
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'status';
+    try{
+      await db.collection('settings').doc('staffSignup').set({ code });
+      statusEl.textContent = '✓ Saved — new signup requests need this code from now on.';
+      statusEl.className = 'status success';
+      logActivity('Staff Signup Code Changed', '');
+    } catch(e){
+      statusEl.textContent = "Couldn't save — " + e.message;
+      statusEl.className = 'status error';
+    }
+  }
+
+  function makePendingItem(id, data){
+    const div = document.createElement('div');
+    div.className = 'pending-item';
+    div.dataset.docId = id;
+    const requested = data.requestedAtMs ? new Date(data.requestedAtMs).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    div.innerHTML = `
+      <div class="pending-top">
+        <div><span class="pending-name">${data.name || 'Unnamed'}</span> <span class="pending-email">${data.email || ''}</span></div>
+        <span class="pending-when">${requested ? 'Requested ' + requested : ''}</span>
+      </div>
+      <label>Roles to grant</label>
+      <div class="roles-cell" style="margin-bottom:12px;">${roleChipsHtml(id, [])}</div>
+      <div class="row-actions">
+        <button class="approve-btn" onclick="approveSignup('${id}', this)">✓ Approve</button>
+        <button class="decline-btn" onclick="declineSignup('${id}', this)">✕ Decline</button>
+      </div>
+    `;
+    return div;
+  }
+
+  async function loadPendingSignups(){
+    const statusEl = document.getElementById('pending-load-status');
+    const listEl = document.getElementById('pending-list');
+    listEl.innerHTML = '';
+    try{
+      const snapshot = await db.collection('staffSignupRequests').orderBy('requestedAtMs').get();
+      if(snapshot.empty){
+        statusEl.textContent = 'No pending signup requests right now.';
+        return;
+      }
+      snapshot.forEach(doc => listEl.appendChild(makePendingItem(doc.id, doc.data())));
+      statusEl.textContent = '';
+    } catch(e){
+      statusEl.textContent = "Couldn't load pending signups — " + e.message;
+    }
+  }
+
+  async function approveSignup(id, btn){
+    const item = btn.closest('.pending-item');
+    const name = item.querySelector('.pending-name').textContent;
+    const email = item.querySelector('.pending-email').textContent;
+    const roles = [...item.querySelectorAll('.role-chip.active')].map(c => c.dataset.role);
+    if(roles.length === 0){
+      alert('Pick at least one role before approving.');
+      return;
+    }
+    const original = btn.textContent;
+    btn.textContent = 'Approving…';
+    try{
+      await db.collection('staff').doc(id).set({ name, email, roles, mustChangePassword: false });
+      await db.collection('staffSignupRequests').doc(id).delete();
+      item.remove();
+      logActivity('Staff Signup Approved', name);
+      loadStaff();
+      const remaining = document.querySelectorAll('#pending-list .pending-item').length;
+      if(remaining === 0) document.getElementById('pending-load-status').textContent = 'No pending signup requests right now.';
+    } catch(e){
+      alert("Couldn't approve — " + e.message);
+      btn.textContent = original;
+    }
+  }
+
+  async function declineSignup(id, btn){
+    const item = btn.closest('.pending-item');
+    const name = item.querySelector('.pending-name').textContent || 'this request';
+    if(!confirm(`Decline ${name}'s request? Their login stays created but gets no access — they won't be able to sign up again with the same email unless you remove it via Firebase directly.`)) return;
+    try{
+      await db.collection('staffSignupRequests').doc(id).delete();
+      item.remove();
+      logActivity('Staff Signup Declined', name);
+      const remaining = document.querySelectorAll('#pending-list .pending-item').length;
+      if(remaining === 0) document.getElementById('pending-load-status').textContent = 'No pending signup requests right now.';
+    } catch(e){
+      alert("Couldn't decline — " + e.message);
+    }
   }
 
   async function loadStaff(){
@@ -398,6 +526,8 @@
       MY_UID = user.uid;
       MY_NAME = data.name || '';
       loadStaff();
+      loadSignupCode();
+      loadPendingSignups();
     } catch(e){
       document.getElementById('load-status').textContent = "Couldn't check your access — " + e.message;
     }
