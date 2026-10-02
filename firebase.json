@@ -51,7 +51,8 @@
         "**/.*",
         "**/node_modules/**",
         "docs/**",
-        "README.md"
+        "README.md",
+        "index.html"
       ],
       "headers": [
         {
