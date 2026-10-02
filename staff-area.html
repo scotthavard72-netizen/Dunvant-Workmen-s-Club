@@ -178,9 +178,9 @@
   <!-- Screen: login -->
   <div class="screen active" id="screen-login">
     <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
-    <span class="eyebrow">Restricted access</span>
-    <h1>Staff Area</h1>
-    <p class="sub">Sign in with your staff login</p>
+    <span class="eyebrow">Staff Area</span>
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in with the login your manager set up for you</p>
     <input type="email" id="login-username" placeholder="Email" autocomplete="off">
     <input type="password" id="login-password" placeholder="Password" autocomplete="off">
     <a href="#" id="forgot-password-link" class="forgot-link" onclick="sendForgotPassword(event)">Forgot password?</a>
@@ -190,42 +190,17 @@
     </label>
     <button class="enter" onclick="attemptLogin()">Sign In</button>
     <p class="error" id="login-error">Username or password not recognised</p>
-    <p class="note">New here? <a href="#" onclick="showSignupScreen(event)" style="color:rgba(255,255,255,0.65); font-weight:600;">Request staff access</a></p>
+    <p class="note">New to the team? Ask a manager to set you up in Manage Staff Logins — they'll give you your email and password.</p>
     <button class="enter" id="install-btn" style="display:none; margin-top:14px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25);" onclick="installApp()">📲 Install App</button>
     <p class="note" id="ios-install-note" style="display:none;">On iPhone: tap Share → Add to Home Screen to install.</p>
   </div>
 
-  <!-- Screen: self-serve signup request — creates a login but grants no access until Site Admin approves it -->
-  <div class="screen" id="screen-signup">
-    <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
-    <span class="eyebrow">Restricted access</span>
-    <h1>Request Staff Access</h1>
-    <p class="sub">Set up your own login — Site Admin still needs to approve it and set your role before you can get in.</p>
-    <input type="text" id="signup-name" placeholder="Full name" autocomplete="off">
-    <input type="email" id="signup-email" placeholder="Email" autocomplete="off">
-    <input type="password" id="signup-password" placeholder="Password (min 6 characters)" autocomplete="new-password">
-    <input type="password" id="signup-confirm-password" placeholder="Confirm password" autocomplete="new-password">
-    <input type="text" id="signup-code" placeholder="Staff code (ask your manager)" autocomplete="off">
-    <button class="enter" onclick="attemptSignup()">Request Access</button>
-    <p class="error" id="signup-error"></p>
-    <p class="note"><a href="#" onclick="showLoginScreen(event)" style="color:rgba(255,255,255,0.65); font-weight:600;">← Back to sign in</a></p>
-  </div>
-
-  <!-- Screen: signup submitted — waiting on Site Admin -->
-  <div class="screen" id="screen-signup-pending">
-    <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
-    <span class="eyebrow">Request sent</span>
-    <h1>Thanks — you're on the list</h1>
-    <p class="sub" id="signup-pending-message">Your login's been created. Site Admin needs to approve it and set your role before you can sign in — check back once they have.</p>
-    <button class="enter" onclick="showLoginScreen(event)">← Back to sign in</button>
-  </div>
-
-  <!-- Screen: forced password change (first login after Site Admin creates an account) -->
+  <!-- Screen: forced password change (first login after a manager creates an account) -->
   <div class="screen" id="screen-change-password">
     <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
     <span class="eyebrow">Welcome</span>
     <h1>Choose Your Own Password</h1>
-    <p class="sub">You're using the password Site Admin set up for you — pick your own before you go any further.</p>
+    <p class="sub">You're using the password your manager set up for you — pick your own before you go any further.</p>
     <input type="password" id="new-own-password" placeholder="New password (min 6 characters)" autocomplete="new-password">
     <input type="password" id="confirm-own-password" placeholder="Confirm new password" autocomplete="new-password">
     <button class="enter" onclick="setOwnPassword()">Set Password &amp; Continue</button>
@@ -327,88 +302,6 @@
         ? "For security, sign out and back in with your old password once more, then try this again."
         : ("Couldn't set that — " + e.message);
       errorEl.style.display = 'block';
-    }
-  }
-
-  function showSignupScreen(event){
-    if(event) event.preventDefault();
-    document.getElementById('login-error').style.display = 'none';
-    document.getElementById('screen-login').classList.remove('active');
-    document.getElementById('screen-signup').classList.add('active');
-  }
-  function showLoginScreen(event){
-    if(event) event.preventDefault();
-    ['screen-signup', 'screen-signup-pending'].forEach(id => document.getElementById(id).classList.remove('active'));
-    document.getElementById('screen-login').classList.add('active');
-  }
-
-  // Self-serve signup: creates a real Firebase Auth login (through a separate,
-  // temporary app instance so it never touches this tab's own session — same
-  // pattern Manage Staff Logins uses), then files a request under
-  // staffSignupRequests for Site Admin to approve. No "staff" doc is created
-  // here, so the person has zero access until an admin approves them and
-  // picks their role(s) in Manage Staff Logins.
-  async function attemptSignup(){
-    const name = document.getElementById('signup-name').value.trim();
-    const email = document.getElementById('signup-email').value.trim();
-    const password = document.getElementById('signup-password').value;
-    const confirmPassword = document.getElementById('signup-confirm-password').value;
-    const code = document.getElementById('signup-code').value.trim();
-    const errorEl = document.getElementById('signup-error');
-    errorEl.style.display = 'none';
-
-    if(!name || !email || !password || !code){
-      errorEl.textContent = 'Fill in your name, email, a password, and the staff code first.';
-      errorEl.style.display = 'block';
-      return;
-    }
-    if(password.length < 6){
-      errorEl.textContent = 'Password needs to be at least 6 characters.';
-      errorEl.style.display = 'block';
-      return;
-    }
-    if(password !== confirmPassword){
-      errorEl.textContent = "Those two passwords don't match — try again.";
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    try{
-      const codeDoc = await db.collection('settings').doc('staffSignup').get();
-      const realCode = codeDoc.exists ? (codeDoc.data().code || '') : '';
-      if(!realCode || code.toLowerCase() !== String(realCode).toLowerCase()){
-        errorEl.textContent = "That staff code isn't right — check with your manager.";
-        errorEl.style.display = 'block';
-        return;
-      }
-    } catch(e){
-      errorEl.textContent = "Couldn't check the staff code right now — try again shortly.";
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    const tempApp = firebase.initializeApp(firebaseConfig, 'temp-signup-' + Date.now());
-    try{
-      const cred = await tempApp.auth().createUserWithEmailAndPassword(email, password);
-      await tempApp.firestore().collection('staffSignupRequests').doc(cred.user.uid).set({
-        name, email,
-        requestedAtMs: Date.now(),
-        requestedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await tempApp.auth().signOut();
-      await tempApp.delete();
-
-      document.getElementById('signup-pending-message').textContent =
-        `Thanks, ${name} — your login's been created. Site Admin needs to approve it and set your role before you can sign in.`;
-      document.getElementById('screen-signup').classList.remove('active');
-      document.getElementById('screen-signup-pending').classList.add('active');
-      ['signup-name','signup-email','signup-password','signup-confirm-password','signup-code'].forEach(id => document.getElementById(id).value = '');
-    } catch(e){
-      let msg = e.message;
-      if(e.code === 'auth/email-already-in-use') msg = 'That email already has a login — try signing in, or use "Forgot password?" instead.';
-      errorEl.textContent = "Couldn't create that login — " + msg;
-      errorEl.style.display = 'block';
-      try{ await tempApp.delete(); } catch(_){}
     }
   }
 
