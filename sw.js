@@ -10,7 +10,6 @@ const URLS_TO_CACHE = [
   "edit-site-content.html",
   "emergency-procedures.html",
   "entertainment-tracker.html",
-  "expense-requests.html",
   "facebook-page-admin.html",
   "finances-accounts.html",
   "full-admin-dashboard.html",

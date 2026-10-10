@@ -784,7 +784,6 @@
             ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"],
             ["qr-code-generator.html", "QR Code Generator", "Turn a link into a scannable code for posters"],
             ["submit-ticket.html", "Submit a Ticket", "Report a problem or request something from management"],
-            ["expense-requests.html", "Expense Claim", "Bought something for the club? Claim it back with a receipt photo"],
             ["incident-report.html", "Accident / Incident Report", "For health &amp; safety, not till issues", "newIncidents"]
           ]
         }
@@ -841,8 +840,7 @@
             ["bookings.html", "Bookings", "Function room requests, and confirming dates on the public Book page", "pendingBookings"],
             ["manage-shows.html", "Manage Shows / Box Office", "Add, edit, or remove what's listed on the public Box Office page"],
             ["manage-whats-on.html", "Manage What's On", "Add, edit, or remove what's listed on the public What's On page"],
-            ["shift-cover-requests-mgmt.html", "Shift Cover Requests", "Track cover requests submitted by bar staff", "openCover"],
-            ["expense-requests.html", "Expense Claims", "Approve staff claims and mark them paid", "pendingExpenses"]
+            ["shift-cover-requests-mgmt.html", "Shift Cover Requests", "Track cover requests submitted by bar staff", "openCover"]
           ]
         },
         {
@@ -993,11 +991,6 @@
         if(snap.size > 0) badges.pendingSignups = snap.size;
       } catch(e){}
       try{
-        const snap = await db.collection('expenseClaims').get();
-        const waiting = snap.docs.filter(d => (d.data().status || 'pending') === 'pending').length;
-        if(waiting > 0) badges.pendingExpenses = waiting;
-      } catch(e){}
-      try{
         const snap = await db.collection('incidents').get();
         const fresh = snap.docs.filter(d => d.data().status !== 'reviewed').length;
         if(fresh > 0) badges.newIncidents = fresh;
@@ -1026,8 +1019,7 @@
     if(!('Notification' in window) || Notification.permission !== 'granted') return;
     const checks = [
       { key: 'pendingBookings', seenKey: 'notifySeenPendingBookings', singular: 'booking request', plural: 'booking requests', url: 'bookings.html' },
-      { key: 'openCover', seenKey: 'notifySeenOpenCover', singular: 'shift cover request', plural: 'shift cover requests', url: 'shift-cover-requests-mgmt.html' },
-      { key: 'pendingExpenses', seenKey: 'notifySeenPendingExpenses', singular: 'expense claim', plural: 'expense claims', url: 'expense-requests.html' }
+      { key: 'openCover', seenKey: 'notifySeenOpenCover', singular: 'shift cover request', plural: 'shift cover requests', url: 'shift-cover-requests-mgmt.html' }
     ];
     checks.forEach(c => {
       const current = badges[c.key] || 0;
