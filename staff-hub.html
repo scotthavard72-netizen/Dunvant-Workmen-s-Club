@@ -720,7 +720,8 @@
     } catch(e){ document.getElementById('stat-pending-bookings').textContent = '—'; }
     try{
       const snap = await db.collection('shiftCoverRequests').get();
-      const open = snap.docs.filter(d => (d.data().status || 'open') === 'open').length;
+      const todayStr = localISODate(new Date());
+      const open = snap.docs.filter(d => !['covered', 'cancelled'].includes(d.data().status || 'open') && (!d.data().date || d.data().date >= todayStr)).length;
       document.getElementById('stat-open-cover').textContent = open === 0 ? 'None' : open;
     } catch(e){ document.getElementById('stat-open-cover').textContent = '—'; }
     try{
@@ -1009,7 +1010,8 @@
     } catch(e){ /* leave unset — no badge rather than a wrong one */ }
     try{
       const snap = await db.collection('shiftCoverRequests').get();
-      const open = snap.docs.filter(d => (d.data().status || 'open') === 'open').length;
+      const todayStr = localISODate(new Date());
+      const open = snap.docs.filter(d => !['covered', 'cancelled'].includes(d.data().status || 'open') && (!d.data().date || d.data().date >= todayStr)).length;
       if(open > 0) badges.openCover = open;
     } catch(e){}
     if(ROLE_KIND === 'mgmt'){
@@ -1046,7 +1048,7 @@
     if(!('Notification' in window) || Notification.permission !== 'granted') return;
     const checks = [
       { key: 'pendingBookings', seenKey: 'notifySeenPendingBookings', singular: 'booking request', plural: 'booking requests', url: 'bookings.html' },
-      { key: 'openCover', seenKey: 'notifySeenOpenCover', singular: 'shift cover request', plural: 'shift cover requests', url: 'shift-cover-requests-mgmt.html' }
+      { key: 'openCover', seenKey: 'notifySeenOpenCover', singular: 'shift cover request', plural: 'shift cover requests', url: 'shift-cover-requests-mgmt.html', tag: 'cover' }
     ];
     checks.forEach(c => {
       const current = badges[c.key] || 0;
@@ -1059,7 +1061,7 @@
       if(current > seen){
         const delta = current - seen;
         const label = delta === 1 ? c.singular : c.plural;
-        showStaffNotification(`🔔 New ${label}`, { body: `${delta} new ${label} waiting.`, url: c.url, tag: c.key });
+        showStaffNotification(`🔔 New ${label}`, { body: `${delta} new ${label} waiting.`, url: c.url, tag: c.tag || c.key });
       }
       localStorage.setItem(c.seenKey, String(current));
     });

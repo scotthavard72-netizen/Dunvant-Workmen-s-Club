@@ -77,7 +77,7 @@
 </header>
 <main>
   <h2 class="section-title">Cover Requests</h2>
-  <div class="notice">Live — pulled straight from the Shift Cover Request form. "Mark Covered" once someone's taken it, or "Acknowledge" just to show you've seen it.</div>
+  <div class="notice">Live — pulled straight from the Shift Cover Request form. "Mark Covered" once someone's taken it, or "Acknowledge" to show you've seen it — acknowledged requests stay open to staff until someone covers them.</div>
   <p class="load-status" id="cover-load-status" style="font-size:0.86rem; color:var(--muted);">Loading…</p>
   <div id="cover-list"></div>
 
@@ -173,7 +173,7 @@
                 <td data-label="Name">${d.name || 'Someone'}</td>
                 <td data-label="Date">${formatCoverDate(d.date)}</td>
                 <td data-label="Reason">${d.reason || ''}</td>
-                <td data-label="Status"><span class="status ${status === 'covered' ? 'covered' : (status === 'seen' ? 'seen' : 'open')}">${label}</span>${d.urgent ? '<span class="status urgent-tag">Urgent</span>' : ''}</td>
+                <td data-label="Status"><span class="status ${status === 'covered' || status === 'cancelled' ? 'covered' : (status === 'seen' ? 'seen' : 'open')}">${label}</span>${d.urgent ? '<span class="status urgent-tag">Urgent</span>' : ''}</td>
                 <td data-label="">
                   ${status !== 'seen' ? `<button class="ack secondary" onclick="setCoverStatus('${doc.id}','seen')">Acknowledge</button>` : ''}
                   ${status !== 'covered' ? `<button class="ack" onclick="setCoverStatus('${doc.id}','covered')">Mark Covered</button>` : ''}

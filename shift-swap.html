@@ -375,7 +375,7 @@
       if(canNotify && prev && prev !== d.status && (d.status === 'accepted' || d.status === 'declined')){
         showStaffNotification(d.status === 'accepted' ? '✅ Shift swap accepted' : '❌ Shift swap declined', {
           body: `${d.colleagueName} ${d.status} your ${d.shiftLabel || 'shift'} swap request.`,
-          url: 'shift-swap.html'
+          url: 'shift-swap.html', tag: 'swap'
         });
       }
       seen[doc.id] = d.status;

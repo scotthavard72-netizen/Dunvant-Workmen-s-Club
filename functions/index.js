@@ -5,11 +5,15 @@
 //   • New staff sign-up  → push + email to managers and Site Admins
 //   • Incident reported  → push + email to managers and Site Admins
 //   • Announcement posted → push to all staff
+//   • Shift cover needed  → push to all other staff (and managers)
+//   • Shift covered       → push to the person who asked, and managers
+//   • Shift swap asked    → push to the colleague asked
+//   • Swap accepted/declined → push to the person who asked
 //
 // Push goes to every device that turned notifications on in Staff Hub
 // (saved in pushTokens). Email is the backup, sent from a Gmail account
 // set up with two secrets (see README in this folder).
-const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
@@ -25,6 +29,16 @@ setGlobalOptions({ region: 'europe-west1', maxInstances: 2 });
 const GMAIL_USER = defineSecret('ALERT_GMAIL_USER');
 const GMAIL_PASS = defineSecret('ALERT_GMAIL_APP_PASSWORD');
 const SITE = 'https://dunvant-staff.web.app/';
+
+const sameName = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
+
+// "2026-10-09" → "Fri 9 Oct"
+function niceDate(iso) {
+  if (!iso) return 'a shift';
+  const d = new Date(iso + 'T12:00:00Z');
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/London' });
+}
 
 const isMgr = (s) => (s.roles || []).some((r) => r === 'mgmt' || r === 'admin');
 
@@ -124,6 +138,81 @@ exports.alertAnnouncement = onDocumentCreated(
         body: (d.text || '').slice(0, 180),
         page: 'staff-chat.html?channel=announcements',
         tag: 'announcement'
+      })
+    );
+  }
+);
+
+exports.alertCoverNeeded = onDocumentCreated(
+  { document: 'shiftCoverRequests/{id}' },
+  async (event) => {
+    const d = event.data ? event.data.data() : {};
+    const who = d.name || 'Someone';
+    const everyone = (await staffList()).filter((s) => !sameName(s.name, who));
+    await both('Cover needed',
+      () => sendPush(everyone.map((s) => s.uid), {
+        title: d.urgent ? '🚨 Urgent: shift cover needed' : '🙋 Shift cover needed',
+        body: `${who} needs cover on ${niceDate(d.date)}. Can you take it?`,
+        page: 'shift-cover-request.html',
+        tag: 'cover'
+      })
+    );
+  }
+);
+
+exports.alertCoverTaken = onDocumentUpdated(
+  { document: 'shiftCoverRequests/{id}' },
+  async (event) => {
+    const before = event.data.before.data() || {};
+    const after = event.data.after.data() || {};
+    if (before.status === 'covered' || after.status !== 'covered') return;
+    const staff = await staffList();
+    const by = after.coveredBy || 'Someone';
+    const asker = staff.filter((s) => sameName(s.name, after.name));
+    const managers = staff.filter(isMgr).filter((m) => !sameName(m.name, by) && !asker.some((a) => a.uid === m.uid));
+    const body = `${by} is covering ${after.name || 'the'}'s shift on ${niceDate(after.date)}.`;
+    await both('Cover taken', () => Promise.all([
+      sendPush(asker.map((s) => s.uid), { title: '✅ Your shift is covered', body, page: 'shift-cover-request.html', tag: 'cover' }),
+      sendPush(managers.map((s) => s.uid), {
+        title: '✅ Shift covered',
+        body: body + (after.rotaUpdated ? ' Rota updated.' : ' Check the rota.'),
+        page: 'shift-cover-requests-mgmt.html',
+        tag: 'cover'
+      })
+    ]).then((n) => n[0] + n[1]));
+  }
+);
+
+exports.alertSwapAsked = onDocumentCreated(
+  { document: 'shiftSwaps/{id}' },
+  async (event) => {
+    const d = event.data ? event.data.data() : {};
+    const colleague = (await staffList()).filter((s) => sameName(s.name, d.colleagueName));
+    await both('Swap asked',
+      () => sendPush(colleague.map((s) => s.uid), {
+        title: `🔁 Swap request from ${d.requesterName || 'a colleague'}`,
+        body: `${d.shiftLabel || 'A shift'}${d.message ? ' — ' + String(d.message).slice(0, 120) : ''}`,
+        page: 'shift-swap.html',
+        tag: 'swap'
+      })
+    );
+  }
+);
+
+exports.alertSwapAnswered = onDocumentUpdated(
+  { document: 'shiftSwaps/{id}' },
+  async (event) => {
+    const before = event.data.before.data() || {};
+    const after = event.data.after.data() || {};
+    if (before.status === after.status || !['accepted', 'declined'].includes(after.status)) return;
+    const asker = (await staffList()).filter((s) => sameName(s.name, after.requesterName));
+    const ok = after.status === 'accepted';
+    await both('Swap answered',
+      () => sendPush(asker.map((s) => s.uid), {
+        title: ok ? '✅ Shift swap accepted' : '❌ Shift swap declined',
+        body: `${after.colleagueName || 'Your colleague'} ${ok ? 'accepted' : 'declined'}: ${after.shiftLabel || 'your swap'}`,
+        page: 'shift-swap.html',
+        tag: 'swap'
       })
     );
   }

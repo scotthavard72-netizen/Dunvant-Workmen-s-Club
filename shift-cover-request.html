@@ -64,6 +64,10 @@
   }
   [data-theme="dark"] .urgent-tag{background:#3a1e1a; color:#e0a89e;}
   .oc-availability-warning{font-size:0.76rem; color:#a24339; margin-top:8px;}
+  .my-status{font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:4px 10px; border-radius:20px; white-space:nowrap; background:#fff2d9; color:#8a6a1f;}
+  .my-status.seen{background:#dbeafe; color:#1e4a7a;}
+  .my-status.covered{background:#e4ece9; color:#2c3f38;}
+  .my-cancel{margin-top:10px; font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600; background:none; border:1px solid var(--line); color:var(--muted); border-radius:8px; padding:7px 12px; cursor:pointer;}
   [data-theme="dark"] .oc-availability-warning{color:#e0a89e;}
   .cover-claim-btn{
     font-family:'Inter', sans-serif; font-weight:600; font-size:0.8rem;
@@ -109,6 +113,9 @@
       <p class="form-status" id="form-status"></p>
     </form>
   </div>
+
+  <h2 class="section-title">Your Requests</h2>
+  <div id="my-cover-list"><p class="empty-note">Loading…</p></div>
 
   <h2 class="section-title">Open — Can You Cover?</h2>
   <div class="notice" style="margin-bottom:16px;">Other people's open requests, in case you can step in. Claiming one puts your name on that shift on the rota automatically.</div>
@@ -181,6 +188,7 @@
       statusEl.textContent = '✓ Sent — management can see this straight away.';
       statusEl.className = 'form-status ok';
       document.getElementById('cover-form').reset();
+      loadOpenCoverRequests();
       logActivity('Shift Cover Request', date + (urgent ? ' (urgent)' : ''));
     } catch(e){
       statusEl.textContent = "Couldn't send that — " + e.message;
@@ -233,12 +241,71 @@
     `;
   }
 
+  // "Acknowledged" by a manager just means they've seen it — the shift
+  // still needs someone until it's covered (or the person cancels it).
+  // Requests for days already gone drop off.
+  function todayISO(){
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  }
+  function stillNeedsCover(d){
+    const status = d.status || 'open';
+    return status !== 'covered' && status !== 'cancelled' && (!d.date || d.date >= todayISO());
+  }
+
+  async function loadMyCoverRequests(){
+    const listEl = document.getElementById('my-cover-list');
+    if(!listEl) return;
+    try{
+      const snap = await db.collection('shiftCoverRequests').get();
+      const me = MY_NAME.trim().toLowerCase();
+      const mine = snap.docs
+        .filter(d => (d.data().name || '').trim().toLowerCase() === me && (d.data().status || 'open') !== 'cancelled' && (!d.data().date || d.data().date >= todayISO()))
+        .sort((a, b) => (a.data().date || '').localeCompare(b.data().date || ''));
+      if(mine.length === 0){
+        listEl.innerHTML = '<p class="empty-note">You haven\'t asked for cover on any upcoming shifts.</p>';
+        return;
+      }
+      listEl.innerHTML = mine.map(doc => {
+        const d = doc.data();
+        const status = d.status || 'open';
+        const label = status === 'covered' ? `Covered${d.coveredBy ? ' by ' + d.coveredBy : ''}`
+          : status === 'seen' ? 'Seen by management — still needs cover'
+          : 'Waiting for cover';
+        return `
+          <div class="open-cover-card">
+            <div class="oc-top">
+              <div>
+                <div class="oc-title">${formatCoverDate(d.date)}${d.urgent ? ' · Urgent' : ''}</div>
+                ${d.reason ? `<div class="oc-meta">"${d.reason}"</div>` : ''}
+              </div>
+              <span class="my-status ${status === 'covered' ? 'covered' : (status === 'seen' ? 'seen' : '')}">${label}</span>
+            </div>
+            ${status !== 'covered' ? `<button class="my-cancel" onclick="cancelMyCoverRequest('${doc.id}')">I can make it after all — cancel</button>` : ''}
+          </div>`;
+      }).join('');
+    } catch(e){
+      listEl.innerHTML = '<p class="empty-note">Couldn\'t load your requests right now.</p>';
+    }
+  }
+
+  async function cancelMyCoverRequest(id){
+    try{
+      await db.collection('shiftCoverRequests').doc(id).update({ status: 'cancelled', cancelledAtMs: Date.now() });
+      logActivity('Shift Cover Cancelled', '');
+    } catch(e){
+      alert("Couldn't cancel that — try again in a moment.");
+    }
+    loadMyCoverRequests();
+  }
+
   async function loadOpenCoverRequests(){
+    loadMyCoverRequests();
     const listEl = document.getElementById('open-cover-list');
     try{
       const snap = await db.collection('shiftCoverRequests').get();
       const docs = snap.docs
-        .filter(d => (d.data().status || 'open') === 'open' && (d.data().name || '').trim().toLowerCase() !== MY_NAME.trim().toLowerCase())
+        .filter(d => stillNeedsCover(d.data()) && (d.data().name || '').trim().toLowerCase() !== MY_NAME.trim().toLowerCase())
         .sort((a, b) => {
           const au = a.data().urgent ? 1 : 0, bu = b.data().urgent ? 1 : 0;
           if(au !== bu) return bu - au;
@@ -275,7 +342,7 @@
   async function claimCoverRequest(id){
     try{
       const doc = await db.collection('shiftCoverRequests').doc(id).get();
-      if(!doc.exists || (doc.data().status || 'open') !== 'open'){
+      if(!doc.exists || !stillNeedsCover(doc.data())){
         alert("That one's already been taken care of — refreshing the list.");
         loadOpenCoverRequests();
         return;
