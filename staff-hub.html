@@ -767,16 +767,17 @@
         {
           label: "On Shift",
           items: [
-            ["till-card-lookup.html", "Till &amp; Card Lookup Guide", "How to scan and apply the member discount"],
-            ["price-list.html", "Price List", "Quick reference for drink prices"],
-            ["whats-on-this-week.html", "What's On This Week", "Upcoming bookings and events"],
-            ["closing-checklist.html", "Closing Checklist", "Cleaning down the bar, cellar, bandits &amp; mopping"],
+            ["till-card-lookup.html", "Till &amp; Card Lookup Guide", "Finding a member so their discount applies"],
+            ["price-list.html", "Price List", "Every drink and snack, with member prices"],
+            ["whats-on-this-week.html", "What's On This Week", "Events from the club's Facebook page"],
+            ["closing-checklist.html", "Closing Checklist", "The 13-step locking-up procedure"],
             ["shift-handover-notes.html", "Shift Handover Notes", "What the next person on needs to know"]
           ]
         },
         {
           label: "Reference &amp; Support",
           items: [
+            ["staff-chat.html?channel=announcements", "📢 Announcements", "What's changed — prices, procedures, rotas, anything everyone should know"],
             ["staff-chat.html", "Staff Chat", "Quick messages between shifts, by channel"],
             ["team-activity.html", "Team Activity", "What's been happening around the site recently"],
             ["staff-directory.html", "Staff Directory", "Everyone with access, their role, and how to reach them"],
@@ -849,7 +850,6 @@
             ["membership-till-system.html", "Membership &amp; Till System", "Card system and discount setup notes"],
             ["supplier-contacts.html", "Supplier Contacts", "Drinks, food, and entertainment suppliers"],
             ["entertainment-tracker.html", "Entertainment Booking Tracker", "Bands, quiz masters, DJs"],
-            ["licensing-compliance.html", "Licensing / Compliance", "Premises license conditions and renewals"],
             ["staff-faq.html", "Staff FAQ / Handbook", "Common questions that don't fit anywhere else"]
           ]
         },
@@ -889,6 +889,7 @@
       label: "Committee",
       items: [
         ["mailto:teamupdates@dunvantclub.example", "Outlook Group Email", "Team updates and messages"],
+        ["staff-chat.html?channel=announcements", "📢 Announcements", "What's changed — prices, procedures, rotas, anything everyone should know"],
         ["staff-chat.html", "Staff Chat", "Quick messages between shifts, by channel"],
         ["team-activity.html", "Team Activity", "What's been happening around the site recently"],
         ["staff-directory.html", "Staff Directory", "Everyone with access, their role, and how to reach them"],
@@ -1357,7 +1358,7 @@
     committee: ['committee']
   };
   function myAccessibleChatChannels(){
-    const extra = new Set(['everyone']);
+    const extra = new Set(['everyone', 'announcements']);
     MY_ROLES.forEach(r => (CHAT_ROLE_EXTRAS[r] || []).forEach(k => extra.add(k)));
     return extra;
   }
@@ -1390,11 +1391,22 @@
       const unseen = mine.filter(d => (d.data().createdAtMs || 0) > lastSeen);
       if(unseen.length === 0) return;
 
-      if(unseen.length === 1){
-        const d = unseen[0].data();
+      // Announcements get their own, clearly-labelled alert so they don't get
+      // lost among ordinary chat.
+      const isAnn = d => (d.data().channel || 'everyone') === 'announcements';
+      const anns = unseen.filter(isAnn);
+      const chats = unseen.filter(d => !isAnn(d));
+      if(anns.length === 1){
+        const d = anns[0].data();
+        showStaffNotification(`📢 Announcement from ${d.authorName || 'Someone'}`, { body: d.text || '', url: 'staff-chat.html?channel=announcements', tag: 'announcement' });
+      } else if(anns.length > 1){
+        showStaffNotification('📢 New announcements', { body: `${anns.length} new announcements — tap to read.`, url: 'staff-chat.html?channel=announcements', tag: 'announcement' });
+      }
+      if(chats.length === 1){
+        const d = chats[0].data();
         showStaffNotification(`${d.authorName || 'Someone'} — Staff Chat`, { body: d.text || '', url: 'staff-chat.html', tag: 'chat' });
-      } else {
-        showStaffNotification('New messages in Staff Chat', { body: `${unseen.length} new messages since you last checked.`, url: 'staff-chat.html', tag: 'chat' });
+      } else if(chats.length > 1){
+        showStaffNotification('New messages in Staff Chat', { body: `${chats.length} new messages since you last checked.`, url: 'staff-chat.html', tag: 'chat' });
       }
       localStorage.setItem(lastSeenKey, String(latestMs));
     } catch(e){

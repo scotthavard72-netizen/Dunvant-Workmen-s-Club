@@ -27,6 +27,7 @@
   header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
   main{max-width:640px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
   .step{display:flex; gap:16px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:12px;}
   .step .num{
     flex-shrink:0; width:32px; height:32px; border-radius:50%;
@@ -47,54 +48,92 @@
     cursor:pointer; font-size:1.05rem;
   }
   .theme-toggle:hover{border-color:var(--brass-light);}
+  .till-btn{display:inline-block; font-size:0.72rem; font-weight:800; letter-spacing:0.02em; padding:4px 9px; border-radius:4px; color:#111; vertical-align:1px;}
+  .till-btn.red{background:#d9452b; color:#fff;}
+  .till-btn.blue{background:#3fb8e0;}
+  .till-btn.yellow{background:#e8d33a;}
+  .till-btn.orange{background:#c9824a; color:#fff;}
+  .till-btn.navy{background:#2f6fd6; color:#fff;}
+  .till-grid{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .till-grid .till-btn{font-size:0.8rem; padding:9px 12px;}
+  ul.groups{list-style:none; padding:0; margin:0;}
+  ul.groups li{font-size:0.88rem; padding:6px 0; border-bottom:1px solid var(--line);}
+  ul.groups li:last-child{border-bottom:none;}
+  .step .body a{color:var(--brass); font-weight:600;}
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin:24px 0 12px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:12px;}
+  .card p{font-size:0.86rem; color:var(--muted);}
 </style>
 </head>
 <body>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Bar Staff · Example</span>
+  <span class="eyebrow">Bar Staff</span>
   <h1>Till &amp; Card Lookup Guide</h1>
-  <p>How to apply the member discount at the till</p>
+  <p>Finding a member on the till so their discount applies</p>
 </header>
 <main>
-  <div class="notice">This is an example page — swap in the real steps for your actual till software once confirmed with C S Marketing.</div>
+  <div class="notice">How members are looked up on the club's till. Members get their discount once their account is on the sale — never guess a discount without finding them.</div>
 
   <div class="step">
     <div class="num">1</div>
     <div class="body">
       <h3>Ask for their membership card</h3>
-      <p>Every member should be able to show a card with a barcode on the back.</p>
+      <p>Before ringing the drinks through.</p>
     </div>
   </div>
   <div class="step">
     <div class="num">2</div>
     <div class="body">
-      <h3>Scan the barcode</h3>
-      <p>Use the USB scanner at the till — point and click, no need to press enter first.</p>
+      <h3>Tap <span class="till-btn red">SWIPE CARD</span> and swipe it</h3>
+      <p>Their account is picked up and member prices apply to the sale.</p>
     </div>
   </div>
   <div class="step">
     <div class="num">3</div>
     <div class="body">
-      <h3>Confirm the discount</h3>
-      <p>The till screen should show the member's name and apply the discounted price automatically.</p>
+      <h3>No card, or it won't swipe? Search for them</h3>
+      <p>Open the member search (the list with <strong>Account · Last Name · First Name · Group</strong>). Type their surname or account number on the on-screen keyboard, check the <strong>Group</strong> column says they're a member, then tap their row. <strong>ESC</strong> or <strong>Back</strong> gets you out without picking anyone.</p>
     </div>
   </div>
   <div class="step">
     <div class="num">4</div>
     <div class="body">
       <h3>Ring it through as normal</h3>
-      <p>Take payment as usual — the discount is already applied to the total.</p>
+      <p>Take payment as usual. Member discounts: 30p off a drink, 20p off a soft drink, 10p off a snack — see the <a href="price-list.html">Price List</a>.</p>
+    </div>
+  </div>
+
+  <div class="section-label">Member groups you'll see</div>
+  <div class="card">
+    <ul class="groups">
+      <li><strong>Ordinary Members</strong> — standard membership</li>
+      <li><strong>Senior Members</strong> — over-60s</li>
+      <li><strong>Life Members</strong> — life membership</li>
+      <li><strong>New Members</strong> — joined recently</li>
+      <li><strong>Temporary Members</strong> — temporary membership</li>
+    </ul>
+  </div>
+
+  <div class="section-label">Selling a membership</div>
+  <div class="card">
+    <p>Use the membership buttons on the till:</p>
+    <div class="till-grid">
+      <span class="till-btn blue">£20 New Members</span>
+      <span class="till-btn yellow">£10 Membership</span>
+      <span class="till-btn orange">£8 Over 60's Membership</span>
+      <span class="till-btn red">£3.50 Pass Card</span>
+      <span class="till-btn navy">Life Membership</span>
     </div>
   </div>
 
   <div class="fallback">
-    <h3>If the card won't scan</h3>
-    <p>Look the member up by name in the membership book behind the bar, or ask a keyholder for help. Never guess a discount without confirming membership.</p>
+    <h3>Still can't find them?</h3>
+    <p>Ask a keyholder or manager before giving a member price. Don't guess.</p>
   </div>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
 </main>
 <script>
   const themeToggle = document.getElementById('theme-toggle');

@@ -18,7 +18,6 @@ const URLS_TO_CACHE = [
   "google-analytics.html",
   "hosting-status.html",
   "incident-report.html",
-  "licensing-compliance.html",
   "manage-staff-logins.html",
   "member-suggestions-review.html",
   "membership-numbers.html",

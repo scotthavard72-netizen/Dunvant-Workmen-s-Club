@@ -27,6 +27,7 @@
   header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
   main{max-width:640px; margin:0 auto; padding:30px 20px 60px;}
   .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  [data-theme="dark"] .notice{background:#2a2318;}
   .item{
     display:flex; align-items:center; gap:14px;
     background:var(--card); border:1px solid var(--line); border-radius:10px;
@@ -34,9 +35,12 @@
     cursor:pointer; user-select:none;
   }
   .item input[type="checkbox"]{width:20px; height:20px; accent-color:var(--forest); flex-shrink:0;}
-  .item label{font-size:0.94rem; cursor:pointer;}
+  .item .num{flex-shrink:0; width:26px; height:26px; border-radius:50%; background:var(--forest); color:#fff; font-size:0.78rem; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .item .text{font-size:0.94rem; line-height:1.4;}
   .item.checked{opacity:0.5;}
-  .item.checked label{text-decoration:line-through;}
+  .item.checked .text{text-decoration:line-through;}
+  .action-btns{display:flex; gap:8px;}
+  .reset-btn{font-family:'Inter', sans-serif; font-weight:600; font-size:0.82rem; background:none; color:var(--muted); border:1px solid var(--line); border-radius:8px; padding:10px 14px; cursor:pointer;}
   a.back{display:inline-block; margin-top:26px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
   .action-row{display:flex; justify-content:space-between; align-items:center; margin-top:26px;}
   .action-row a.back{margin-top:0;}
@@ -67,58 +71,74 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Bar Staff · Example</span>
+  <span class="eyebrow">Bar Staff · Keyholder</span>
   <h1>Closing Checklist</h1>
-  <p>Cleaning down the bar, cellar, bandits &amp; mopping</p>
+  <p>Locking up procedure — The Dunvant Club</p>
 </header>
 <main>
-  <div class="notice">This is an example page — tick items off as you go, and edit the list to match the club's real closing routine.</div>
+  <div class="notice">The club's locking-up procedure, in order — the same as the sheet on the wall. Tick each step as you go. Ticks are just for you on this device; tap "Start again" for the next night.</div>
 
-  <div class="item" onclick="toggle(this)">
-    <input type="checkbox">
-    <label>Wipe down all bar surfaces and pumps</label>
-  </div>
-  <div class="item" onclick="toggle(this)">
-    <input type="checkbox">
-    <label>Wash and put away all glasses</label>
-  </div>
-  <div class="item" onclick="toggle(this)">
-    <input type="checkbox">
-    <label>Empty and clean the bar bins</label>
-  </div>
-  <div class="item" onclick="toggle(this)">
-    <input type="checkbox">
-    <label>Lock the cellar door</label>
-  </div>
-  <div class="item" onclick="toggle(this)">
-    <input type="checkbox">
-    <label>Close down the bandits (fruit machines)</label>
-  </div>
-  <div class="item" onclick="toggle(this)">
-    <input type="checkbox">
-    <label>Mop the bar floor</label>
-  </div>
-  <div class="item" onclick="toggle(this)">
-    <input type="checkbox">
-    <label>Stack chairs / tidy the function room if used</label>
-  </div>
-  <div class="item" onclick="toggle(this)">
-    <input type="checkbox">
-    <label>Hand over to keyholder for final lock-up</label>
-  </div>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">1</span><span class="text">Escort last customers from the Club and lock the main door behind them.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">2</span><span class="text">Lock the cellar, and shut and bolt the back door.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">3</span><span class="text">Check all doors and windows.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">4</span><span class="text">Lock the bandits and put the bandit alarm on.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">5</span><span class="text">Check the toilets.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">6</span><span class="text">Cash up and lock all money away, leaving the till drawer ajar.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">7</span><span class="text">Close all shutters.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">8</span><span class="text">Check the heating is off.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">9</span><span class="text">Pick up the personal alarm.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">10</span><span class="text">Lock the bar doors.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">11</span><span class="text">Turn off all lights.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">12</span><span class="text">Put the alarm on in the hallway.</span>
+  </label>
+  <label class="item">
+    <input type="checkbox" onchange="this.closest('.item').classList.toggle('checked', this.checked)">
+    <span class="num">13</span><span class="text">Exit the building, locking the door behind you.</span>
+  </label>
 
   <div class="action-row">
-    <a class="back" href="staff-area.html">← Back to Staff Area</a>
-    <button class="print-btn" onclick="window.print()">Print Checklist</button>
+    <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
+    <span class="action-btns">
+      <button class="reset-btn" onclick="document.querySelectorAll('.item input').forEach(b => { b.checked = false; b.closest('.item').classList.remove('checked'); })">Start again</button>
+      <button class="print-btn" onclick="window.print()">Print Checklist</button>
+    </span>
   </div>
 </main>
-<script>
-  function toggle(el){
-    const box = el.querySelector('input[type="checkbox"]');
-    box.checked = !box.checked;
-    el.classList.toggle('checked', box.checked);
-  }
-</script>
 <script>
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');

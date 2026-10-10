@@ -85,6 +85,9 @@
   button.send:disabled{opacity:0.6; cursor:default;}
   .form-status{font-size:0.8rem; margin-top:8px; text-align:center; display:none;}
   .form-status.err{color:#a24339; display:block;}
+  .channel-note{display:none; background:var(--card); border:1px solid var(--brass); border-radius:10px; padding:12px 14px; font-size:0.82rem; color:var(--muted); line-height:1.5; margin-bottom:10px; flex-shrink:0;}
+  .channel-note strong{color:var(--ink);}
+  .msg-card.announcement{border-left:4px solid var(--brass);}
 </style>
 </head>
 <body>
@@ -98,6 +101,7 @@
 </header>
 <main>
   <div class="channel-row" id="channel-row"></div>
+  <div class="channel-note" id="channel-note">📢 <strong>Announcements</strong> are for things that have changed — prices, procedures, opening times, rota changes, anything everyone should know. Everyone on the team sees these and gets a notification.</div>
 
   <p class="load-status" id="load-status">Loading…</p>
   <div class="messages-pane" id="messages-pane">
@@ -143,6 +147,7 @@
   // tabs (mgmt sees bar/keyholder, admin sees everything).
   const CHANNELS = [
     { key: 'everyone', label: 'Everyone' },
+    { key: 'announcements', label: '📢 Announcements' },
     { key: 'bar', label: 'Bar Staff' },
     { key: 'keyholder', label: 'Keyholder' },
     { key: 'mgmt', label: 'Management' },
@@ -160,7 +165,8 @@
   function myChannelKeys(){
     const extra = new Set();
     MY_ROLES.forEach(r => (ROLE_EXTRAS[r] || []).forEach(k => extra.add(k)));
-    return ['everyone', ...CHANNELS.filter(c => c.key !== 'everyone' && extra.has(c.key)).map(c => c.key)];
+    // Everyone and Announcements are open to all staff; the rest depend on role.
+    return ['everyone', 'announcements', ...CHANNELS.filter(c => !['everyone', 'announcements'].includes(c.key) && extra.has(c.key)).map(c => c.key)];
   }
 
   function timeAgo(ms){
@@ -181,7 +187,18 @@
   function switchChannel(key){
     CURRENT_CHANNEL = key;
     renderChannelTabs();
+    updateChannelNote();
     loadMessages(true);
+  }
+
+  // Announcements is for things that have changed, so it gets its own
+  // explainer and prompt instead of the chatty "say hello" ones.
+  function updateChannelNote(){
+    const isAnn = CURRENT_CHANNEL === 'announcements';
+    document.getElementById('channel-note').style.display = isAnn ? 'block' : 'none';
+    document.getElementById('compose-text').placeholder = isAnn
+      ? 'Post an announcement — what has changed?'
+      : 'Message this channel…';
   }
 
   function renderMessageCard(doc){
@@ -189,7 +206,7 @@
     const isOwn = d.authorUid === MY_UID;
     const canDelete = isOwn || CAN_MODERATE;
     return `
-      <div class="msg-card${isOwn ? ' own' : ''}">
+      <div class="msg-card${isOwn ? ' own' : ''}${(d.channel || 'everyone') === 'announcements' ? ' announcement' : ''}">
         <div class="msg-top">
           <span class="msg-author">${escapeHtml(d.authorName || 'Someone')}</span>
           <span class="msg-time">${timeAgo(d.createdAtMs)}</span>
@@ -238,7 +255,9 @@
       statusEl.style.display = 'none';
       listEl.innerHTML = docs.length
         ? docs.map(renderMessageCard).join('')
-        : '<p class="empty-note">No messages in this channel yet — say hello.</p>';
+        : (CURRENT_CHANNEL === 'announcements'
+            ? '<p class="empty-note">No announcements yet. When something changes, post it here so everyone knows.</p>'
+            : '<p class="empty-note">No messages in this channel yet — say hello.</p>');
       if(wasNearBottom) scrollToBottom();
     } catch(e){
       if(showSpinner) statusEl.textContent = e.code === 'permission-denied'
@@ -307,7 +326,12 @@
       MY_ROLES = data.roles || [];
     } catch(e){ /* keep going without a name/roles */ }
     CAN_MODERATE = MY_ROLES.some(r => ['admin', 'mgmt'].includes(r));
+    // Opened from a notification (e.g. staff-chat.html?channel=announcements)
+    // — jump straight to that channel if this person can see it.
+    const wanted = new URLSearchParams(location.search).get('channel');
+    if(wanted && myChannelKeys().includes(wanted)) CURRENT_CHANNEL = wanted;
     renderChannelTabs();
+    updateChannelNote();
     loadMessages(true);
     // Poll for new messages while the page is open — a lightweight stand-in
     // for a live listener, matching the rest of the site's simple style.

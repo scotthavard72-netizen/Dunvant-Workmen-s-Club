@@ -61,33 +61,174 @@
   }
 
 
+  .member-box{background:var(--card); border:1px solid var(--brass); border-radius:12px; padding:14px 18px; margin-bottom:16px; font-size:0.86rem; line-height:1.5;}
+  .member-box strong{display:block; color:var(--forest); margin-bottom:2px;}
+  .member-box span{color:var(--muted);}
+  .price-search{width:100%; font-family:'Inter', sans-serif; font-size:1rem; padding:13px 16px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink); margin-bottom:6px;}
+  .price-search:focus{outline:none; border-color:var(--brass);}
+  .no-match{display:none; font-size:0.86rem; color:var(--muted); margin:14px 2px;}
+  .price-section{margin-top:22px;}
+  .section-note{font-size:0.8rem; color:var(--muted); margin:-6px 0 10px; line-height:1.5;}
+  .table-wrap{overflow-x:auto; border-radius:12px;}
+  table.prices th, table.prices td{padding:10px 12px; white-space:nowrap;}
+  table.prices th:not(:first-child), table.prices td:not(:first-child){text-align:right;}
+  table.prices td.name{white-space:normal; font-weight:600;}
+  table.prices .mem{color:var(--forest); font-weight:700;}
+  table.prices tbody tr:nth-child(even){background:rgba(0,0,0,0.025);}
+  [data-theme="dark"] table.prices tbody tr:nth-child(even){background:rgba(255,255,255,0.03);}
+  @media(max-width:600px){
+    table.prices{display:table;}
+    table.prices thead{display:table-header-group;}
+    table.prices tbody{display:table-row-group;}
+    table.prices tr{display:table-row; border:none; margin:0; padding:0; background:none;}
+    table.prices th, table.prices td{display:table-cell; padding:9px 8px; font-size:0.8rem;}
+    table.prices td::before{content:none;}
+  }
+  @media print{
+    header{background:none !important; padding:0 0 10px;} header h1{color:#000 !important;}
+    .theme-toggle, .price-search, .back, .notice{display:none;}
+  }
 </style>
 </head>
 <body>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Bar Staff · Example</span>
+  <span class="eyebrow">Bar Staff</span>
   <h1>Price List</h1>
-  <p>Quick reference for drink prices</p>
+  <p>From 3 August 2026</p>
 </header>
 <main>
 
-  <div class="notice">This is an example page with sample prices — replace with the club's real price list, and update whenever prices change.</div>
-  <table>
-    <thead><tr><th>Item</th><th>Member Price</th><th>Non-Member Price</th></tr></thead>
-    <tbody>
-      <tr><td data-label="Item">Pint of lager</td><td data-label="Member">£3.20</td><td data-label="Non-Member">£3.60</td></tr>
-      <tr><td data-label="Item">Pint of bitter</td><td data-label="Member">£3.00</td><td data-label="Non-Member">£3.40</td></tr>
-      <tr><td data-label="Item">Glass of wine</td><td data-label="Member">£3.50</td><td data-label="Non-Member">£3.90</td></tr>
-      <tr><td data-label="Item">Spirit &amp; mixer</td><td data-label="Member">£3.00</td><td data-label="Non-Member">£3.40</td></tr>
-      <tr><td data-label="Item">Soft drink</td><td data-label="Member">£1.80</td><td data-label="Non-Member">£1.80</td></tr>
-    </tbody>
-  </table>
+  <div class="notice">The club's price list from <strong>3 August 2026</strong>, as on the sheets behind the bar. If the sheets change, this needs updating too — tell Site Admin.</div>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <div class="member-box">
+    <strong>Member discounts</strong>
+    <span>30p off a drink · 20p off a soft drink · 10p off a snack. Draught and bottle member prices are shown below.</span>
+  </div>
+
+  <input type="search" id="price-search" class="price-search" placeholder="Search a drink or snack…" oninput="filterPrices(this.value)" autocomplete="off">
+  <p class="no-match" id="no-match">Nothing matches that — check the spelling, or it might not be on the list.</p>
+
+  <section class="price-section">
+  <div class="section-label">Beers &amp; Lagers — draught</div>
+  <div class="table-wrap"><table class="prices">
+    <thead><tr><th>Drink</th><th>Pint</th><th>Member</th><th>Half</th><th>Member</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Cruz Campo</td><td>£5.20</td><td><span class="mem">£4.70</span></td><td>£2.60</td><td><span class="mem">£2.35</span></td></tr>
+      <tr><td class="name">Madri</td><td>£5.20</td><td><span class="mem">£4.70</span></td><td>£2.60</td><td><span class="mem">£2.35</span></td></tr>
+      <tr><td class="name">Worthington</td><td>£4.40</td><td><span class="mem">£3.90</span></td><td>£2.20</td><td><span class="mem">£1.95</span></td></tr>
+      <tr><td class="name">Coors</td><td>£4.70</td><td><span class="mem">£4.20</span></td><td>£2.35</td><td><span class="mem">£2.10</span></td></tr>
+      <tr><td class="name">Caffrey&#x27;s</td><td>£4.80</td><td><span class="mem">£4.30</span></td><td>£2.40</td><td><span class="mem">£2.15</span></td></tr>
+      <tr><td class="name">Carling</td><td>£4.60</td><td><span class="mem">£4.10</span></td><td>£2.30</td><td><span class="mem">£2.05</span></td></tr>
+      <tr><td class="name">Stella</td><td>£4.80</td><td><span class="mem">£4.30</span></td><td>£2.40</td><td><span class="mem">£2.15</span></td></tr>
+      <tr><td class="name">Caffrey&#x27;s Black</td><td>£4.80</td><td><span class="mem">£4.30</span></td><td>£2.40</td><td><span class="mem">£2.15</span></td></tr>
+      <tr><td class="name">Guinness</td><td>£5.20</td><td><span class="mem">£4.70</span></td><td>£2.60</td><td><span class="mem">£2.35</span></td></tr>
+      <tr><td class="name">Strongbow</td><td>£4.90</td><td><span class="mem">£4.40</span></td><td>£2.45</td><td><span class="mem">£2.20</span></td></tr>
+      <tr><td class="name">Real Ale</td><td>£4.90</td><td><span class="mem">£4.40</span></td><td>£2.45</td><td><span class="mem">£2.20</span></td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <section class="price-section">
+  <div class="section-label">Bottles</div>
+  <div class="table-wrap"><table class="prices">
+    <thead><tr><th>Drink</th><th>Price</th><th>Member</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Budweiser</td><td>£4.50</td><td><span class="mem">£4.20</span></td></tr>
+      <tr><td class="name">Bottled Cider</td><td>£4.80</td><td><span class="mem">£4.50</span></td></tr>
+      <tr><td class="name">Guinness Zero</td><td>£4.40</td><td><span class="mem">£4.10</span></td></tr>
+      <tr><td class="name">Thatchers Zero</td><td>£4.30</td><td><span class="mem">£4.00</span></td></tr>
+      <tr><td class="name">Zero Alcohol Beers</td><td>£3.90</td><td><span class="mem">£3.60</span></td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <section class="price-section">
+  <div class="section-label">Members' offers — spirits</div>
+  <p class="section-note">Based on members' best sellers: £1.00 off a double with a dash, <strong>members only</strong>.</p>
+  <div class="table-wrap"><table class="prices">
+    <thead><tr><th>Spirit</th><th>Single</th><th>Double + dash</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Bell&#x27;s Whisky</td><td>£2.65</td><td><span class="mem">£4.30</span></td></tr>
+      <tr><td class="name">Smirnoff Vodka</td><td>£2.70</td><td><span class="mem">£4.40</span></td></tr>
+      <tr><td class="name">Gordon&#x27;s Gin</td><td>£2.55</td><td><span class="mem">£4.10</span></td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <section class="price-section">
+  <div class="section-label">Wines &amp; Spirits</div>
+  <p class="section-note">Gin, rum, vodka and whisky are served in 25ml measures or multiples of 25ml (other measures shown). The member discount is applied to these prices at the till.</p>
+  <div class="table-wrap"><table class="prices">
+    <thead><tr><th>Spirit</th><th>Single</th><th>Double</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Sheepdog</td><td>£2.70</td><td>£5.40</td></tr>
+      <tr><td class="name">Port (50ml)</td><td>£3.15</td><td>£6.30</td></tr>
+      <tr><td class="name">Grouse</td><td>£2.75</td><td>£5.50</td></tr>
+      <tr><td class="name">Baileys (50ml)</td><td>£4.50</td><td>—</td></tr>
+      <tr><td class="name">Rum — Premium</td><td>£3.10</td><td>£6.20</td></tr>
+      <tr><td class="name">Rum — Captain Morgan</td><td>£2.95</td><td>£5.90</td></tr>
+      <tr><td class="name">AU Vodka</td><td>£3.15</td><td>£6.30</td></tr>
+      <tr><td class="name">Bacardi</td><td>£2.65</td><td>£5.30</td></tr>
+      <tr><td class="name">Malibu</td><td>£2.50</td><td>£5.00</td></tr>
+      <tr><td class="name">Pernod</td><td>£3.10</td><td>£6.20</td></tr>
+      <tr><td class="name">Brandy</td><td>£3.30</td><td>£6.60</td></tr>
+      <tr><td class="name">Sambuca</td><td>£3.00</td><td>£6.00</td></tr>
+      <tr><td class="name">Glayva</td><td>£3.40</td><td>£6.80</td></tr>
+      <tr><td class="name">Jack Daniel&#x27;s</td><td>£3.50</td><td>£7.00</td></tr>
+      <tr><td class="name">Southern Comfort</td><td>£2.80</td><td>£5.60</td></tr>
+      <tr><td class="name">Morgan Spiced</td><td>£2.95</td><td>£5.90</td></tr>
+      <tr><td class="name">Flavoured Vodkas</td><td>£3.15</td><td>£6.30</td></tr>
+      <tr><td class="name">Flavoured Gins</td><td>£3.30</td><td>£6.60</td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <section class="price-section">
+  <div class="section-label">Soft Drinks &amp; Sundries</div>
+  <div class="table-wrap"><table class="prices">
+    <thead><tr><th>Item</th><th>Price</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Mixers</td><td>£1.60</td></tr>
+      <tr><td class="name">J2O</td><td>£2.40</td></tr>
+      <tr><td class="name">Fruit Shoot</td><td>£2.00</td></tr>
+      <tr><td class="name">Dash</td><td>£0.80</td></tr>
+      <tr><td class="name">Cans (Coke, Fanta etc.)</td><td>£1.60</td></tr>
+      <tr><td class="name">Water</td><td>£1.00</td></tr>
+      <tr><td class="name">Pint pump drinks</td><td>£2.50</td></tr>
+      <tr><td class="name">Half pint pump drinks</td><td>£1.25</td></tr>
+      <tr><td class="name">Grab bags</td><td>£1.50</td></tr>
+      <tr><td class="name">Small bags</td><td>£1.20</td></tr>
+      <tr><td class="name">Nuts</td><td>£1.30</td></tr>
+      <tr><td class="name">Scratchings</td><td>£2.25</td></tr>
+      <tr><td class="name">Scampi / bacon fries</td><td>£1.50</td></tr>
+      <tr><td class="name">Mini Cheddars</td><td>£2.00</td></tr>
+      <tr><td class="name">Cigarette papers</td><td>£0.45</td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
 </main>
 
+<script>
+  function filterPrices(q){
+    q = q.trim().toLowerCase();
+    let any = false;
+    document.querySelectorAll('.price-section').forEach(sec => {
+      let shown = 0;
+      sec.querySelectorAll('tbody tr').forEach(tr => {
+        const hit = !q || tr.querySelector('.name').textContent.toLowerCase().includes(q);
+        tr.style.display = hit ? '' : 'none';
+        if(hit) shown++;
+      });
+      sec.style.display = shown ? '' : 'none';
+      if(shown) any = true;
+    });
+    document.getElementById('no-match').style.display = any ? 'none' : 'block';
+  }
+</script>
 <script>
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
