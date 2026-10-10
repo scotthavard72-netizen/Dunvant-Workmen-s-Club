@@ -797,7 +797,7 @@
           items: [
             ["cash-up-log.html", "Cash-Up Log", "End-of-night till count and drop record"],
             ["shift-handover-notes.html", "Shift Handover Notes", "What the next person on needs to know"],
-            ["#locking-alarm-link", "Locking &amp; Setting the Alarm", "Final lock-up at close"]
+            ["closing-checklist.html", "Locking Up / Closing Checklist", "The 13-step locking-up procedure, including the alarm"]
           ]
         },
         {
@@ -905,6 +905,31 @@
       ]
     }
   };
+
+  // Pages that are still examples (placeholder content), and menu links that
+  // don't go anywhere real yet, are kept out of every menu so staff only ever
+  // see tools that work. The pages still exist — take one off this list once
+  // its real content is in, and it reappears everywhere.
+  const NOT_READY = new Set([
+    'staff-faq.html', 'new-starter-checklist.html', 'supplier-contacts.html',
+    'entertainment-tracker.html', 'membership-till-system.html', 'emergency-procedures.html',
+    'agm-planning.html', 'club-constitution.html', 'finances-accounts.html',
+    'membership-numbers.html', 'funding-opportunities.html', 'google-analytics.html'
+  ]);
+  function isReady(item){
+    const href = item[0] || '';
+    if(NOT_READY.has(href)) return false;
+    if(href.startsWith('#')) return false;                              // placeholder anchors
+    if(href.startsWith('mailto:') && href.endsWith('.example')) return false; // placeholder email
+    return true;
+  }
+  Object.values(MENUS).forEach(role => {
+    if(role.groups){
+      role.groups.forEach(g => { g.items = g.items.filter(isReady); });
+      role.groups = role.groups.filter(g => g.items.length > 0);
+    }
+    if(role.items) role.items = role.items.filter(isReady);
+  });
 
   // ── Which menus each role sees, beyond its own ──
   // mgmt also sees bar; keyholder also sees bar; admin sees everything, but the
