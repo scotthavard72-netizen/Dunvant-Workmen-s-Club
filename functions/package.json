@@ -3,7 +3,7 @@
   "private": true,
   "description": "Sends staff push alerts and manager emails (sign-ups, incidents, announcements).",
   "main": "index.js",
-  "engines": { "node": "20" },
+  "engines": { "node": "22" },
   "dependencies": {
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.1.1",
