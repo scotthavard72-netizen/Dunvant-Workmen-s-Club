@@ -236,6 +236,19 @@
     pane.scrollTop = pane.scrollHeight;
   }
 
+  // Stay pinned to the newest message while the page settles (fonts and
+  // emoji loading change message heights after the first scroll), but only
+  // while they're at the bottom — never drag them down mid-read.
+  (function keepPinned(){
+    const pane = document.getElementById('messages-pane');
+    const list = document.getElementById('messages-list');
+    if(!pane || !list) return;
+    let pinned = true;
+    pane.addEventListener('scroll', () => { pinned = isNearBottom(pane); }, { passive: true });
+    if('ResizeObserver' in window) new ResizeObserver(() => { if(pinned) scrollToBottom(); }).observe(list);
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if(pinned) scrollToBottom(); });
+  })();
+
   async function loadMessages(showSpinner){
     const listEl = document.getElementById('messages-list');
     const statusEl = document.getElementById('load-status');

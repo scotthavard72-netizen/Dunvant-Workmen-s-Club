@@ -55,6 +55,12 @@ service cloud.firestore {
     match /rota/{doc} {
       allow read: if true;
       allow write: if isMgr();
+      // Any staff member can swap a name on the rota (claiming a cover or
+      // accepting a swap) — but only the shift list, and never add or
+      // remove shifts.
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['shifts'])
+        && request.resource.data.shifts.size() == resource.data.shifts.size();
     }
     match /rotaConfirmations/{id} { allow read, write: if isStaff(); }
     match /availability/{docId} {
@@ -73,7 +79,11 @@ service cloud.firestore {
     match /activityLog/{logId}        { allow read, create: if isStaff(); }
     match /adminAccessLog/{id}        { allow read, write: if isStaff(); }
     match /shiftHandoverNotes/{id}    { allow read, write: if isStaff(); }
-    match /tickets/{ticketId}         { allow read, write: if isStaff(); }
+    match /tickets/{ticketId} {
+      allow read, write: if isStaff();
+      // The public "Report an issue" form (no sign-in needed).
+      allow create: if request.resource.data.type == 'public' && request.resource.data.status == 'open';
+    }
     match /diaryEntries/{id}          { allow read, write: if isStaff(); }
     match /shoutouts/{id}             { allow read, write: if isStaff(); }
     match /staffSuggestions/{id}      { allow read, write: if isStaff(); }
