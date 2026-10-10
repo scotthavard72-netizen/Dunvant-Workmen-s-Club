@@ -564,9 +564,12 @@
   }
 
   function buildShareableLink(shifts){
-    // The page reads the live rota straight from Firestore now, so the link
-    // itself needs no data encoded into it — it's always current for whoever opens it.
-    return `${location.origin}${location.pathname.replace('weekly-rota-builder.html', 'this-weeks-rota.html')}`;
+    // Current Rota reads the live rota straight from Firestore, so the link
+    // needs no data in it — it's always current for whoever opens it. Fixed
+    // to the staff app's address so it's right whichever address the
+    // builder was opened on (and doesn't depend on the page's own URL, which
+    // no longer ends in .html now that clean URLs are on).
+    return 'https://dunvant-staff.web.app/current-rota';
   }
 
   function buildSummaryText(shifts){
