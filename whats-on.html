@@ -94,6 +94,20 @@
     nav.clubnav a{padding:14px 12px; white-space:nowrap; font-size:0.8rem;}
     .plaque-name{font-size:1.8rem;}
   }
+  .event-badge{display:inline-block; margin-top:8px;}
+  .event-poster{display:block; width:74px; height:92px; overflow:hidden; border-radius:3px; border:1px solid var(--line); flex-shrink:0;}
+  .event-poster img{width:100%; height:100%; object-fit:cover; display:block;}
+  .weekly{display:grid; gap:12px;}
+  .weekly-card{display:grid; grid-template-columns:84px 1fr; gap:16px; align-items:center; background:var(--card); border:1px solid var(--line); padding:12px; border-radius:3px;}
+  .weekly-poster{display:block; width:84px; height:100px; overflow:hidden; border-radius:3px;}
+  .weekly-poster img{width:100%; height:100%; object-fit:cover; display:block;}
+  .weekly-day{font-size:0.72rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--brass);}
+  .weekly-title{font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem; margin:2px 0 4px;}
+  .weekly-meta{font-size:0.84rem; color:var(--muted); line-height:1.5;}
+  @media(max-width:480px){
+    .event-row{grid-template-columns:56px 1fr 64px !important; gap:12px !important;}
+    .event-poster{width:64px; height:80px;}
+  }
 </style>
 
 </head>
@@ -116,7 +130,35 @@
   <div class="empty-state" id="empty-state" style="display:none;">Nothing confirmed here just yet — check the club's <a href="https://www.facebook.com/profile.php?id=61563877044858" target="_blank" rel="noopener" style="color:var(--brass); font-weight:600;">Facebook page</a> for the latest, or check back soon.</div>
   <p style="margin-top:24px; font-size:0.86rem; color:var(--muted);">Looking for tickets to a show? Visit the <a href="box-office.html" style="color:var(--brass); font-weight:600;">Box Office</a>.</p>
 
-  <div class="section-head" style="margin-top:56px;"><span class="num">2</span><h2>Latest from Facebook</h2></div>
+  <div class="section-head" style="margin-top:56px;"><span class="num">2</span><h2>Every week</h2></div>
+  <div class="weekly">
+    <div class="weekly-card">
+      <a class="weekly-poster" href="assets/posters/chess-mondays.jpg" data-lightbox="weekly" title="Chess evening — every Monday"><img src="assets/posters/chess-mondays.jpg" alt="Chess evening poster" loading="lazy"></a>
+      <div>
+        <div class="weekly-day">Every Monday</div>
+        <div class="weekly-title">♟️ Chess Evening</div>
+        <div class="weekly-meta">Come along and practise your chess — every chess master was once a beginner.</div>
+      </div>
+    </div>
+    <div class="weekly-card">
+      <a class="weekly-poster" href="assets/posters/quiz.jpg" data-lightbox="weekly" title="Quiz at the Workies — every Tuesday"><img src="assets/posters/quiz.jpg" alt="Quiz night poster" loading="lazy"></a>
+      <div>
+        <div class="weekly-day">Every Tuesday · 8pm</div>
+        <div class="weekly-title">❓ Quiz Night</div>
+        <div class="weekly-meta">£1 per person, up to 6 per team. Cash prize — or gamble for the mystery prize, including a rolling cash jackpot.</div>
+      </div>
+    </div>
+    <div class="weekly-card">
+      <a class="weekly-poster" href="assets/posters/bingo.jpg" data-lightbox="weekly" title="Bingo nights — every Wednesday and Sunday"><img src="assets/posters/bingo.jpg" alt="Bingo nights poster" loading="lazy"></a>
+      <div>
+        <div class="weekly-day">Every Wednesday &amp; Sunday · from 8pm</div>
+        <div class="weekly-title">🎱 Bingo</div>
+        <div class="weekly-meta">Eyes down 8:30pm. Win £500 on the red flyer if it's called on the 50th number (members only).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-head" style="margin-top:56px;"><span class="num">3</span><h2>Latest from Facebook</h2></div>
   <div class="fb-feed" data-tabs="events,timeline" data-height="720"></div>
 </main>
 
@@ -128,6 +170,30 @@
 <script>
   function localISODate(d){
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // Events from the club's posters. Each disappears by itself once its date
+  // has passed. Events added in Manage What's On are merged in alongside.
+  const CLUB_EVENTS = [
+    { date: '2026-10-29', emoji: '🎃', title: 'Halloween Party', time: '6pm–7:30pm',
+      description: "Hosted by Dunvant Three Crosses AFC U8s. £6 a ticket, adults free — sweets, hot dogs, games, a DJ and a prize for the best fancy dress. Ticket details on the poster.",
+      poster: 'assets/posters/halloween.jpg' },
+    { date: '2026-11-14', emoji: '🕺', title: 'Daytime Disco for Grownups', time: '2pm–6pm',
+      description: "Floor fillers from the 60s, 70s and 80s with DJ Jules. Tickets £8.",
+      poster: 'assets/posters/daytime-disco.jpg' },
+    { date: '2026-12-26', emoji: '🎱', title: 'Boxing Day Pool Competition', time: '2pm',
+      description: "Quarters, semis and final on the day — best of 3, final best of 5. Knockout games in the lead-up if more than 8 enter. Put your name on the notice board.",
+      poster: 'assets/posters/boxing-day-pool.jpg' },
+    { date: '2026-12-26', emoji: '🎯', title: 'Boxing Day Darts Competition (501)', time: '2pm',
+      description: "Quarters, semis and final on the day — best of 3, final best of 5. Knockout games in the lead-up if more than 8 enter. Put your name on the notice board.",
+      poster: 'assets/posters/boxing-day-darts.jpg' },
+    { date: '2026-12-26', emoji: '♟️', title: 'Boxing Day Chess Competition', time: '2pm',
+      description: "Put your name on the notice board if you're interested.",
+      poster: 'assets/posters/boxing-day-chess.jpg' }
+  ];
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
   function renderEvent(data){
@@ -155,8 +221,9 @@
           <div class="event-title">${data.emoji ? data.emoji + ' ' : ''}${data.title}</div>
           ${metaParts.length ? `<div class="event-meta">${metaParts.join(' · ')}</div>` : ''}
           ${data.facebookLink ? `<a class="event-fblink" href="${data.facebookLink}" target="_blank" rel="noopener">More on Facebook →</a>` : ''}
+          ${badge ? `<div class="event-badge">${badge}</div>` : ''}
         </div>
-        ${badge ? `<div class="event-badge">${badge}</div>` : '<div></div>'}
+        ${data.poster ? `<a class="event-poster" href="${data.poster}" data-lightbox="events" title="${escapeHtml(data.title)}"><img src="${data.poster}" alt="${escapeHtml(data.title)} poster" loading="lazy"></a>` : '<div></div>'}
       </div>
     `;
   }
@@ -165,22 +232,28 @@
     const statusEl = document.getElementById('load-status');
     const wrap = document.getElementById('events-wrap');
     const emptyEl = document.getElementById('empty-state');
+    const today = localISODate(new Date());
+    const upcoming = CLUB_EVENTS.filter(e => e.date >= today);
+    let failed = false;
     try{
       const snapshot = await db.collection('whatsOnEvents').orderBy('date').get();
-      const today = localISODate(new Date());
-      const upcoming = [];
       snapshot.forEach(doc => { if(doc.data().date >= today) upcoming.push(doc.data()); });
-
-      statusEl.style.display = 'none';
-      if(upcoming.length === 0){
-        emptyEl.style.display = 'block';
-        return;
-      }
-      wrap.innerHTML = upcoming.map(renderEvent).join('');
-      wrap.style.display = 'block';
     } catch(e){
-      statusEl.textContent = "Couldn't load events right now — try again shortly.";
+      failed = true;
     }
+    upcoming.sort((a, b) => a.date.localeCompare(b.date));
+    statusEl.style.display = 'none';
+    if(upcoming.length === 0){
+      if(failed){
+        statusEl.textContent = "Couldn't load events right now — try again shortly.";
+        statusEl.style.display = 'block';
+      } else {
+        emptyEl.style.display = 'block';
+      }
+      return;
+    }
+    wrap.innerHTML = upcoming.map(renderEvent).join('');
+    wrap.style.display = 'block';
   }
   loadEvents();
 
@@ -206,5 +279,6 @@
   });
 </script>
 <script src="fb-feed.js"></script>
+<script src="lightbox.js"></script>
 </body>
 </html>

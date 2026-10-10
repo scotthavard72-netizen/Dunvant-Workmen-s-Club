@@ -67,6 +67,19 @@
     nav.clubnav a{padding:14px 12px; white-space:nowrap; font-size:0.8rem;}
     .plaque-name{font-size:1.8rem;}
   }
+  .intro{font-size:0.95rem; color:var(--muted); margin:-12px 0 22px; line-height:1.6;}
+  .intro a{color:var(--brass); font-weight:600; text-decoration:none;}
+  .ph-grid{display:grid; grid-template-columns:repeat(3, 1fr); grid-auto-rows:200px; grid-auto-flow:dense; gap:10px; margin-bottom:56px;}
+  .ph{position:relative; display:block; overflow:hidden; border-radius:4px; background:var(--card); border:1px solid var(--line);}
+  .ph.wide{grid-column:span 2;}
+  .ph.tall{grid-row:span 2;}
+  .ph img{width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.35s ease;}
+  .ph:hover img{transform:scale(1.04);}
+  .ph-cap{position:absolute; left:0; right:0; bottom:0; padding:22px 12px 9px; font-size:0.8rem; font-weight:600; color:#fff; background:linear-gradient(transparent, rgba(0,0,0,0.65));}
+  @media(max-width:640px){
+    .ph-grid{grid-template-columns:repeat(2, 1fr); grid-auto-rows:150px; gap:8px;}
+    .ph.wide{grid-column:span 2;}
+  }
 </style>
 
 </head>
@@ -83,15 +96,32 @@
 </nav>
 
 <main>
-  <div class="section-head"><span class="num">1</span><h1>Gallery</h1></div>
-  <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--line); border:1px solid var(--line);">
-    <div style="aspect-ratio:1; background:var(--card); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.82rem;">Photo 1</div>
-    <div style="aspect-ratio:1; background:var(--card); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.82rem;">Photo 2</div>
-    <div style="aspect-ratio:1; background:var(--card); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.82rem;">Photo 3</div>
-    <div style="aspect-ratio:1; background:var(--card); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.82rem;">Photo 4</div>
-    <div style="aspect-ratio:1; background:var(--card); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.82rem;">Photo 5</div>
-    <div style="aspect-ratio:1; background:var(--card); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.82rem;">Photo 6</div>
+  <div class="section-head"><span class="num">1</span><h1>The function room</h1></div>
+  <p class="intro">Set up for whatever you're celebrating — birthdays, anniversaries, Christmas dos and club nights. <a href="book.html">Book it →</a></p>
+  <div class="ph-grid">
+    <a class="ph wide" href="assets/photos/room-disco.jpg" data-lightbox="room" title="Party night set-up"><img src="assets/photos/room-disco.jpg" alt="The function room set for a party, with the stage, starlight backdrop and disco lights" loading="lazy"><span class="ph-cap">Party night set-up</span></a>
+    <a class="ph" href="assets/photos/room-gold.jpg" data-lightbox="room" title="Golden anniversary"><img src="assets/photos/room-gold.jpg" alt="Long tables dressed in black and gold for a golden wedding anniversary" loading="lazy"><span class="ph-cap">Golden anniversary</span></a>
+    <a class="ph" href="assets/photos/room-christmas.jpg" data-lightbox="room" title="Christmas dinner"><img src="assets/photos/room-christmas.jpg" alt="The room laid out with white tables and decorations for Christmas dinner" loading="lazy"><span class="ph-cap">Christmas dinner</span></a>
+    <a class="ph wide" href="assets/photos/room-kids-party.jpg" data-lightbox="room" title="Football club awards party"><img src="assets/photos/room-kids-party.jpg" alt="Long tables with green and yellow plates and cups, set for a kids football awards party, with the stage and screen" loading="lazy"><span class="ph-cap">Football club awards party</span></a>
   </div>
+
+  <div class="section-head"><span class="num">2</span><h2>Nights at the club</h2></div>
+  <div class="ph-grid">
+    <a class="ph wide" href="assets/photos/party-crowd.jpg" data-lightbox="nights" title="Golden anniversary party"><img src="assets/photos/party-crowd.jpg" alt="A packed function room during a golden anniversary party" loading="lazy"><span class="ph-cap">Golden anniversary party</span></a>
+    <a class="ph" href="assets/photos/party-dancing.jpg" data-lightbox="nights" title="On the dance floor"><img src="assets/photos/party-dancing.jpg" alt="Guests dancing on the dance floor at a family party" loading="lazy"><span class="ph-cap">On the dance floor</span></a>
+    <a class="ph tall" href="assets/photos/quiz-night.jpg" data-lightbox="nights" title="Tuesday quiz night"><img src="assets/photos/quiz-night.jpg" alt="Teams giving a thumbs up at the Tuesday quiz" loading="lazy"><span class="ph-cap">Tuesday quiz night</span></a>
+    <a class="ph wide" href="assets/photos/summer-live-music.jpg" data-lightbox="nights" title="Live music in the sun"><img src="assets/photos/summer-live-music.jpg" alt="A live band playing outside the club to a busy beer garden" loading="lazy"><span class="ph-cap">Live music in the sun</span></a>
+    <a class="ph tall" href="assets/photos/bbq.jpg" data-lightbox="nights" title="Perky's Burgers on the BBQ"><img src="assets/photos/bbq.jpg" alt="Perky on the barbecue outside the club, burgers on the grill" loading="lazy"><span class="ph-cap">Perky's Burgers on the BBQ</span></a>
+    <a class="ph tall" href="assets/photos/santa-grotto.jpg" data-lightbox="nights" title="Santa's grotto"><img src="assets/photos/santa-grotto.jpg" alt="Santa waving from his grotto next to a decorated Christmas tree" loading="lazy"><span class="ph-cap">Santa's grotto</span></a>
+    <a class="ph wide" href="assets/photos/pool-table.jpg" data-lightbox="nights" title="The pool table"><img src="assets/photos/pool-table.jpg" alt="The pool table in the bar, racked and ready" loading="lazy"><span class="ph-cap">The pool table</span></a>
+  </div>
+
+  <div class="section-head"><span class="num">3</span><h2>Past events</h2></div>
+  <div class="ph-grid">
+    <a class="ph" href="assets/posters/night-at-the-races.jpg" data-lightbox="past" title="A Night at the Races — 3 October"><img src="assets/posters/night-at-the-races.jpg" alt="Poster for A Night at the Races on 3 October" loading="lazy"><span class="ph-cap">A Night at the Races — 3 October</span></a>
+    <a class="ph wide" href="assets/posters/races-sponsors.jpg" data-lightbox="past" title="Thank you to our Night at the Races sponsors"><img src="assets/posters/races-sponsors.jpg" alt="Thank you to the Night at the Races sponsors: Morgan Financial Solutions, Shircar, Hill Grwp, Dennis J Stock Carpet and Upholstery Cleaning, Uprise Bikes, Baileys Building Contractors, Gower Brows and Beauty" loading="lazy"><span class="ph-cap">Thank you to our Night at the Races sponsors</span></a>
+  </div>
+  <p class="intro" style="margin-top:22px;">More photos go up on the club's <a href="https://www.facebook.com/profile.php?id=61563877044858" target="_blank" rel="noopener">Facebook page</a>.</p>
 </main>
 
 <footer>
@@ -121,5 +151,6 @@
     localStorage.setItem('theme', newTheme);
   });
 </script>
+<script src="lightbox.js"></script>
 </body>
 </html>
