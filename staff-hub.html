@@ -555,6 +555,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="staff-notify.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
@@ -1012,8 +1013,8 @@
     if(ROLE_KIND !== 'mgmt') return;
     if(!('Notification' in window) || Notification.permission !== 'granted') return;
     const checks = [
-      { key: 'pendingBookings', seenKey: 'notifySeenPendingBookings', singular: 'booking request', plural: 'booking requests' },
-      { key: 'openCover', seenKey: 'notifySeenOpenCover', singular: 'shift cover request', plural: 'shift cover requests' }
+      { key: 'pendingBookings', seenKey: 'notifySeenPendingBookings', singular: 'booking request', plural: 'booking requests', url: 'bookings.html' },
+      { key: 'openCover', seenKey: 'notifySeenOpenCover', singular: 'shift cover request', plural: 'shift cover requests', url: 'shift-cover-requests-mgmt.html' }
     ];
     checks.forEach(c => {
       const current = badges[c.key] || 0;
@@ -1026,7 +1027,7 @@
       if(current > seen){
         const delta = current - seen;
         const label = delta === 1 ? c.singular : c.plural;
-        new Notification(`🔔 New ${label}`, { body: `${delta} new ${label} waiting.` });
+        showStaffNotification(`🔔 New ${label}`, { body: `${delta} new ${label} waiting.`, url: c.url, tag: c.key });
       }
       localStorage.setItem(c.seenKey, String(current));
     });
@@ -1292,9 +1293,10 @@
         // Pop a real browser notification, but only once per publish — not every time the app opens
         const lastNotified = localStorage.getItem('lastNotifiedRotaTimestamp');
         if(lastNotified !== match[1] && 'Notification' in window && Notification.permission === 'granted'){
-          new Notification('New rota published! 🔔', {
+          showStaffNotification('New rota published! 🔔', {
             body: "This week's rota is ready to view — tap Current Rota to see your shifts.",
-            icon: 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect width=\'192\' height=\'192\' rx=\'34\' fill=\'%232c3f38\'/%3E%3Ctext x=\'96\' y=\'132\' font-family=\'Georgia,serif\' font-size=\'112\' font-weight=\'700\' fill=\'%23e0b56a\' text-anchor=\'middle\'%3ED%3C/text%3E%3C/svg%3E'
+            url: 'current-rota.html',
+            tag: 'rota'
           });
           localStorage.setItem('lastNotifiedRotaTimestamp', match[1]);
         }
@@ -1329,9 +1331,10 @@
         if(alreadyNotified.includes(marker)) return;
         const when = s.fd === todayFd ? 'today' : 'tomorrow';
         const timeLabel = `${s.st}${s.et ? '–' + (s.et === '23:59' ? 'midnight' : s.et) : ''}`;
-        new Notification(`Shift reminder — ${when}`, {
+        showStaffNotification(`Shift reminder — ${when}`, {
           body: `You're on ${when}, ${timeLabel}${s.r === 'K' ? ' (Keyholder)' : ''}.`,
-          icon: 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect width=\'192\' height=\'192\' rx=\'34\' fill=\'%232c3f38\'/%3E%3Ctext x=\'96\' y=\'132\' font-family=\'Georgia,serif\' font-size=\'112\' font-weight=\'700\' fill=\'%23e0b56a\' text-anchor=\'middle\'%3ED%3C/text%3E%3C/svg%3E'
+          url: 'current-rota.html',
+          tag: 'shift-reminder'
         });
         alreadyNotified.push(marker);
       });
@@ -1342,7 +1345,6 @@
     }
   }
 
-  const NOTIFY_ICON = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect width=\'192\' height=\'192\' rx=\'34\' fill=\'%232c3f38\'/%3E%3Ctext x=\'96\' y=\'132\' font-family=\'Georgia,serif\' font-size=\'112\' font-weight=\'700\' fill=\'%23e0b56a\' text-anchor=\'middle\'%3ED%3C/text%3E%3C/svg%3E';
 
   // Same channel-access mapping as staff-chat.html — kept in sync there and
   // here since this only needs the accessible key set, not the full channel
@@ -1390,9 +1392,9 @@
 
       if(unseen.length === 1){
         const d = unseen[0].data();
-        new Notification(`${d.authorName || 'Someone'} — Staff Chat`, { body: d.text || '', icon: NOTIFY_ICON });
+        showStaffNotification(`${d.authorName || 'Someone'} — Staff Chat`, { body: d.text || '', url: 'staff-chat.html', tag: 'chat' });
       } else {
-        new Notification('New messages in Staff Chat', { body: `${unseen.length} new messages since you last checked.`, icon: NOTIFY_ICON });
+        showStaffNotification('New messages in Staff Chat', { body: `${unseen.length} new messages since you last checked.`, url: 'staff-chat.html', tag: 'chat' });
       }
       localStorage.setItem(lastSeenKey, String(latestMs));
     } catch(e){
@@ -1418,10 +1420,11 @@
       const unseen = docs.filter(d => (d.data().requestedAtMs || 0) > lastSeen);
       if(unseen.length === 0) return;
 
-      const n = unseen.length === 1
-        ? new Notification('New staff sign-up', { body: `${unseen[0].data().name || 'Someone'} wants access — tap to approve.`, icon: NOTIFY_ICON })
-        : new Notification('New staff sign-ups', { body: `${unseen.length} people want access — tap to approve.`, icon: NOTIFY_ICON });
-      n.onclick = () => { window.focus(); window.location.href = 'staff-signups.html'; };
+      if(unseen.length === 1){
+        showStaffNotification('New staff sign-up', { body: `${unseen[0].data().name || 'Someone'} wants access — tap to approve.`, url: 'staff-signups.html', tag: 'signups' });
+      } else {
+        showStaffNotification('New staff sign-ups', { body: `${unseen.length} people want access — tap to approve.`, url: 'staff-signups.html', tag: 'signups' });
+      }
       localStorage.setItem(lastSeenKey, String(latestMs));
       loadLiveBadges();
     } catch(e){
@@ -1453,9 +1456,9 @@
 
       if(unseen.length === 1){
         const d = unseen[0].data();
-        new Notification('New ticket submitted', { body: `${d.authorName || 'Someone'}: ${(d.description || '').slice(0, 100)}`, icon: NOTIFY_ICON });
+        showStaffNotification('New ticket submitted', { body: `${d.authorName || 'Someone'}: ${(d.description || '').slice(0, 100)}`, url: 'tickets.html', tag: 'tickets' });
       } else {
-        new Notification('New tickets submitted', { body: `${unseen.length} new tickets since you last checked.`, icon: NOTIFY_ICON });
+        showStaffNotification('New tickets submitted', { body: `${unseen.length} new tickets since you last checked.`, url: 'tickets.html', tag: 'tickets' });
       }
       localStorage.setItem(lastSeenKey, String(latestMs));
     } catch(e){

@@ -169,6 +169,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="staff-notify.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
@@ -372,8 +373,9 @@
       const d = doc.data();
       const prev = seen[doc.id];
       if(canNotify && prev && prev !== d.status && (d.status === 'accepted' || d.status === 'declined')){
-        new Notification(d.status === 'accepted' ? '✅ Shift swap accepted' : '❌ Shift swap declined', {
-          body: `${d.colleagueName} ${d.status} your ${d.shiftLabel || 'shift'} swap request.`
+        showStaffNotification(d.status === 'accepted' ? '✅ Shift swap accepted' : '❌ Shift swap declined', {
+          body: `${d.colleagueName} ${d.status} your ${d.shiftLabel || 'shift'} swap request.`,
+          url: 'shift-swap.html'
         });
       }
       seen[doc.id] = d.status;

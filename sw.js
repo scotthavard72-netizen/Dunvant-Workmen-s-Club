@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dunvant-site-v21';
+const CACHE_NAME = 'dunvant-site-v22';
 const URLS_TO_CACHE = [
   "agm-planning.html",
   "backup-reminder.html",
@@ -38,6 +38,7 @@ const URLS_TO_CACHE = [
   "staff-faq.html",
   "staff-hub.html",
   "staff-rota.html",
+  "staff-signups.html",
   "submit-ticket.html",
   "supplier-contacts.html",
   "team-activity.html",
@@ -96,6 +97,24 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       }).catch(() => cached);
       return cached || fetchPromise;
+    })
+  );
+});
+
+// Tapping a staff notification (shown via showStaffNotification in
+// staff-notify.js) opens the page it's about — reusing an open Staff tab or
+// installed app window if there is one, rather than opening a second copy.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const path = (event.notification.data && event.notification.data.url) || 'staff-hub.html';
+  const target = new URL(path, self.registration.scope).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const existing = windows.find((w) => 'focus' in w);
+      if (existing) {
+        return existing.focus().then((w) => (w && 'navigate' in w) ? w.navigate(target) : w);
+      }
+      return self.clients.openWindow(target);
     })
   );
 });
