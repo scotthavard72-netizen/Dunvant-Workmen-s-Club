@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Stamp what's being deployed, so the admin "site updated" banner can
+      # check what's actually live on Firebase (works even once the repo is
+      # private, unlike asking GitHub).
+      - run: echo "{\"sha\":\"${{ github.sha }}\",\"deployedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > version.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

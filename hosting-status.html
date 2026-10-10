@@ -51,6 +51,8 @@
   .tag.todo{background:#fff2d9; color:#8a6a1f;}
   .tag.done{background:#e4ece9; color:#2c3f38;}
   .tag.open{background:#fff2d9; color:#8a6a1f;}
+  td a{color:var(--brass); font-weight:600; text-decoration:none;}
+  td a:hover{text-decoration:underline;}
   a.back{display:inline-block; margin-top:10px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
   @media(max-width:600px){
     table, thead, tbody, th, td, tr{display:block;}
@@ -67,20 +69,64 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Site Admin · Example</span>
+  <span class="eyebrow">Site Admin</span>
   <h1>Domain / Hosting Status</h1>
   <p>Where the site actually lives</p>
 </header>
 <main>
 
-  <div class="notice">This is an example page — fill in the real details once the site's actually hosted.</div>
-  <div class="card"><span class="tag todo">Not Set Up Yet</span><h3>GitHub Pages</h3><p>[Repo URL once created] — free hosting, HTTPS included automatically.</p></div>
-  <div class="card"><span class="tag todo">Optional</span><h3>Custom Domain</h3><p>[e.g. dunvantwmc.co.uk, if ever wanted — costs money annually, GitHub Pages' free URL works fine without one]</p></div>
+  <div class="notice">The site is hosted on <strong>Firebase Hosting</strong> (Google), moved over from GitHub Pages in October 2026. Every change pushed to GitHub goes live on both addresses automatically within a couple of minutes — nothing to upload by hand.</div>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <div class="section-label">Live addresses</div>
+  <table>
+    <thead><tr><th>What</th><th>Address</th><th>Opens on</th></tr></thead>
+    <tbody>
+      <tr><td data-label="What">Public site</td><td data-label="Address"><a href="https://dunvantclub.web.app" target="_blank" rel="noopener">dunvantclub.web.app</a></td><td data-label="Opens on">Homepage</td></tr>
+      <tr><td data-label="What">Staff app</td><td data-label="Address"><a href="https://dunvant-staff.web.app" target="_blank" rel="noopener">dunvant-staff.web.app</a></td><td data-label="Opens on">Staff login</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">Status</div>
+  <div class="card">
+    <span class="tag done">Live</span>
+    <h3>Firebase Hosting</h3>
+    <p>Firebase project <strong>dunvantwmc-36de5</strong> — the same project that holds staff logins and the database. HTTPS included. Page addresses don't need ".html" on the end.</p>
+    <p id="last-deploy">Last deployed: checking…</p>
+  </div>
+  <div class="card">
+    <span class="tag done">Live</span>
+    <h3>Auto-deploy from GitHub</h3>
+    <p>A GitHub Action ("Deploy to Firebase Hosting on merge") publishes to both addresses whenever the main branch changes. Site Admins see a green strip while an update is building, and a "site was just updated" banner once it's live.</p>
+  </div>
+  <div class="card">
+    <span class="tag open">Still running</span>
+    <h3>Old GitHub Pages link</h3>
+    <p>scotthavard72-netizen.github.io/Dunvant-Workmen-s-Club still works for now, but stops once the GitHub repo is made private. Point anyone still using it at the new addresses above.</p>
+  </div>
+  <div class="card">
+    <span class="tag todo">To do</span>
+    <h3>Custom domain</h3>
+    <p>Not bought yet. Once there is one (e.g. a .co.uk, roughly £10–15 a year):</p>
+    <ul>
+      <li>Add it in the Firebase console → Hosting → Add custom domain, and copy the DNS records it gives you into the domain registrar.</li>
+      <li>Add it under Firebase → Authentication → Settings → Authorised domains, or staff logins won't work on it.</li>
+      <li>Then make the GitHub repo private and turn off GitHub Pages (repo Settings → Pages).</li>
+    </ul>
+  </div>
+
+  <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
 </main>
 
 <script>
+  // What's actually live right now — stamped onto the site by every deploy.
+  fetch('version.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(v => {
+      const when = v.deployedAt ? new Date(v.deployedAt).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'unknown time';
+      document.getElementById('last-deploy').textContent = `Last deployed: ${when}` + (v.sha ? ` (version ${String(v.sha).slice(0, 7)})` : '');
+    })
+    .catch(() => { document.getElementById('last-deploy').textContent = "Last deployed: couldn't check right now."; });
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');

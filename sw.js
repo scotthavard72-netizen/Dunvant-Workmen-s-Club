@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dunvant-site-v22';
+const CACHE_NAME = 'dunvant-site-v23';
 const URLS_TO_CACHE = [
   "agm-planning.html",
   "backup-reminder.html",
@@ -65,6 +65,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Deploy stamp checked by the admin update banner — must never come from cache.
+  if (new URL(event.request.url).pathname.endsWith('/version.json')) return;
 
   // Page loads (including a plain refresh): always try the network first,
   // so a normal refresh shows the latest content immediately — no more

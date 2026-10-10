@@ -23,13 +23,28 @@
         {
           "source": "**/*.@(html)",
           "headers": [
-            { "key": "Cache-Control", "value": "no-cache" }
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
           ]
         },
         {
           "source": "assets/**",
           "headers": [
-            { "key": "Cache-Control", "value": "public, max-age=604800" }
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800"
+            }
+          ]
+        },
+        {
+          "source": "version.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            }
           ]
         }
       ]
@@ -58,13 +73,28 @@
         {
           "source": "**/*.@(html)",
           "headers": [
-            { "key": "Cache-Control", "value": "no-cache" }
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
           ]
         },
         {
           "source": "assets/**",
           "headers": [
-            { "key": "Cache-Control", "value": "public, max-age=604800" }
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800"
+            }
+          ]
+        },
+        {
+          "source": "version.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            }
           ]
         }
       ]

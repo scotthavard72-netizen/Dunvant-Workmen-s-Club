@@ -131,48 +131,61 @@ const GH_REPO = 'Dunvant-Workmen-s-Club';
     banner.style.display = 'flex';
   }
 
-  // Poll GitHub's actual deployment status directly — this catches a publish
-  // finishing (or in progress) even if it wasn't triggered from this device,
-  // since it's checking the real, ground-truth state rather than just this
-  // browser's cache. Admin-only: everyone else just gets the plain "new
-  // version available" banner once a build actually finishes (handled
-  // separately, above, via the service worker).
+  // Admin-only. Two checks, every 45s:
+  //  1. Progress — the "Deploy to Firebase Hosting" GitHub Action (queued →
+  //     building → done/failed). Best-effort: once the repo is private,
+  //     GitHub won't answer without a login and this just stays quiet.
+  //  2. What's actually live — version.json, which that Action stamps onto
+  //     the site with every deploy. This is the real "it's live now" signal
+  //     and keeps working whatever happens to the repo.
+  // Everyone else just gets the plain "new version available" banner once
+  // the service worker spots an update (handled above).
+  const DEPLOY_WORKFLOW = 'firebase-hosting-merge.yml';
   function startDeploymentPolling(){
     if(!isAdmin()) return;
 
-    const check = async () => {
+    const checkProgress = async () => {
       try{
-        const res = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/pages/builds/latest`);
+        const res = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/${DEPLOY_WORKFLOW}/runs?per_page=1`);
         if(!res.ok) return;
-        const build = await res.json();
-
-        if(build.status === 'queued'){
+        const data = await res.json();
+        const run = data.workflow_runs && data.workflow_runs[0];
+        if(!run) return;
+        if(['queued', 'requested', 'waiting', 'pending'].includes(run.status)){
           showDeployProgress('⏳ Site update queued — about to start building…');
           return;
         }
-        if(build.status === 'building'){
-          showDeployProgress('🔧 Site update building — usually done within a minute or two.');
+        if(run.status === 'in_progress'){
+          showDeployProgress('🔧 Site update building — usually live within a minute or two.');
           return;
         }
-        if(build.status === 'errored'){
-          showDeployProgress('⚠️ The last site update failed to build — check the Actions tab on GitHub.', true);
+        if(run.status === 'completed' && ['failure', 'timed_out', 'startup_failure'].includes(run.conclusion)){
+          showDeployProgress('⚠️ The last site update failed to deploy — check the Actions tab on GitHub.', true);
           return;
         }
-
-        // status === 'built' (or anything else we don't specifically track)
         hideDeployProgress();
-        if(build.status !== 'built') return;
-
-        const lastSeen = localStorage.getItem('lastSeenDeployId');
-        const currentId = String(build.id || build.updated_at);
-        if(lastSeen && lastSeen !== currentId){
-          showBanner('🟢 The site was just updated — tap to see the latest.');
-        }
-        localStorage.setItem('lastSeenDeployId', currentId);
       } catch(e){
         // Quietly skip this round — not worth surfacing a network hiccup as an error
       }
     };
+
+    const checkLive = async () => {
+      try{
+        const res = await fetch('version.json', { cache: 'no-store' });
+        if(!res.ok) return;
+        const live = await res.json();
+        const currentId = String(live.sha || live.deployedAt || '');
+        if(!currentId) return;
+        const lastSeen = localStorage.getItem('lastSeenDeployId');
+        if(lastSeen && lastSeen !== currentId){
+          hideDeployProgress();
+          showBanner('🟢 The site was just updated — tap to see the latest.');
+        }
+        localStorage.setItem('lastSeenDeployId', currentId);
+      } catch(e){}
+    };
+
+    const check = () => { checkProgress(); checkLive(); };
     check();
     setInterval(check, 45000);
   }
