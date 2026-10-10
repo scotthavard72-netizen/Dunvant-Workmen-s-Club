@@ -1596,8 +1596,18 @@
     if(!entered) return;
     try{
       if(adminPinCache === null){
-        const doc = await db.collection('staff').doc(MY_UID).get();
-        adminPinCache = doc.exists ? String(doc.data().adminPin || '') : '';
+        // PINs now live in staffPins (only you and Site Admins can read
+        // yours); fall back to the old field on the staff record.
+        let pin = '';
+        try{
+          const p = await db.collection('staffPins').doc(MY_UID).get();
+          if(p.exists) pin = String(p.data().pin || '');
+        } catch(e){}
+        if(!pin){
+          const doc = await db.collection('staff').doc(MY_UID).get();
+          pin = doc.exists ? String(doc.data().adminPin || '') : '';
+        }
+        adminPinCache = pin;
       }
     } catch(e){
       errorEl.textContent = "Couldn't check the passcode — try again.";
@@ -1605,7 +1615,7 @@
       return;
     }
     if(!adminPinCache){
-      errorEl.textContent = "No admin passcode is set up for your account yet — add one to your staff record in Firestore.";
+      errorEl.textContent = "No Site Admin PIN is set for your account yet — add one on Manage Staff Logins.";
       errorEl.style.display = 'block';
       return;
     }

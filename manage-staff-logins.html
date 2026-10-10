@@ -209,7 +209,7 @@
       <td data-label="Name"><input type="text" class="f-name" value="${data.name || ''}"></td>
       <td data-label="Email"><input type="email" class="f-email" value="${data.email || ''}" disabled></td>
       <td data-label="Roles"><div class="roles-cell">${roleChipsHtml(id, data.roles || [])}</div></td>
-      <td data-label="Site Admin PIN"><input type="text" inputmode="numeric" maxlength="8" class="f-pin" placeholder="Not set" value="${data.adminPin || ''}"></td>
+      <td data-label="Site Admin PIN"><input type="text" inputmode="numeric" maxlength="8" class="f-pin" placeholder="Not set" value="${PINS[id] ?? data.adminPin ?? ''}"></td>
       <td data-label="">
         <div class="row-actions">
           <button class="reset-btn" onclick="sendReset('${data.email}')">Reset PW</button>
@@ -220,12 +220,21 @@
     return tr;
   }
 
+  let PINS = {};
   async function loadStaff(){
     const statusEl = document.getElementById('load-status');
     const tbody = document.getElementById('staff-rows');
     tbody.innerHTML = '';
     try{
       const snapshot = await db.collection('staff').orderBy('name').get();
+      // Site Admin PINs live in their own collection that only the owner and
+      // Site Admins can read (staff records are readable by every member of
+      // staff, for the directory). Older PINs may still be on the staff record.
+      PINS = {};
+      try{
+        const pinSnap = await db.collection('staffPins').get();
+        pinSnap.forEach(d => { PINS[d.id] = String(d.data().pin || ''); });
+      } catch(e){}
       if(snapshot.empty){
         statusEl.textContent = 'No staff added yet — use "+ Add Person" below to add the first one.';
         return;
@@ -258,7 +267,9 @@
         const name = row.querySelector('.f-name').value.trim();
         const activeRoles = [...row.querySelectorAll('.role-chip.active')].map(c => c.dataset.role);
         const adminPin = row.querySelector('.f-pin').value.trim();
-        batch.update(db.collection('staff').doc(docId), { name, roles: activeRoles, adminPin });
+        batch.update(db.collection('staff').doc(docId), { name, roles: activeRoles, adminPin: firebase.firestore.FieldValue.delete() });
+        if(adminPin) batch.set(db.collection('staffPins').doc(docId), { pin: adminPin });
+        else batch.delete(db.collection('staffPins').doc(docId));
       });
       setProgress('save-progress', 60);
       await batch.commit();

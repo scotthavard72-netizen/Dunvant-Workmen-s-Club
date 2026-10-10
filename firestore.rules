@@ -1,0 +1,113 @@
+rules_version = '2';
+// Dunvant WMC — Firestore access rules.
+// "Staff" means someone a manager has approved (they have a staff record).
+// A brand-new sign-up is signed in but NOT staff until approved, so they
+// can't see anything except their own sign-up request.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isStaff() {
+      return signedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+    function myRoles() {
+      return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.roles;
+    }
+    function isAdmin() { return isStaff() && myRoles().hasAny(['admin']); }
+    function isMgr()   { return isStaff() && myRoles().hasAny(['admin', 'mgmt']); }
+
+    // ---- People ----
+    match /staff/{userId} {
+      // Everyone on staff can see the team list (directory, shout-outs);
+      // you can always check your own record (even before approval).
+      allow read: if isStaff() || (signedIn() && request.auth.uid == userId);
+      // You can only clear your own "must change password" flag.
+      allow update: if signedIn() && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mustChangePassword']);
+      // Managers can approve a sign-up as bar / keyholder / manager.
+      allow create: if isMgr()
+        && request.resource.data.roles.hasOnly(['bar', 'keyholder', 'mgmt'])
+        && exists(/databases/$(database)/documents/staffSignupRequests/$(userId));
+      // Site Admins can do anything with staff records.
+      allow read, write: if isAdmin();
+    }
+
+    // Site Admin PINs — only the owner and Site Admins can see them.
+    match /staffPins/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow read, write: if isAdmin();
+    }
+
+    match /staffSignupRequests/{userId} {
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow read, delete: if isMgr();
+    }
+
+    // ---- Rota ----
+    match /rota/{doc} {
+      allow read: if true;
+      allow write: if isMgr();
+    }
+    match /rotaConfirmations/{id} { allow read, write: if isStaff(); }
+    match /availability/{docId} {
+      allow read: if isStaff();
+      allow create: if isStaff() && request.resource.data.staffUid == request.auth.uid;
+      allow delete: if isStaff() && resource.data.staffUid == request.auth.uid;
+    }
+    match /shiftCoverRequests/{id} { allow read, write: if isStaff(); }
+    match /shiftSwaps/{id}         { allow read, write: if isStaff(); }
+
+    // ---- Staff tools ----
+    match /staffChat/{msgId} {
+      allow read, create: if isStaff();
+      allow delete: if isStaff() && (resource.data.authorUid == request.auth.uid || isMgr());
+    }
+    match /activityLog/{logId}        { allow read, create: if isStaff(); }
+    match /adminAccessLog/{id}        { allow read, write: if isStaff(); }
+    match /shiftHandoverNotes/{id}    { allow read, write: if isStaff(); }
+    match /tickets/{ticketId}         { allow read, write: if isStaff(); }
+    match /diaryEntries/{id}          { allow read, write: if isStaff(); }
+    match /shoutouts/{id}             { allow read, write: if isStaff(); }
+    match /staffSuggestions/{id}      { allow read, write: if isStaff(); }
+    match /cashUps/{id}               { allow read, write: if isStaff(); }
+    match /editingPresence/{id}       { allow read, write: if isStaff(); }
+
+    // Accident / incident reports: staff file them and see their own;
+    // only managers see everyone's and mark them reviewed.
+    match /incidents/{id} {
+      allow create: if isStaff() && request.resource.data.reportedByUid == request.auth.uid;
+      allow read: if isMgr() || (isStaff() && resource.data.reportedByUid == request.auth.uid);
+      allow update: if isMgr();
+    }
+
+    // ---- Public site ----
+    match /memberSuggestions/{id} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+    match /bookingRequests/{id} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+    match /bookings/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /shows/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /whatsOnEvents/{id} {
+      allow read: if true;
+      allow write: if isMgr();
+    }
+    match /galleryPhotos/{id} {
+      allow read: if true;
+      allow write: if isMgr();
+    }
+    match /galleryImages/{id} {
+      allow read: if true;
+      allow write: if isMgr();
+    }
+  }
+}

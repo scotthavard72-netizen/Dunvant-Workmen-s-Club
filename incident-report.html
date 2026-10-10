@@ -292,7 +292,9 @@
   async function loadAll(){
     let docs = [];
     try{
-      const snap = await db.collection('incidents').get();
+      // Managers load every report; everyone else can only read their own.
+      const q = CAN_REVIEW ? db.collection('incidents') : db.collection('incidents').where('reportedByUid', '==', MY_UID);
+      const snap = await q.get();
       docs = snap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
     } catch(e){
       const msg = e.code === 'permission-denied'
