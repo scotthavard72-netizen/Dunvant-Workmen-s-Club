@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dunvant-site-v23';
+const CACHE_NAME = 'dunvant-site-v24';
 const URLS_TO_CACHE = [
   "agm-planning.html",
   "backup-reminder.html",
@@ -100,6 +100,27 @@ self.addEventListener('fetch', (event) => {
       return cached || fetchPromise;
     })
   );
+});
+
+// Push alerts from the server (functions/index.js via Firebase Cloud
+// Messaging) — these arrive even when the staff app is closed. FCM wraps
+// our fields in "data"; plain web-push payloads are handled too.
+self.addEventListener('push', (event) => {
+  let p = {};
+  try {
+    const j = event.data ? event.data.json() : {};
+    p = j.data || j.notification || j;
+  } catch (e) {
+    p = { body: event.data ? event.data.text() : '' };
+  }
+  const opts = {
+    body: p.body || '',
+    icon: 'assets/dw-staff-icon-192.png',
+    badge: 'assets/dw-staff-icon-192.png',
+    data: { url: p.url || 'staff-hub.html' }
+  };
+  if (p.tag) opts.tag = p.tag;
+  event.waitUntil(self.registration.showNotification(p.title || 'Dunvant WMC Staff', opts));
 });
 
 // Tapping a staff notification (shown via showStaffNotification in

@@ -38,6 +38,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Phones signed up for push alerts. Each device can only register (or
+    // remove) itself for the person signed in on it; nobody can read them —
+    // only the alert server (functions/) uses them.
+    match /pushTokens/{token} {
+      allow create, update: if isStaff() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isStaff() && resource.data.uid == request.auth.uid;
+    }
+
     match /staffSignupRequests/{userId} {
       allow create: if signedIn() && request.auth.uid == userId;
       allow read, delete: if isMgr();

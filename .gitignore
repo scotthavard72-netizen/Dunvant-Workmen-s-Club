@@ -69,5 +69,5 @@ node_modules/
 .dataconnect
 
 # Firebase CLI tooling (not part of the site)
-package.json
-package-lock.json
+/package.json
+/package-lock.json

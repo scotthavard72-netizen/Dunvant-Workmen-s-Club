@@ -1551,6 +1551,9 @@
     if(Notification.permission === 'granted'){
       btn.textContent = '🔔 Notifications on';
       btn.disabled = true;
+      // Also sign this device up for real push alerts (they arrive with the
+      // app closed). Not on shared bar devices — those sign out on close.
+      if(window.enableStaffPush && MY_UID && !isSharedDevice()) enableStaffPush(db, MY_UID);
     } else if(Notification.permission === 'denied'){
       btn.textContent = '🔕 Notifications blocked in browser settings';
       btn.disabled = true;
@@ -1772,8 +1775,9 @@
     ).join('');
   }
 
-  function logout(){
+  async function logout(){
     intentionalNavigation = true; // don't fight our own sign-out with the pagehide handler
+    if(window.disableStaffPush) await disableStaffPush(db);
     auth.signOut();
     localStorage.removeItem('staffUserName');
     localStorage.removeItem('staffUserRoles');

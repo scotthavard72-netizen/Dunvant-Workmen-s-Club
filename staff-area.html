@@ -346,29 +346,6 @@
   // request under staffSignupRequests. No "staff" doc is created here, so the
   // person has no access at all until a manager or Site Admin approves them
   // on the New Staff Requests page — which is also what flags it in Staff Hub.
-  // Instant phone alert for managers via ntfy (free push app — install
-  // "ntfy" and subscribe to this channel name). Works even when Staff Hub is
-  // closed. Anyone who reads this page's source could find the channel name,
-  // so the alert deliberately carries no names or emails — just "someone
-  // signed up". Sent as a JSON body with no custom headers so the browser
-  // doesn't need a CORS preflight. Best-effort: a failure never affects the
-  // sign-up itself.
-  const NTFY_TOPIC = 'dunvant-staff-8gmj31i8b0eh';
-  function pingManagersPhones(){
-    try{
-      fetch('https://ntfy.sh/', {
-        method: 'POST',
-        body: JSON.stringify({
-          topic: NTFY_TOPIC,
-          title: 'New staff sign-up',
-          message: 'Someone new has signed up for the staff app. Tap to approve or decline them.',
-          tags: ['wave'],
-          priority: 4,
-          click: 'https://dunvant-staff.web.app/staff-signups'
-        })
-      }).catch(() => {});
-    } catch(e){ /* never block sign-up */ }
-  }
 
   let signupInFlight = false;
   async function attemptSignup(){
@@ -410,7 +387,6 @@
       });
       await tempApp.auth().signOut();
       await tempApp.delete();
-      pingManagersPhones();
 
       document.getElementById('signup-pending-message').textContent =
         `Thanks, ${name}. A manager has been notified — once they've approved you, sign in with the email and password you just chose.`;
