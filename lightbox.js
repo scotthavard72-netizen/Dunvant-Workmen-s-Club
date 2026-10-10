@@ -56,6 +56,12 @@
   function show(){
     const a = items[index];
     imgEl.src = a.getAttribute('href');
+    // Photos added through Manage Gallery link to a small preview; swap in the
+    // full-size copy once it arrives (only if they haven't moved on).
+    if(a.dataset.fullId && window.LIGHTBOX_FULL){
+      const want = index;
+      window.LIGHTBOX_FULL(a.dataset.fullId).then(src => { if(src && index === want) imgEl.src = src; }).catch(() => {});
+    }
     const img = a.querySelector('img');
     imgEl.alt = img ? img.alt : '';
     capEl.textContent = a.getAttribute('title') || (img ? img.alt : '');

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Manage Gallery — Dunvant WMC</title>
+<link rel="manifest" href="manifest-staff.json">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-staff-icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-staff-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:calc(26px + env(safe-area-inset-top)) 24px 26px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:calc(16px + env(safe-area-inset-top)); right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  main{max-width:720px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:20px; line-height:1.5;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+  .preview-link{display:inline-block; font-size:0.84rem; font-weight:600; color:var(--brass); text-decoration:none; margin-bottom:22px;}
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin:26px 0 12px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px;}
+  .card label.field{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .card select, .card input[type="text"]{width:100%; font-family:'Inter', sans-serif; font-size:1rem; padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); margin-bottom:14px;}
+  .pick-btn{display:block; text-align:center; font-size:0.95rem; font-weight:600; color:var(--forest); border:2px dashed var(--forest); border-radius:10px; padding:20px 14px; cursor:pointer; margin-bottom:14px;}
+  #photo-input{display:none;}
+  .previews{display:grid; grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:8px; margin-bottom:14px;}
+  .previews img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:6px; border:1px solid var(--line);}
+  .upload-btn{font-family:'Inter', sans-serif; font-weight:600; font-size:0.95rem; background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512; border:none; border-radius:8px; padding:13px 20px; cursor:pointer; width:100%;}
+  .upload-btn:disabled{opacity:0.6; cursor:default;}
+  .status{font-size:0.86rem; margin-top:10px; text-align:center; color:var(--muted);}
+  .status.success{color:#3d8f6f; font-weight:600;}
+  .status.error{color:#c25a4d; font-weight:600;}
+  .load-status{font-size:0.86rem; color:var(--muted); margin-bottom:12px;}
+  .photo-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px;}
+  .photo-item{background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .photo-item img{width:100%; aspect-ratio:4/3; object-fit:cover; display:block;}
+  .photo-body{padding:10px 12px;}
+  .photo-cap{font-size:0.84rem; font-weight:600; min-height:1.2em;}
+  .photo-meta{font-size:0.72rem; color:var(--muted); margin-top:3px;}
+  .remove-btn{margin-top:8px; width:100%; background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.78rem; font-weight:600; border-radius:6px; padding:8px; cursor:pointer;}
+  a.back{display:inline-block; margin-top:26px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Management</span>
+  <h1>Manage Gallery</h1>
+  <p>Add photos to the public Gallery page</p>
+</header>
+<main>
+  <div class="notice">Photos you add here go on the public Gallery straight away, newest first in the section you pick. They're shrunk on your phone before uploading, so big photos are fine. Only add photos the people in them are happy to be on the website.</div>
+
+  <a class="preview-link" href="gallery.html" target="_blank">↗ View the live Gallery</a>
+
+  <div class="card" id="upload-card">
+    <label class="pick-btn" for="photo-input">📷 Choose photos</label>
+    <input type="file" id="photo-input" accept="image/*" multiple>
+    <div class="previews" id="previews"></div>
+    <label class="field" for="photo-section">Which part of the Gallery?</label>
+    <select id="photo-section">
+      <option value="nights">Nights at the club</option>
+      <option value="room">The function room</option>
+      <option value="past">Past events</option>
+    </select>
+    <label class="field" for="photo-caption">Caption (optional)</label>
+    <input type="text" id="photo-caption" placeholder="e.g. Halloween party 2026" maxlength="80">
+    <button class="upload-btn" id="upload-btn" onclick="uploadPhotos()">Add to Gallery</button>
+    <p class="status" id="upload-status"></p>
+  </div>
+
+  <div class="section-label">Photos added here</div>
+  <p class="load-status" id="load-status">Loading…</p>
+  <div class="photo-list" id="photo-list"></div>
+
+  <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  const SECTION_LABEL = { room: 'The function room', nights: 'Nights at the club', past: 'Past events' };
+  let MY_NAME = '', MY_UID = '';
+  let PICKED = []; // [{ thumb, full, aspect }]
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function logActivity(action, detail){
+    try{
+      await db.collection('activityLog').add({
+        actorUid: MY_UID, actorName: MY_NAME || 'Someone', action, detail: detail || '',
+        createdAtMs: Date.now(), createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){}
+  }
+
+  function loadImage(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Couldn't read that photo."));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("One of those doesn't look like a photo."));
+        img.onload = () => resolve(img);
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Shrink to a JPEG no longer than maxSide, stepping quality down until it's
+  // under maxBytes (Firestore documents top out at 1MB).
+  function toJpeg(img, maxSide, maxBytes){
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * scale);
+    c.height = Math.round(img.height * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    let q = 0.8, out = c.toDataURL('image/jpeg', q);
+    while(out.length > maxBytes && q > 0.35){ q -= 0.08; out = c.toDataURL('image/jpeg', q); }
+    return out;
+  }
+
+  document.getElementById('photo-input').addEventListener('change', async (e) => {
+    const files = [...(e.target.files || [])].slice(0, 12);
+    const statusEl = document.getElementById('upload-status');
+    const previews = document.getElementById('previews');
+    PICKED = []; previews.innerHTML = '';
+    if(!files.length) return;
+    statusEl.className = 'status'; statusEl.textContent = 'Getting the photos ready…';
+    try{
+      for(const f of files){
+        const img = await loadImage(f);
+        PICKED.push({
+          thumb: toJpeg(img, 640, 90000),
+          full: toJpeg(img, 1600, 800000),
+          aspect: Math.round((img.width / img.height) * 100) / 100
+        });
+        const p = document.createElement('img');
+        p.src = PICKED[PICKED.length - 1].thumb;
+        p.alt = '';
+        previews.appendChild(p);
+      }
+      statusEl.textContent = `${PICKED.length} photo${PICKED.length === 1 ? '' : 's'} ready.` + (e.target.files.length > 12 ? ' (12 at a time — add the rest after.)' : '');
+    } catch(err){
+      PICKED = []; previews.innerHTML = '';
+      statusEl.className = 'status error'; statusEl.textContent = err.message;
+    }
+  });
+
+  async function uploadPhotos(){
+    const statusEl = document.getElementById('upload-status');
+    if(!PICKED.length){ statusEl.className = 'status error'; statusEl.textContent = 'Choose some photos first.'; return; }
+    const section = document.getElementById('photo-section').value;
+    const caption = document.getElementById('photo-caption').value.trim();
+    const btn = document.getElementById('upload-btn');
+    btn.disabled = true;
+    let done = 0;
+    try{
+      for(const p of PICKED){
+        btn.textContent = `Uploading ${done + 1} of ${PICKED.length}…`;
+        const ref = db.collection('galleryPhotos').doc();
+        // Full-size copy in its own document, only fetched when someone taps the photo.
+        await db.collection('galleryImages').doc(ref.id).set({ image: p.full });
+        await ref.set({
+          thumb: p.thumb, aspect: p.aspect, section, caption,
+          addedByUid: MY_UID, addedByName: MY_NAME || 'Someone',
+          createdAtMs: Date.now(), createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        done++;
+      }
+      logActivity('Gallery Photos Added', `${done} to ${SECTION_LABEL[section]}`);
+      statusEl.className = 'status success';
+      statusEl.textContent = `✓ ${done} photo${done === 1 ? '' : 's'} added to ${SECTION_LABEL[section]}.`;
+      PICKED = [];
+      document.getElementById('previews').innerHTML = '';
+      document.getElementById('photo-input').value = '';
+      document.getElementById('photo-caption').value = '';
+      loadPhotos();
+    } catch(e){
+      statusEl.className = 'status error';
+      statusEl.textContent = (done ? `${done} added, then it stopped — ` : '') + (e.code === 'permission-denied'
+        ? "Site Admin needs to update Firestore's access rules for the gallery."
+        : "couldn't upload — try again in a moment.");
+    }
+    btn.disabled = false; btn.textContent = 'Add to Gallery';
+  }
+
+  async function loadPhotos(){
+    const listEl = document.getElementById('photo-list');
+    const statusEl = document.getElementById('load-status');
+    try{
+      const snap = await db.collection('galleryPhotos').get();
+      const docs = snap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+      listEl.innerHTML = docs.map(doc => {
+        const d = doc.data();
+        const when = d.createdAtMs ? new Date(d.createdAtMs).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        return `<div class="photo-item">
+          <img src="${d.thumb}" alt="${escapeHtml(d.caption)}">
+          <div class="photo-body">
+            <div class="photo-cap">${escapeHtml(d.caption) || '<span style="color:var(--muted);font-weight:400">No caption</span>'}</div>
+            <div class="photo-meta">${SECTION_LABEL[d.section] || ''} · ${escapeHtml(d.addedByName)}${when ? ' · ' + when : ''}</div>
+            <button class="remove-btn" onclick="removePhoto('${doc.id}')">Remove from Gallery</button>
+          </div>
+        </div>`;
+      }).join('');
+      statusEl.textContent = docs.length ? '' : "Nothing added here yet. (The photos already on the Gallery were put up by Site Admin — ask if you want any of those changed.)";
+    } catch(e){
+      statusEl.textContent = e.code === 'permission-denied'
+        ? "Couldn't load — Site Admin needs to update Firestore's access rules for the gallery."
+        : "Couldn't load the photos — try refreshing.";
+    }
+  }
+
+  async function removePhoto(id){
+    if(!confirm('Take this photo off the Gallery?')) return;
+    try{
+      await db.collection('galleryPhotos').doc(id).delete();
+      try{ await db.collection('galleryImages').doc(id).delete(); } catch(e){}
+      logActivity('Gallery Photo Removed', '');
+      loadPhotos();
+    } catch(e){
+      alert("Couldn't remove it — " + e.message);
+    }
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){ window.location.href = 'staff-area.html'; return; }
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      const data = doc.exists ? doc.data() : {};
+      const roles = data.roles || [];
+      if(!roles.includes('admin') && !roles.includes('mgmt')){
+        document.getElementById('upload-card').style.display = 'none';
+        document.getElementById('load-status').textContent = "You're signed in, but this page is for Management and Site Admin only.";
+        return;
+      }
+      MY_UID = user.uid; MY_NAME = data.name || '';
+      loadPhotos();
+    } catch(e){
+      document.getElementById('load-status').textContent = "Couldn't check your access — " + e.message;
+    }
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  function applyTheme(theme){
+    if(theme === 'dark'){ document.documentElement.setAttribute('data-theme', 'dark'); themeIcon.textContent = '🌙'; }
+    else { document.documentElement.removeAttribute('data-theme'); themeIcon.textContent = '☀️'; }
+  }
+  applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
+  themeToggle.addEventListener('click', () => {
+    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(t); localStorage.setItem('theme', t);
+  });
+</script>
+<script src="update-banner.js"></script>
+</body>
+</html>

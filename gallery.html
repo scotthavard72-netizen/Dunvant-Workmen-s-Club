@@ -98,7 +98,7 @@
 <main>
   <div class="section-head"><span class="num">1</span><h1>The function room</h1></div>
   <p class="intro">Set up for whatever you're celebrating — birthdays, anniversaries, Christmas dos and club nights. <a href="book.html">Book it →</a></p>
-  <div class="ph-grid">
+  <div class="ph-grid" data-section="room">
     <a class="ph wide" href="assets/photos/room-disco.jpg" data-lightbox="room" title="Party night set-up"><img src="assets/photos/room-disco.jpg" alt="The function room set for a party, with the stage, starlight backdrop and disco lights" loading="lazy"><span class="ph-cap">Party night set-up</span></a>
     <a class="ph" href="assets/photos/room-gold.jpg" data-lightbox="room" title="Golden anniversary"><img src="assets/photos/room-gold.jpg" alt="Long tables dressed in black and gold for a golden wedding anniversary" loading="lazy"><span class="ph-cap">Golden anniversary</span></a>
     <a class="ph" href="assets/photos/room-christmas.jpg" data-lightbox="room" title="Christmas dinner"><img src="assets/photos/room-christmas.jpg" alt="The room laid out with white tables and decorations for Christmas dinner" loading="lazy"><span class="ph-cap">Christmas dinner</span></a>
@@ -106,7 +106,7 @@
   </div>
 
   <div class="section-head"><span class="num">2</span><h2>Nights at the club</h2></div>
-  <div class="ph-grid">
+  <div class="ph-grid" data-section="nights">
     <a class="ph wide" href="assets/photos/party-crowd.jpg" data-lightbox="nights" title="Golden anniversary party"><img src="assets/photos/party-crowd.jpg" alt="A packed function room during a golden anniversary party" loading="lazy"><span class="ph-cap">Golden anniversary party</span></a>
     <a class="ph" href="assets/photos/party-dancing.jpg" data-lightbox="nights" title="On the dance floor"><img src="assets/photos/party-dancing.jpg" alt="Guests dancing on the dance floor at a family party" loading="lazy"><span class="ph-cap">On the dance floor</span></a>
     <a class="ph tall" href="assets/photos/quiz-night.jpg" data-lightbox="nights" title="Tuesday quiz night"><img src="assets/photos/quiz-night.jpg" alt="Teams giving a thumbs up at the Tuesday quiz" loading="lazy"><span class="ph-cap">Tuesday quiz night</span></a>
@@ -117,7 +117,7 @@
   </div>
 
   <div class="section-head"><span class="num">3</span><h2>Past events</h2></div>
-  <div class="ph-grid">
+  <div class="ph-grid" data-section="past">
     <a class="ph" href="assets/posters/night-at-the-races.jpg" data-lightbox="past" title="A Night at the Races — 3 October"><img src="assets/posters/night-at-the-races.jpg" alt="Poster for A Night at the Races on 3 October" loading="lazy"><span class="ph-cap">A Night at the Races — 3 October</span></a>
     <a class="ph wide" href="assets/posters/races-sponsors.jpg" data-lightbox="past" title="Thank you to our Night at the Races sponsors"><img src="assets/posters/races-sponsors.jpg" alt="Thank you to the Night at the Races sponsors: Morgan Financial Solutions, Shircar, Hill Grwp, Dennis J Stock Carpet and Upholstery Cleaning, Uprise Bikes, Baileys Building Contractors, Gower Brows and Beauty" loading="lazy"><span class="ph-cap">Thank you to our Night at the Races sponsors</span></a>
   </div>
@@ -150,6 +150,65 @@
     applyTheme(newTheme);
     localStorage.setItem('theme', newTheme);
   });
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  // Photos managers add in Manage Gallery (staff app). They go at the front of
+  // their section, newest first. If they can't be loaded, the photos already
+  // on the page still show as normal.
+  (function(){
+    try{
+      firebase.initializeApp({
+        apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+        authDomain: "dunvantwmc-36de5.firebaseapp.com",
+        projectId: "dunvantwmc-36de5",
+        storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+        messagingSenderId: "826027608283",
+        appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+      });
+    } catch(e){ return; }
+    const db = firebase.firestore();
+
+    // Full-size copy, fetched only when someone taps the photo (see lightbox.js).
+    window.LIGHTBOX_FULL = async (id) => {
+      const doc = await db.collection('galleryImages').doc(id).get();
+      return doc.exists ? doc.data().image : null;
+    };
+
+    function shape(aspect){
+      if(aspect >= 1.3) return 'wide';
+      if(aspect <= 0.8) return 'tall';
+      return '';
+    }
+
+    db.collection('galleryPhotos').get().then(snap => {
+      const docs = snap.docs.sort((a, b) => (a.data().createdAtMs || 0) - (b.data().createdAtMs || 0));
+      docs.forEach(doc => {
+        const d = doc.data();
+        const grid = document.querySelector(`.ph-grid[data-section="${d.section}"]`);
+        if(!grid || !d.thumb) return;
+        const a = document.createElement('a');
+        a.className = 'ph ' + shape(d.aspect || 1);
+        a.href = d.thumb;
+        a.dataset.lightbox = d.section;
+        a.dataset.fullId = doc.id;
+        if(d.caption) a.title = d.caption;
+        const img = document.createElement('img');
+        img.src = d.thumb;
+        img.alt = d.caption || 'Photo from the club';
+        img.loading = 'lazy';
+        a.appendChild(img);
+        if(d.caption){
+          const cap = document.createElement('span');
+          cap.className = 'ph-cap';
+          cap.textContent = d.caption;
+          a.appendChild(cap);
+        }
+        grid.insertBefore(a, grid.firstChild); // oldest first in the loop, so newest ends up on top
+      });
+    }).catch(() => { /* keep the built-in photos only */ });
+  })();
 </script>
 <script src="lightbox.js"></script>
 </body>
