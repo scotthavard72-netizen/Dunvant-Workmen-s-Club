@@ -855,6 +855,7 @@
         {
           label: "Team",
           items: [
+            ["staff-signups.html", "New Staff Requests", "People who've signed up and need letting in", "pendingSignups"],
             ["staff-chat.html", "Staff Chat", "Quick messages between shifts, by channel"],
             ["team-activity.html", "Team Activity", "What's been happening around the site recently"],
             ["new-starter-checklist.html", "New Starter Checklist", "Training and setup steps for someone joining the team"],
@@ -870,6 +871,7 @@
         ["edit-site-content.html", "Edit Site Content", "Find where to change something, and a live editor to change it"],
         ["https://outlook.live.com/owa/calendar/bb8f79de-cbbe-4d7b-8e7f-2123ebde7711/c726ef94-949e-4889-9aa2-39f3f93837b8/cid-FC69B5B067121F85/index.html", "Outlook Rota Calendar", "Add, edit, or remove staff shifts"],
         ["facebook-page-admin.html", "Facebook Page", "Post updates and manage the club's page"],
+        ["staff-signups.html", "New Staff Requests", "People who've signed up and need letting in", "pendingSignups"],
         ["manage-staff-logins.html", "Manage Staff Logins", "Add, remove, or update who has access and to what"],
         ["manage-shows.html", "Manage Shows / Box Office", "Add, edit, or remove what's listed on the public Box Office page"],
         ["manage-whats-on.html", "Manage What's On", "Add, edit, or remove what's listed on the public What's On page"],
@@ -982,6 +984,12 @@
       const open = snap.docs.filter(d => (d.data().status || 'open') === 'open').length;
       if(open > 0) badges.openCover = open;
     } catch(e){}
+    if(ROLE_KIND === 'mgmt'){
+      try{
+        const snap = await db.collection('staffSignupRequests').get();
+        if(snap.size > 0) badges.pendingSignups = snap.size;
+      } catch(e){}
+    }
     try{
       const TOTAL_TODO_ITEMS = 16; // keep in sync with the checklist in site-status.html
       const checked = new Set(JSON.parse(localStorage.getItem('siteTodosChecked_v2') || '[]'));
@@ -1387,6 +1395,35 @@
         new Notification('New messages in Staff Chat', { body: `${unseen.length} new messages since you last checked.`, icon: NOTIFY_ICON });
       }
       localStorage.setItem(lastSeenKey, String(latestMs));
+    } catch(e){
+      // Fine if this fails — just no notification this round
+    }
+  }
+
+  // New staff sign-ups — for managers and Site Admins (whoever can approve
+  // them on New Staff Requests). Same timestamp-baseline approach as tickets
+  // below, so it names the person and never fires for ones already seen.
+  async function checkForNewSignups(){
+    if(ROLE_KIND !== 'mgmt' || !('Notification' in window) || Notification.permission !== 'granted') return;
+    try{
+      const snap = await db.collection('staffSignupRequests').get();
+      const docs = snap.docs.sort((a, b) => (b.data().requestedAtMs || 0) - (a.data().requestedAtMs || 0));
+      const latestMs = docs.length ? (docs[0].data().requestedAtMs || 0) : 0;
+      const lastSeenKey = 'lastSeenSignupNotifyMs';
+      if(localStorage.getItem(lastSeenKey) === null){
+        localStorage.setItem(lastSeenKey, String(latestMs));
+        return;
+      }
+      const lastSeen = Number(localStorage.getItem(lastSeenKey) || 0);
+      const unseen = docs.filter(d => (d.data().requestedAtMs || 0) > lastSeen);
+      if(unseen.length === 0) return;
+
+      const n = unseen.length === 1
+        ? new Notification('New staff sign-up', { body: `${unseen[0].data().name || 'Someone'} wants access — tap to approve.`, icon: NOTIFY_ICON })
+        : new Notification('New staff sign-ups', { body: `${unseen.length} people want access — tap to approve.`, icon: NOTIFY_ICON });
+      n.onclick = () => { window.focus(); window.location.href = 'staff-signups.html'; };
+      localStorage.setItem(lastSeenKey, String(latestMs));
+      loadLiveBadges();
     } catch(e){
       // Fine if this fails — just no notification this round
     }
@@ -2040,10 +2077,12 @@
     // now, then on a light poll while this tab stays open and visible.
     checkForNewChatMessages();
     checkForNewTickets();
+    checkForNewSignups();
     setInterval(() => {
       if(document.visibilityState === 'visible'){
         checkForNewChatMessages();
         checkForNewTickets();
+        checkForNewSignups();
       }
     }, 45000);
   });

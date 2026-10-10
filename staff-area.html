@@ -180,7 +180,7 @@
     <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
     <span class="eyebrow">Staff Area</span>
     <h1>Welcome back</h1>
-    <p class="sub">Sign in with the login your manager set up for you</p>
+    <p class="sub">Sign in with your staff login</p>
     <input type="email" id="login-username" placeholder="Email" autocomplete="off">
     <input type="password" id="login-password" placeholder="Password" autocomplete="off">
     <a href="#" id="forgot-password-link" class="forgot-link" onclick="sendForgotPassword(event)">Forgot password?</a>
@@ -190,9 +190,33 @@
     </label>
     <button class="enter" onclick="attemptLogin()">Sign In</button>
     <p class="error" id="login-error">Username or password not recognised</p>
-    <p class="note">New to the team? Ask a manager to set you up in Manage Staff Logins — they'll give you your email and password.</p>
+    <p class="note">New to the team? <a href="#" id="show-signup-link" onclick="showSignupScreen(event)" style="color:rgba(255,255,255,0.75); font-weight:600;">Sign up here</a></p>
     <button class="enter" id="install-btn" style="display:none; margin-top:14px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25);" onclick="installApp()">📲 Install App</button>
     <p class="note" id="ios-install-note" style="display:none;">On iPhone: tap Share → Add to Home Screen to install.</p>
+  </div>
+
+  <!-- Screen: sign up — creates a login, but no access until a manager or Site Admin approves it -->
+  <div class="screen" id="screen-signup">
+    <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
+    <span class="eyebrow">Staff Area</span>
+    <h1>Sign Up</h1>
+    <p class="sub">Set up your login — a manager will get a notification and let you in.</p>
+    <input type="text" id="signup-name" placeholder="Full name" autocomplete="off">
+    <input type="email" id="signup-email" placeholder="Email" autocomplete="off">
+    <input type="password" id="signup-password" placeholder="Password (min 6 characters)" autocomplete="new-password">
+    <input type="password" id="signup-confirm-password" placeholder="Confirm password" autocomplete="new-password">
+    <button class="enter" id="signup-submit-btn" onclick="attemptSignup()">Sign Up</button>
+    <p class="error" id="signup-error"></p>
+    <p class="note"><a href="#" onclick="showLoginScreen(event)" style="color:rgba(255,255,255,0.75); font-weight:600;">← Back to sign in</a></p>
+  </div>
+
+  <!-- Screen: signed up — waiting for approval -->
+  <div class="screen" id="screen-signup-pending">
+    <img class="brand-mark" src="assets/dw-crest-mark.jpg" alt="Dunvant Workingmens Club crest">
+    <span class="eyebrow">All done</span>
+    <h1>Thanks — you're signed up</h1>
+    <p class="sub" id="signup-pending-message">A manager has been notified. Once they've approved you, sign in with the email and password you just chose.</p>
+    <button class="enter" onclick="showLoginScreen(event)">← Back to sign in</button>
   </div>
 
   <!-- Screen: forced password change (first login after a manager creates an account) -->
@@ -305,6 +329,82 @@
     }
   }
 
+  function showSignupScreen(event){
+    if(event) event.preventDefault();
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('screen-login').classList.remove('active');
+    document.getElementById('screen-signup').classList.add('active');
+  }
+  function showLoginScreen(event){
+    if(event) event.preventDefault();
+    ['screen-signup', 'screen-signup-pending'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById('screen-login').classList.add('active');
+  }
+
+  // Sign up: creates a real Firebase login through a separate, temporary app
+  // instance (so this tab's own session is never touched), then files a
+  // request under staffSignupRequests. No "staff" doc is created here, so the
+  // person has no access at all until a manager or Site Admin approves them
+  // on the New Staff Requests page — which is also what flags it in Staff Hub.
+  let signupInFlight = false;
+  async function attemptSignup(){
+    if(signupInFlight) return;
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const confirmPassword = document.getElementById('signup-confirm-password').value;
+    const errorEl = document.getElementById('signup-error');
+    errorEl.style.display = 'none';
+
+    if(!name || !email || !password){
+      errorEl.textContent = 'Fill in your name, email, and a password first.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if(password.length < 6){
+      errorEl.textContent = 'Password needs to be at least 6 characters.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if(password !== confirmPassword){
+      errorEl.textContent = "Those two passwords don't match — try again.";
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    signupInFlight = true;
+    const btn = document.getElementById('signup-submit-btn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Signing up…';
+    const tempApp = firebase.initializeApp(firebaseConfig, 'temp-signup-' + Date.now());
+    try{
+      const cred = await tempApp.auth().createUserWithEmailAndPassword(email, password);
+      await tempApp.firestore().collection('staffSignupRequests').doc(cred.user.uid).set({
+        name, email,
+        requestedAtMs: Date.now(),
+        requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await tempApp.auth().signOut();
+      await tempApp.delete();
+
+      document.getElementById('signup-pending-message').textContent =
+        `Thanks, ${name}. A manager has been notified — once they've approved you, sign in with the email and password you just chose.`;
+      document.getElementById('screen-signup').classList.remove('active');
+      document.getElementById('screen-signup-pending').classList.add('active');
+      ['signup-name','signup-email','signup-password','signup-confirm-password'].forEach(id => document.getElementById(id).value = '');
+    } catch(e){
+      let msg = e.message;
+      if(e.code === 'auth/email-already-in-use') msg = 'that email already has a login — try signing in, or use "Forgot password?" instead.';
+      if(e.code === 'auth/invalid-email') msg = "that email doesn't look right.";
+      errorEl.textContent = "Couldn't sign you up — " + msg;
+      errorEl.style.display = 'block';
+      try{ await tempApp.delete(); } catch(_){}
+    } finally {
+      signupInFlight = false;
+      btn.textContent = originalText;
+    }
+  }
+
   function sendForgotPassword(event){
     event.preventDefault();
     const email = document.getElementById('login-username').value.trim();
@@ -339,7 +439,7 @@
     try{
       const doc = await db.collection('staff').doc(firebaseUser.uid).get();
       if(!doc.exists){
-        document.getElementById('login-error').textContent = "Your login works, but no role is set up for you yet — ask Site Admin.";
+        document.getElementById('login-error').textContent = "You're signed up, but a manager hasn't approved you yet — try again once they have.";
         document.getElementById('login-error').style.display = 'block';
         auth.signOut();
         return;

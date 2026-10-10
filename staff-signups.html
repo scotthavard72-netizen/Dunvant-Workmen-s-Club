@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>New Staff Requests — Dunvant WMC</title>
+<link rel="manifest" href="manifest-staff.json">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-staff-icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-staff-icon-180.png">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;}
+  [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased;}
+  #offline-banner{display:none; align-items:center; justify-content:center; padding:10px 16px; font-size:0.82rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:300; background:#8a2f2f; color:#fff;}
+  header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:calc(26px + env(safe-area-inset-top)) 24px 26px; text-align:center;}
+  .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
+  header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
+  header p{font-size:0.8rem; color:rgba(255,255,255,0.55); margin-top:4px;}
+  .theme-toggle{
+    position:fixed; top:calc(16px + env(safe-area-inset-top)); right:16px; z-index:100;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:50%; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
+  }
+  main{max-width:720px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px; line-height:1.5;}
+  [data-theme="dark"] .notice{background:#2a2318;}
+  .load-status{font-size:0.88rem; color:var(--muted); margin-bottom:16px;}
+  .pending-item{background:var(--card); border:1px solid var(--brass); border-radius:12px; padding:16px 18px; margin-bottom:12px;}
+  .pending-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px;}
+  .pending-name{font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem;}
+  .pending-email{display:block; font-size:0.8rem; color:var(--muted); margin-top:2px;}
+  .pending-when{font-size:0.74rem; color:var(--muted);}
+  .pending-item label{display:block; font-size:0.74rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .roles-cell{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;}
+  .role-chip{
+    font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600; padding:8px 14px; border-radius:16px; cursor:pointer;
+    border:1px solid var(--line); background:var(--paper); color:var(--muted); user-select:none;
+  }
+  .role-chip.active{background:var(--brass); color:#fff; border-color:var(--brass);}
+  .row-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .approve-btn{flex:1; background:var(--forest); color:#fff; border:none; border-radius:8px; padding:12px 16px; font-size:0.88rem; font-weight:600; cursor:pointer;}
+  .decline-btn{background:none; border:1px solid #c25a4d; color:#c25a4d; font-size:0.88rem; font-weight:600; cursor:pointer; padding:12px 16px; border-radius:8px;}
+  .item-status{font-size:0.82rem; margin-top:8px; color:#c25a4d; font-weight:600;}
+  a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+</style>
+</head>
+<body>
+<div id="offline-banner">📡 You're offline — nothing here will work until you're back online.</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
+
+<header>
+  <span class="eyebrow">Management</span>
+  <h1>New Staff Requests</h1>
+  <p>People who've signed up and are waiting to be let in</p>
+</header>
+<main>
+  <div class="notice">When someone signs up on the staff login page, they land here. They can't see anything until you approve them. Pick what they should have access to, then tap Approve, and they can sign in straight away. Decline anyone you don't recognise.</div>
+
+  <p class="load-status" id="load-status">Loading…</p>
+  <div id="pending-list"></div>
+
+  <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
+</main>
+<script>
+  const ROLE_LABELS = {bar:"Bar", keyholder:"Keyholder", mgmt:"Mgmt", admin:"Admin", committee:"Committee"};
+  // Managers can let people in up to their own level; only Site Admins can
+  // hand out Admin or Committee access.
+  const GRANTABLE = {
+    mgmt: ["bar", "keyholder", "mgmt"],
+    admin: ["bar", "keyholder", "mgmt", "admin", "committee"]
+  };
+  let MY_NAME = '';
+  let MY_UID = '';
+  let MY_GRANTABLE = [];
+
+  function escapeHtml(s){
+    return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function logActivity(action, detail){
+    try{
+      await db.collection('activityLog').add({
+        actorUid: MY_UID,
+        actorName: MY_NAME || 'Someone',
+        action,
+        detail: detail || '',
+        createdAtMs: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){ /* non-critical */ }
+  }
+
+  function makePendingItem(id, data){
+    const div = document.createElement('div');
+    div.className = 'pending-item';
+    div.dataset.docId = id;
+    div.dataset.name = data.name || '';
+    div.dataset.email = data.email || '';
+    const requested = data.requestedAtMs ? new Date(data.requestedAtMs).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    const chips = MY_GRANTABLE.map(r =>
+      `<span class="role-chip${r === 'bar' ? ' active' : ''}" data-role="${r}" onclick="this.classList.toggle('active')">${ROLE_LABELS[r]}</span>`
+    ).join('');
+    div.innerHTML = `
+      <div class="pending-top">
+        <div><span class="pending-name">${escapeHtml(data.name) || 'Unnamed'}</span><span class="pending-email">${escapeHtml(data.email)}</span></div>
+        <span class="pending-when">${requested ? 'Signed up ' + requested : ''}</span>
+      </div>
+      <label>Give them access to</label>
+      <div class="roles-cell">${chips}</div>
+      <div class="row-actions">
+        <button class="approve-btn" onclick="approveSignup('${id}', this)">✓ Approve</button>
+        <button class="decline-btn" onclick="declineSignup('${id}', this)">✕ Decline</button>
+      </div>
+      <p class="item-status"></p>
+    `;
+    return div;
+  }
+
+  function refreshEmptyState(){
+    const remaining = document.querySelectorAll('#pending-list .pending-item').length;
+    document.getElementById('load-status').textContent = remaining === 0
+      ? 'No one waiting right now. 👍'
+      : `${remaining} ${remaining === 1 ? 'person' : 'people'} waiting.`;
+  }
+
+  async function loadPendingSignups(){
+    const listEl = document.getElementById('pending-list');
+    listEl.innerHTML = '';
+    try{
+      const snapshot = await db.collection('staffSignupRequests').orderBy('requestedAtMs').get();
+      snapshot.forEach(doc => listEl.appendChild(makePendingItem(doc.id, doc.data())));
+      refreshEmptyState();
+    } catch(e){
+      document.getElementById('load-status').textContent = "Couldn't load requests — " + e.message;
+    }
+  }
+
+  async function approveSignup(id, btn){
+    const item = btn.closest('.pending-item');
+    const statusEl = item.querySelector('.item-status');
+    const name = item.dataset.name;
+    const email = item.dataset.email;
+    const roles = [...item.querySelectorAll('.role-chip.active')].map(c => c.dataset.role)
+      .filter(r => MY_GRANTABLE.includes(r));
+    statusEl.textContent = '';
+    if(roles.length === 0){
+      statusEl.textContent = 'Pick at least one thing they should have access to first.';
+      return;
+    }
+    const original = btn.textContent;
+    btn.textContent = 'Approving…';
+    btn.disabled = true;
+    try{
+      await db.collection('staff').doc(id).set({ name, email, roles, mustChangePassword: false });
+      await db.collection('staffSignupRequests').doc(id).delete();
+      item.remove();
+      logActivity('New Staff Approved', `${name} (${roles.map(r => ROLE_LABELS[r]).join(', ')})`);
+      refreshEmptyState();
+    } catch(e){
+      statusEl.textContent = "Couldn't approve — " + e.message;
+      btn.textContent = original;
+      btn.disabled = false;
+    }
+  }
+
+  async function declineSignup(id, btn){
+    const item = btn.closest('.pending-item');
+    const name = item.dataset.name || 'this person';
+    if(!confirm(`Decline ${name}? They won't get any access.`)) return;
+    try{
+      await db.collection('staffSignupRequests').doc(id).delete();
+      item.remove();
+      logActivity('New Staff Declined', name);
+      refreshEmptyState();
+    } catch(e){
+      item.querySelector('.item-status').textContent = "Couldn't decline — " + e.message;
+    }
+  }
+
+  function updateOnlineStatus(){
+    document.getElementById('offline-banner').style.display = navigator.onLine ? 'none' : 'flex';
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){
+      document.getElementById('load-status').textContent = 'Sign in on the Staff Area page first.';
+      return;
+    }
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      const data = doc.exists ? doc.data() : {};
+      const roles = data.roles || [];
+      if(roles.includes('admin')) MY_GRANTABLE = GRANTABLE.admin;
+      else if(roles.includes('mgmt')) MY_GRANTABLE = GRANTABLE.mgmt;
+      else {
+        document.getElementById('load-status').textContent = "This page is for managers and Site Admins only.";
+        return;
+      }
+      MY_UID = user.uid;
+      MY_NAME = data.name || '';
+      loadPendingSignups();
+    } catch(e){
+      document.getElementById('load-status').textContent = "Couldn't check your access — " + e.message;
+    }
+  });
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '☀️';
+    }
+  }
+  applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
+  themeToggle.addEventListener('click', () => {
+    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+</body>
+</html>
