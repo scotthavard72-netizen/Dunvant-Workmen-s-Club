@@ -60,6 +60,17 @@
   }
 
 
+  table.fees{width:100%; border-collapse:collapse; margin-top:6px;}
+  table.fees td{padding:9px 0; font-size:0.92rem; border-bottom:1px solid var(--line);}
+  table.fees tr:last-child td{border-bottom:none;}
+  table.fees td:last-child{text-align:right; font-weight:700; color:var(--forest);}
+  @media(max-width:600px){
+    table.fees{display:table; border:none; background:none;}
+    table.fees tbody{display:table-row-group;}
+    table.fees tr{display:table-row; border:none; margin:0; padding:0; background:none; border-radius:0;}
+    table.fees td{display:table-cell; padding:9px 0; border:none; border-bottom:1px solid var(--line);}
+    table.fees td::before{content:none;}
+  }
 </style>
 </head>
 <body>
@@ -70,18 +81,25 @@
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Public Site · Example</span>
+  <span class="eyebrow">Members</span>
   <h1>Membership Renewal</h1>
-  <p>What to do if membership lapses</p>
+  <p>Keeping your membership going</p>
 </header>
 <main>
 
-  <div class="notice">This is an example page — confirm the real renewal process and fee with the committee.</div>
-  <div class="card"><h3>How to renew</h3><p>[Ask at the bar / pay via a specific method] — confirm the real process.</p></div>
-  <div class="card"><h3>Renewal fee</h3><p>[£ amount] per year</p></div>
-  <div class="card"><h3>What happens if it lapses</h3><p>[e.g. reverts to non-member pricing until renewed]</p></div>
+  <div class="card"><h3>How to renew</h3><p>Ask at the bar — staff can renew you on the spot at the till.</p></div>
+  <div class="card">
+    <h3>Membership fees</h3>
+    <table class="fees">
+      <tr><td>Renewal</td><td>£10</td></tr>
+      <tr><td>Over 60s</td><td>£8</td></tr>
+      <tr><td>New members (joining)</td><td>£20</td></tr>
+      <tr><td>Life membership</td><td>Ask at the bar</td></tr>
+    </table>
+  </div>
+  <div class="card"><h3>What members get</h3><p>Member prices at the bar — 30p off a drink, 20p off a soft drink and 10p off a snack — plus a vote at the AGM. Until you renew, you pay non-member prices.</p></div>
 
-  <a class="back" href="club-website.html">← Back to Homepage</a>
+  <a class="back" href="members.html">← Back to Members</a>
 </main>
 
 <script>

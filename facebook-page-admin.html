@@ -45,35 +45,41 @@
     cursor:pointer; font-size:1.05rem;
   }
   .theme-toggle:hover{border-color:var(--brass-light);}
+  .card a{color:var(--brass); font-weight:600;}
 </style>
 </head>
 <body>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Site Admin · Example</span>
+  <span class="eyebrow">Site Admin </span>
   <h1>Facebook Page</h1>
   <p>The Dunvant Workies Official</p>
 </header>
 <main>
-  <div class="notice">This is an example reference page — the site can link out to Facebook, but posting and page management happens in Facebook's own app, not here.</div>
+  <div class="notice">The club's Facebook page is where events and news go first. The website now shows it automatically, so there's no need to copy posts across.</div>
 
   <a class="open-btn" href="https://www.facebook.com/profile.php?id=61563877044858" target="_blank" rel="noopener">Open Facebook Page →</a>
 
   <div class="card">
-    <h3>Posting updates</h3>
-    <p>Use the Facebook app or facebook.com directly to post events, photos, and announcements — anything posted there will also be what members see if they follow the page from the website's Members section.</p>
+    <h3>Posting events and updates</h3>
+    <p>Post on Facebook as normal, from the app or facebook.com. Adding it as a Facebook <strong>Event</strong> (rather than just a post) gives it a date and time, and it shows in the events list.</p>
   </div>
   <div class="card">
-    <h3>Keeping the site in sync</h3>
-    <p>The website's "What's On" and Gallery sections are static — they don't pull from Facebook automatically. After posting a new event or photo there, come back here (or ask in the Claude conversation) to add it to the website too.</p>
+    <h3>Where it shows on the website</h3>
+    <p>Anything on the Facebook page appears under <strong>"Latest from Facebook"</strong> on the public <a href="whats-on.html">What's On</a> page, and on <a href="whats-on-this-week.html">What's On This Week</a> for staff. Visitors tap "Show Facebook posts" to load it (Facebook sets cookies, so they're asked first).</p>
+    <p style="margin-top:8px;">Anything you want pinned at the top of What's On, or that isn't on Facebook, add in <a href="manage-whats-on.html">Manage What's On</a>.</p>
   </div>
   <div class="card">
-    <h3>Page roles</h3>
-    <p>Facebook lets you add other admins/editors to the page itself, separate from this Site Admin login — worth doing in Facebook's own Page Settings if more than one person needs posting access.</p>
+    <h3>Telling staff about changes</h3>
+    <p>For things staff need to know (not the public), post in <a href="staff-chat.html?channel=announcements">📢 Announcements</a> in Staff Chat — everyone gets a notification.</p>
+  </div>
+  <div class="card">
+    <h3>Who can post on Facebook</h3>
+    <p>Facebook page access is managed in Facebook's own page settings, separate from staff logins here. Add anyone else who needs to post there.</p>
   </div>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
 </main>
 <script>
   const themeToggle = document.getElementById('theme-toggle');

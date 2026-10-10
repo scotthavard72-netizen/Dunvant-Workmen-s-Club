@@ -5,16 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Accident / Incident Report — Dunvant WMC</title>
+<link rel="manifest" href="manifest-staff.json">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/dw-staff-icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/dw-staff-icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-
   :root{--ink:#1a1512;--paper:#f0e6d6;--card:#faf4e8;--line:#ded0b8;--muted:#6b5d4f;--brass:#a67c3d;--brass-light:#c9a05e;--forest:#2d4a35;--pop:#ff7a45;}
   [data-theme="dark"]{--ink:#ece2d0;--paper:#161210;--card:#211b16;--line:#3a3128;--muted:#a8977f;--brass:#c9a05e;--brass-light:#e0bd82;--forest:#4a7a5c;--pop:#ff9166;}
   *{box-sizing:border-box; margin:0; padding:0;}
-  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; transition:background 0.25s ease, color 0.25s ease;}
-  *, *::before, *::after{transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased;}
   header{background:linear-gradient(160deg, #1a1512 0%, #16211a 100%); padding:calc(26px + env(safe-area-inset-top)) 24px 26px; text-align:center;}
   .eyebrow{display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--brass-light); margin-bottom:8px;}
   header h1{font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; color:#fff;}
@@ -25,87 +26,324 @@
     border-radius:50%; width:38px; height:38px;
     display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.05rem;
   }
-  .theme-toggle:hover{border-color:var(--brass-light);}
-  main{max-width:680px; margin:0 auto; padding:30px 20px 60px;}
-  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px;}
+  main{max-width:640px; margin:0 auto; padding:30px 20px 60px;}
+  .notice{background:#fff8ea; border:1px solid var(--line); border-radius:10px; padding:16px 20px; font-size:0.84rem; color:var(--muted); margin-bottom:24px; line-height:1.5;}
   [data-theme="dark"] .notice{background:#2a2318;}
-  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin:24px 0 12px;}
-  .section-label:first-of-type{margin-top:0;}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:12px;}
-  .card h3{font-family:'Fraunces', serif; font-size:0.95rem; color:var(--forest); margin-bottom:6px;}
-  .card p, .card li{font-size:0.86rem; color:var(--muted); line-height:1.7;}
-  .card ul{padding-left:1.2em; margin-top:6px;}
-  table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
-  th, td{text-align:left; padding:12px 14px; font-size:0.84rem; border-bottom:1px solid var(--line);}
-  th{background:var(--forest); color:#fff; font-weight:600; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.03em;}
-  tr:last-child td{border-bottom:none;}
-  .step{display:flex; gap:16px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:12px;}
-  .step .num{
-    flex-shrink:0; width:32px; height:32px; border-radius:50%;
-    background:var(--forest); color:#fff; font-family:'Fraunces', serif; font-weight:600;
-    display:flex; align-items:center; justify-content:center; font-size:0.95rem;
+  .section-label{font-family:'Fraunces', serif; font-size:1rem; font-weight:600; color:var(--forest); margin:28px 0 12px;}
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px;}
+  .form-card label{display:block; font-size:0.78rem; font-weight:600; color:var(--forest); margin-bottom:6px;}
+  .form-card input, .form-card select, .form-card textarea{
+    width:100%; font-family:'Inter', sans-serif; font-size:1rem;
+    padding:11px 14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+    margin-bottom:14px;
   }
-  .step .body h3{font-size:0.95rem; margin-bottom:4px;}
-  .step .body p{font-size:0.86rem; color:var(--muted);}
-  .tag{display:inline-block; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:3px 9px; border-radius:12px; margin-bottom:8px;}
-  .tag.todo{background:#fff2d9; color:#8a6a1f;}
-  .tag.done{background:#e4ece9; color:#2c3f38;}
-  .tag.open{background:#fff2d9; color:#8a6a1f;}
-  a.back{display:inline-block; margin-top:10px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
-  @media(max-width:600px){
-    table, thead, tbody, th, td, tr{display:block;}
-    thead{display:none;}
-    tr{background:var(--card); border:1px solid var(--line); border-radius:10px; margin-bottom:10px; padding:6px 0;}
-    td{border:none; padding:6px 16px;}
-    td::before{content:attr(data-label); font-weight:700; display:block; font-size:0.7rem; color:var(--muted); text-transform:uppercase;}
+  .form-card textarea{min-height:70px; resize:vertical;}
+  .row{display:flex; gap:10px;}
+  .row > div{flex:1; min-width:0;}
+  .receipt-pick{display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
+  .receipt-pick label.pick-btn{display:inline-block; margin:0; font-size:0.88rem; font-weight:600; color:var(--forest); border:1px dashed var(--forest); border-radius:8px; padding:11px 14px; cursor:pointer;}
+  .receipt-pick input{display:none;}
+  .receipt-preview{max-height:90px; border-radius:6px; border:1px solid var(--line); display:none;}
+  .submit-btn{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:0.95rem;
+    background:linear-gradient(135deg, var(--brass-light), var(--brass)); color:#1a1512;
+    border:none; border-radius:8px; padding:13px 20px; cursor:pointer; width:100%;
   }
-
-
+  .submit-btn:disabled{opacity:0.6; cursor:default;}
+  .form-status{font-size:0.85rem; color:var(--muted); margin-top:10px; text-align:center;}
+  .form-status.success{color:#3d8f6f; font-weight:600;}
+  .form-status.error{color:#c25a4d; font-weight:600;}
+  .load-status{font-size:0.86rem; color:var(--muted); padding:6px 0;}
+  .claim{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:10px;}
+  .claim-top{display:flex; justify-content:space-between; gap:10px; align-items:baseline;}
+  .claim-what{font-weight:600; font-size:0.94rem;}
+  .claim-amount{font-family:'Fraunces', serif; font-weight:700; font-size:1.05rem; color:var(--forest); white-space:nowrap;}
+  .claim-meta{font-size:0.76rem; color:var(--muted); margin-top:4px;}
+  .claim-note{font-size:0.82rem; color:var(--muted); margin-top:6px;}
+  .tag{font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:3px 8px; border-radius:10px; margin-left:6px; vertical-align:2px;}
+  .tag.pending{background:#fff2d9; color:#8a6a1f;}
+  .tag.approved{background:#dbeafe; color:#1e4a7a;}
+  .tag.declined{background:#fbe2de; color:#8a2f2f;}
+  .tag.paid{background:#e4ece9; color:#2c3f38;}
+  .claim-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .claim-actions button{font-family:'Inter', sans-serif; font-size:0.8rem; font-weight:600; border-radius:6px; padding:9px 12px; cursor:pointer;}
+  .btn-approve{background:var(--forest); color:#fff; border:none;}
+  .btn-paid{background:var(--brass); color:#1a1512; border:none;}
+  .btn-decline{background:none; color:#c25a4d; border:1px solid #c25a4d;}
+  .btn-receipt{background:none; color:var(--forest); border:1px solid var(--line);}
+  .mgmt-only{display:none;}
+  a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+  .steps{display:grid; gap:8px; margin-bottom:22px;}
+  .steps div{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-size:0.84rem; line-height:1.45;}
+  .steps strong{color:var(--forest);}
+  .urgent{background:#fbe2de; border:1px solid #c25a4d; color:#8a2f2f; border-radius:10px; padding:12px 16px; font-size:0.86rem; font-weight:600; margin-bottom:18px; line-height:1.45;}
+  [data-theme="dark"] .urgent{background:#3a1d19; color:#ffb4a8;}
+  .inc-body{font-size:0.86rem; margin-top:8px; line-height:1.5;}
+  .inc-body b{color:var(--forest); font-weight:600;}
+  .tag.new{background:#fbe2de; color:#8a2f2f;}
+  .tag.reviewed{background:#e4ece9; color:#2c3f38;}
 </style>
 </head>
 <body>
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"><span id="theme-icon">☀️</span></button>
 
 <header>
-  <span class="eyebrow">Bar Staff · Example</span>
+  <span class="eyebrow">Health &amp; Safety</span>
   <h1>Accident / Incident Report</h1>
-  <p>For anything health &amp; safety related — different from a till discrepancy</p>
+  <p>For accidents, injuries and anything unsafe — not till issues</p>
 </header>
 <main>
+  <div class="urgent">🚑 Someone badly hurt? Call 999 first and deal with them. Fill this in afterwards.</div>
+  <div class="steps">
+    <div><strong>1. Make sure everyone's safe</strong> — first aid, call for help, keep others away.</div>
+    <div><strong>2. Record it here as soon as you can</strong>, while it's fresh. Managers get an alert straight away.</div>
+    <div><strong>3. If the club keeps a paper accident book</strong>, fill that in too.</div>
+    <div><strong>4. Serious injuries</strong> may have to be reported by law (RIDDOR) — tell a manager in person or by phone, don't just leave it here.</div>
+  </div>
 
-  <div class="notice">This is an example page — an accident book is a genuine legal requirement for reportable injuries. Check what's actually required (RIDDOR in the UK) rather than relying solely on this.</div>
-  <div class="step"><div class="num">1</div><div class="body"><h3>Make sure everyone's safe first</h3><p>Deal with the immediate situation — first aid, calling for help — before worrying about paperwork.</p></div></div>
-  <div class="step"><div class="num">2</div><div class="body"><h3>Record it as soon as possible</h3><p>Who was involved, what happened, time and date, and any witnesses — while it's fresh.</p></div></div>
-  <div class="step"><div class="num">3</div><div class="body"><h3>Notify management</h3><p>Via the Outlook group email or in person — don't let it wait until the next shift.</p></div></div>
-  <div class="step"><div class="num">4</div><div class="body"><h3>Serious injuries</h3><p>Some injuries are legally reportable (RIDDOR) — management needs to know immediately, not just logged for later.</p></div></div>
+  <div class="form-card">
+    <div class="row">
+      <div>
+        <label for="inc-when">When did it happen?</label>
+        <input type="datetime-local" id="inc-when">
+      </div>
+      <div>
+        <label for="inc-where">Where?</label>
+        <select id="inc-where">
+          <option value="">Choose…</option>
+          <option>Main bar</option>
+          <option>Function room</option>
+          <option>Cellar</option>
+          <option>Toilets</option>
+          <option>Entrance / hallway</option>
+          <option>Outside / car park</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <label for="inc-who">Who was involved?</label>
+    <input type="text" id="inc-who" placeholder="Name(s), and whether customer, member, staff or visitor" maxlength="200">
+    <label for="inc-what">What happened?</label>
+    <textarea id="inc-what" placeholder="Describe what happened, in order" maxlength="2000"></textarea>
+    <label for="inc-injury">Any injuries?</label>
+    <textarea id="inc-injury" placeholder="What and where — or 'None'" maxlength="1000"></textarea>
+    <label for="inc-action">First aid given / what was done</label>
+    <textarea id="inc-action" placeholder="e.g. Cleaned and plastered the cut; area mopped and coned off" maxlength="1000"></textarea>
+    <div class="row">
+      <div>
+        <label for="inc-services">Emergency services called?</label>
+        <select id="inc-services">
+          <option>No</option>
+          <option>Ambulance</option>
+          <option>Police</option>
+          <option>Ambulance and police</option>
+        </select>
+      </div>
+      <div>
+        <label for="inc-witnesses">Witnesses</label>
+        <input type="text" id="inc-witnesses" placeholder="Names, if any" maxlength="200">
+      </div>
+    </div>
+    <button class="submit-btn" id="inc-submit" onclick="submitIncident()">Submit Report</button>
+    <p class="form-status" id="form-status"></p>
+  </div>
 
-  <a class="back" href="staff-area.html">← Back to Staff Area</a>
+  <div class="mgmt-only" id="review-section">
+    <div class="section-label">Reported incidents</div>
+    <p class="load-status" id="review-status">Loading…</p>
+    <div id="review-list"></div>
+  </div>
+
+  <div class="section-label">Reports you've made</div>
+  <p class="load-status" id="mine-status">Loading…</p>
+  <div id="mine-list"></div>
+
+  <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
 </main>
-
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
+    authDomain: "dunvantwmc-36de5.firebaseapp.com",
+    projectId: "dunvantwmc-36de5",
+    storageBucket: "dunvantwmc-36de5.firebasestorage.app",
+    messagingSenderId: "826027608283",
+    appId: "1:826027608283:web:e2dfe243f70ac77d5624fe"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<script>
+  let MY_NAME = '';
+  let MY_UID = '';
+  let CAN_REVIEW = false;
+
+  function escapeHtml(s){
+    return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function nowLocalInput(){
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  }
+  function niceWhen(v){
+    const d = new Date(v);
+    return isNaN(d) ? (v || '') : d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function logActivity(action, detail){
+    try{
+      await db.collection('activityLog').add({
+        actorUid: MY_UID, actorName: MY_NAME || 'Someone', action, detail: detail || '',
+        createdAtMs: Date.now(), createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){ /* non-critical */ }
+  }
+
+  async function submitIncident(){
+    const v = id => document.getElementById(id).value.trim();
+    const report = {
+      when: v('inc-when'), where: v('inc-where'), who: v('inc-who'), what: v('inc-what'),
+      injury: v('inc-injury'), action: v('inc-action'), services: v('inc-services'), witnesses: v('inc-witnesses')
+    };
+    const statusEl = document.getElementById('form-status');
+    statusEl.className = 'form-status';
+    const missing = [];
+    if(!report.when) missing.push('when');
+    if(!report.where) missing.push('where');
+    if(!report.who) missing.push('who was involved');
+    if(!report.what) missing.push('what happened');
+    if(!report.injury) missing.push('injuries (put "None" if none)');
+    if(missing.length){
+      statusEl.textContent = 'Please fill in: ' + missing.join(', ') + '.';
+      statusEl.className = 'form-status error';
+      return;
+    }
+    const btn = document.getElementById('inc-submit');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try{
+      await db.collection('incidents').add({
+        ...report,
+        reportedByUid: MY_UID, reportedByName: MY_NAME || 'Someone',
+        status: 'new',
+        createdAtMs: Date.now(), createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // Activity feed gets the fact of it only — no names or injury details.
+      logActivity('Incident Reported', report.where);
+      ['inc-who', 'inc-what', 'inc-injury', 'inc-action', 'inc-witnesses'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('inc-where').value = '';
+      document.getElementById('inc-services').value = 'No';
+      document.getElementById('inc-when').value = nowLocalInput();
+      statusEl.textContent = '✓ Reported — managers have been alerted. If anyone was seriously hurt, tell a manager directly as well.';
+      statusEl.className = 'form-status success';
+      loadAll();
+    } catch(e){
+      statusEl.textContent = e.code === 'permission-denied'
+        ? "Couldn't send — Site Admin needs to update Firestore's access rules for incident reports. Tell a manager in person for now."
+        : "Couldn't send that — try again, and tell a manager in person.";
+      statusEl.className = 'form-status error';
+    }
+    btn.disabled = false; btn.textContent = 'Submit Report';
+  }
+
+  function incidentCard(doc, full){
+    const d = doc.data();
+    const reviewed = d.status === 'reviewed';
+    const tag = `<span class="tag ${reviewed ? 'reviewed' : 'new'}">${reviewed ? 'Reviewed' : 'New'}</span>`;
+    const head = `
+        <div class="claim-top">
+          <span class="claim-what">${escapeHtml(d.where)}${tag}</span>
+        </div>
+        <div class="claim-meta">${niceWhen(d.when)}${full ? ` · reported by ${escapeHtml(d.reportedByName)}` : ''}${reviewed && d.reviewedByName ? ` · reviewed by ${escapeHtml(d.reviewedByName)}` : ''}</div>`;
+    if(!full) return `<div class="claim">${head}</div>`;
+    const row = (label, val) => val ? `<div><b>${label}:</b> ${escapeHtml(val)}</div>` : '';
+    return `
+      <div class="claim">${head}
+        <div class="inc-body">
+          ${row('Involved', d.who)}
+          ${row('What happened', d.what)}
+          ${row('Injuries', d.injury)}
+          ${row('Action taken', d.action)}
+          ${d.services && d.services !== 'No' ? row('Emergency services', d.services) : ''}
+          ${row('Witnesses', d.witnesses)}
+          ${row('Manager notes', d.managerNotes)}
+        </div>
+        ${reviewed ? '' : `<div class="claim-actions"><button class="btn-approve" onclick="markReviewed('${doc.id}')">✓ Mark as reviewed</button></div>`}
+      </div>`;
+  }
+
+  async function markReviewed(id){
+    const notes = prompt('Any notes? (optional — e.g. "Spoke to customer, wet floor sign now kept by the door")');
+    if(notes === null) return;
+    try{
+      await db.collection('incidents').doc(id).update({
+        status: 'reviewed', reviewedByName: MY_NAME || 'A manager', reviewedAtMs: Date.now(), managerNotes: notes.trim()
+      });
+      logActivity('Incident Reviewed', '');
+      loadAll();
+    } catch(e){
+      alert("Couldn't update that — " + e.message);
+    }
+  }
+
+  async function loadAll(){
+    let docs = [];
+    try{
+      const snap = await db.collection('incidents').get();
+      docs = snap.docs.sort((a, b) => (b.data().createdAtMs || 0) - (a.data().createdAtMs || 0));
+    } catch(e){
+      const msg = e.code === 'permission-denied'
+        ? "Couldn't load reports — Site Admin needs to update Firestore's access rules for incident reports."
+        : "Couldn't load reports — try refreshing.";
+      document.getElementById('mine-status').textContent = msg;
+      document.getElementById('review-status').textContent = msg;
+      return;
+    }
+    // Staff only see a short line for their own reports — the details
+    // (names, injuries) are for managers.
+    const mine = docs.filter(d => d.data().reportedByUid === MY_UID).slice(0, 20);
+    document.getElementById('mine-list').innerHTML = mine.map(d => incidentCard(d, false)).join('');
+    document.getElementById('mine-status').textContent = mine.length ? '' : "You haven't reported anything.";
+    if(CAN_REVIEW){
+      const list = docs.slice().sort((a, b) => ((a.data().status === 'reviewed') - (b.data().status === 'reviewed')) || ((b.data().createdAtMs || 0) - (a.data().createdAtMs || 0))).slice(0, 50);
+      document.getElementById('review-list').innerHTML = list.map(d => incidentCard(d, true)).join('');
+      const fresh = docs.filter(d => d.data().status !== 'reviewed').length;
+      document.getElementById('review-status').textContent = docs.length ? `${fresh} not yet reviewed.` : 'Nothing reported yet.';
+    }
+  }
+
+  document.getElementById('inc-when').value = nowLocalInput();
+
+  auth.onAuthStateChanged(async (user) => {
+    if(!user){ window.location.href = 'staff-area.html'; return; }
+    MY_UID = user.uid;
+    try{
+      const doc = await db.collection('staff').doc(user.uid).get();
+      const data = doc.exists ? doc.data() : {};
+      MY_NAME = data.name || '';
+      CAN_REVIEW = (data.roles || []).some(r => ['mgmt', 'admin'].includes(r));
+    } catch(e){}
+    document.getElementById('review-section').style.display = CAN_REVIEW ? 'block' : 'none';
+    loadAll();
+  });
+
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme');
   const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
   function applyTheme(theme){
-    if(theme === 'dark'){
-      document.documentElement.setAttribute('data-theme', 'dark');
-      themeIcon.textContent = '🌙';
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      themeIcon.textContent = '☀️';
-    }
+    if(theme === 'dark'){ document.documentElement.setAttribute('data-theme', 'dark'); themeIcon.textContent = '🌙'; }
+    else { document.documentElement.removeAttribute('data-theme'); themeIcon.textContent = '☀️'; }
   }
-  applyTheme(initialTheme);
+  applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
   themeToggle.addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const newTheme = isDark ? 'light' : 'dark';
-    applyTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(t); localStorage.setItem('theme', t);
   });
 </script>
-
 <script src="update-banner.js"></script>
 </body>
 </html>
