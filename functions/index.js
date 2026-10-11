@@ -15,6 +15,7 @@
 //   • Ticket / issue report → push to Site Admins and managers
 //   • Member suggestion   → push to committee, managers and Site Admins
 //   • Cash-up out by £5+  → push + email to managers
+//   • Stock flagged low / run out → push to managers
 //   • Rota not confirmed after a day → one nudge to those who haven't, list to managers
 //   • Monday 9am          → summary email of the week to Site Admins
 //
@@ -459,6 +460,25 @@ exports.alertCashUp = onDocumentCreated(
   }
 );
 
+exports.alertStock = onDocumentWritten(
+  { document: 'stockItems/{id}' },
+  async (event) => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    if (!after || (after.status || 'active') !== 'active') return;
+    const isNew = !before;
+    const nowOut = after.level === 'out' && (!before || before.level !== 'out');
+    if (!isNew && !nowOut) return;
+    const managers = (await staffList()).filter(isMgr).filter((m) => m.uid !== after.flaggedByUid);
+    await both('Stock', () => sendPush(managers.map((m) => m.uid), {
+      title: after.level === 'out' ? `🚫 Run out: ${after.name}` : `🍺 Running low: ${after.name}`,
+      body: `Flagged by ${after.flaggedByName || 'someone'}${after.note ? ' — \u201c' + String(after.note).slice(0, 100) + '\u201d' : ''}. Tap to see the order list.`,
+      page: 'stock-list.html',
+      tag: 'stock-' + String(after.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    }));
+  }
+);
+
 // Once per publish, a day later: nudge anyone on the rota who hasn't tapped
 // "I've seen the rota", and tell managers who's still missing.
 exports.rotaChaser = onSchedule(
@@ -500,9 +520,10 @@ async function buildWeeklySummary(nowMs) {
   const today = new Date(nowMs).toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
   const in7 = new Date(nowMs + 7 * 86400000).toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
   const get = async (c) => (await db.collection(c).get()).docs.map((d) => d.data());
-  const [log, incidents, covers, requests, bookings, cashUps, tickets, suggestions, rotaDoc, confirms, pending] = await Promise.all([
+  const [log, incidents, covers, requests, bookings, cashUps, tickets, suggestions, rotaDoc, confirms, pending, stock] = await Promise.all([
     get('activityLog'), get('incidents'), get('shiftCoverRequests'), get('bookingRequests'), get('bookings'),
-    get('cashUps'), get('tickets'), get('memberSuggestions'), db.collection('rota').doc('current').get(), get('rotaConfirmations'), get('staffSignupRequests')
+    get('cashUps'), get('tickets'), get('memberSuggestions'), db.collection('rota').doc('current').get(), get('rotaConfirmations'), get('staffSignupRequests'),
+    get('stockItems')
   ]);
   const recent = (arr, key) => arr.filter((x) => (x[key || 'createdAtMs'] || 0) >= weekAgo);
   const lines = [];
@@ -526,6 +547,8 @@ async function buildWeeklySummary(nowMs) {
     const done = confirms.filter((c) => c.publishedTimestamp === r.publishedTimestamp);
     section(`Not confirmed the current rota (published ${r.publishedDate || ''})`, names.filter((n) => !done.some((c) => sameName(c.name, n))));
   }
+  const toOrder = stock.filter((x) => (x.status || 'active') === 'active').sort((a, b) => (b.level === 'out') - (a.level === 'out'));
+  section('Still to order (running low list)', toOrder.map((x) => `${x.name}${x.level === 'out' ? ' — RUN OUT' : ' — running low'}${x.note ? ' (' + x.note + ')' : ''}`));
   section('Open tickets', tickets.filter((t) => (t.status || 'open') !== 'resolved').map((t) => `${t.type === 'public' ? '[Public] ' : ''}${(t.description || '').slice(0, 80)}`));
   section('New member suggestions', recent(suggestions).map((m) => (m.text || '').slice(0, 100)));
   return `Here's the week at Dunvant WMC (last 7 days).\n` + lines.join('\n') + `\n\nStaff Hub: ${SITE}staff-hub`;

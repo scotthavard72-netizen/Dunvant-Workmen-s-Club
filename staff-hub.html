@@ -770,6 +770,7 @@
           items: [
             ["till-card-lookup.html", "Till &amp; Card Lookup Guide", "Finding a member so their discount applies"],
             ["price-list.html", "Price List", "Every drink and snack, with member prices"],
+            ["stock-list.html", "🍺 Running Low", "Flag drinks and supplies that need ordering", "stockLow"],
             ["whats-on-this-week.html", "What's On This Week", "Events from the club's Facebook page"],
             ["closing-checklist.html", "Closing Checklist", "The 13-step locking-up procedure"],
             ["shift-handover-notes.html", "Shift Handover Notes", "What the next person on needs to know"]
@@ -798,7 +799,8 @@
           items: [
             ["cash-up-log.html", "Cash-Up Log", "End-of-night till count and drop record"],
             ["shift-handover-notes.html", "Shift Handover Notes", "What the next person on needs to know"],
-            ["closing-checklist.html", "Locking Up / Closing Checklist", "The 13-step locking-up procedure, including the alarm"]
+            ["closing-checklist.html", "Locking Up / Closing Checklist", "The 13-step locking-up procedure, including the alarm"],
+            ["stock-list.html", "🍺 Running Low", "Flag drinks and supplies that need ordering", "stockLow"]
           ]
         },
         {
@@ -839,6 +841,7 @@
           label: "Requests &amp; Bookings",
           items: [
             ["bookings.html", "Bookings", "Function room requests, and confirming dates on the public Book page", "pendingBookings"],
+            ["stock-list.html", "Order List (Running Low)", "What staff have flagged as low or run out — mark it ordered", "stockLow"],
             ["manage-shows.html", "Manage Shows / Box Office", "Add, edit, or remove what's listed on the public Box Office page"],
             ["manage-whats-on.html", "Manage What's On", "Add, edit, or remove what's listed on the public What's On page"],
             ["manage-gallery.html", "Manage Gallery", "Add photos to the public Gallery from your phone"],
@@ -1013,6 +1016,11 @@
       const todayStr = localISODate(new Date());
       const open = snap.docs.filter(d => !['covered', 'cancelled'].includes(d.data().status || 'open') && (!d.data().date || d.data().date >= todayStr)).length;
       if(open > 0) badges.openCover = open;
+    } catch(e){}
+    try{
+      const snap = await db.collection('stockItems').get();
+      const need = snap.docs.filter(d => (d.data().status || 'active') === 'active').length;
+      if(need > 0) badges.stockLow = need;
     } catch(e){}
     if(ROLE_KIND === 'mgmt'){
       try{

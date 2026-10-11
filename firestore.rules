@@ -89,6 +89,11 @@ service cloud.firestore {
     match /staffSuggestions/{id}      { allow read, write: if isStaff(); }
     match /cashUps/{id}               { allow read, write: if isStaff(); }
     match /editingPresence/{id}       { allow read, write: if isStaff(); }
+    // Running-low / order list: any staff can flag and update; managers delete.
+    match /stockItems/{id} {
+      allow read, create, update: if isStaff();
+      allow delete: if isMgr();
+    }
 
     // Accident / incident reports: staff file them and see their own;
     // only managers see everyone's and mark them reviewed.
