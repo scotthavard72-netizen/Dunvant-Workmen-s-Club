@@ -11,6 +11,12 @@
 //   • Swap accepted/declined → push to the person who asked
 //   • Rota published      → push to every member of staff, listing their shifts
 //   • 6pm every evening   → push a reminder to anyone working tomorrow
+//   • Function room request → push + email to managers
+//   • Ticket / issue report → push to Site Admins and managers
+//   • Member suggestion   → push to committee, managers and Site Admins
+//   • Cash-up out by £5+  → push + email to managers
+//   • Rota not confirmed after a day → one nudge to those who haven't, list to managers
+//   • Monday 9am          → summary email of the week to Site Admins
 //
 // Push goes to every device that turned notifications on in Staff Hub
 // (saved in pushTokens). Email is the backup, sent from a Gmail account
@@ -365,5 +371,173 @@ exports.shiftReminders = onSchedule(
       } catch (e) { logger.error('Reminder push failed for ' + person.uid, e); }
     }
     logger.info(`Shift reminders: push sent to ${sent} device(s)`);
+  }
+);
+
+// ---------------------------------------------------------------------------
+// More alerts
+// ---------------------------------------------------------------------------
+const hasRole = (s, roles) => (s.roles || []).some((r) => roles.includes(r));
+const money = (n) => '£' + Math.abs(Number(n) || 0).toFixed(2);
+const CASH_ALERT_OVER = 5; // pounds either way
+
+exports.alertBookingRequest = onDocumentCreated(
+  { document: 'bookingRequests/{id}', secrets: [GMAIL_USER, GMAIL_PASS] },
+  async (event) => {
+    const d = event.data ? event.data.data() : {};
+    const managers = (await staffList()).filter(isMgr);
+    const what = d.eventName || 'A function room booking';
+    const when = `${niceDate(d.date)}${d.startTime ? ', ' + niceTime(d.startTime) : ''}${d.endTime ? '–' + niceTime(d.endTime) : ''}`;
+    await both('Booking request',
+      () => sendPush(managers.map((m) => m.uid), {
+        title: '🎉 New booking request', body: `${what} — ${when}${d.guests ? ', ~' + d.guests + ' guests' : ''}. Tap to approve.`, page: 'bookings.html', tag: 'pendingBookings'
+      }),
+      () => sendEmail(managers.map((m) => m.email), `Booking request: ${what} (${when})`,
+        `A new function room request has come in from the website.\n\n` +
+        `Event: ${what}\nWhen: ${when}\nGuests: ${d.guests || 'not given'}\n` +
+        `Contact: ${d.contactName || ''} ${d.contactPhone || ''} ${d.contactEmail || ''}\n` +
+        (d.notes ? `Notes: ${d.notes}\n` : '') +
+        `\nApprove or decline it here:\n${SITE}bookings`)
+    );
+  }
+);
+
+exports.alertNewTicket = onDocumentCreated(
+  { document: 'tickets/{id}' },
+  async (event) => {
+    const d = event.data ? event.data.data() : {};
+    const isPublic = d.type === 'public';
+    const people = (await staffList())
+      .filter((s) => hasRole(s, ['admin', 'mgmt']))
+      .filter((s) => isPublic || !sameName(s.name, d.authorName));
+    await both('Ticket',
+      () => sendPush(people.map((s) => s.uid), {
+        title: isPublic ? '📮 Issue reported on the website' : `🔧 New ticket from ${d.authorName || 'a member of staff'}`,
+        body: (d.description || '').slice(0, 140),
+        page: 'tickets.html',
+        tag: 'tickets'
+      })
+    );
+  }
+);
+
+exports.alertMemberSuggestion = onDocumentCreated(
+  { document: 'memberSuggestions/{id}' },
+  async (event) => {
+    const d = event.data ? event.data.data() : {};
+    const people = (await staffList()).filter((s) => hasRole(s, ['committee', 'admin', 'mgmt']));
+    await both('Member suggestion',
+      () => sendPush(people.map((s) => s.uid), {
+        title: '💡 New member suggestion',
+        body: (d.text || '').slice(0, 140),
+        page: 'member-suggestions-review.html',
+        tag: 'memberSuggestions'
+      })
+    );
+  }
+);
+
+exports.alertCashUp = onDocumentCreated(
+  { document: 'cashUps/{id}', secrets: [GMAIL_USER, GMAIL_PASS] },
+  async (event) => {
+    const d = event.data ? event.data.data() : {};
+    if (d.tillReading === undefined || d.tillReading === null || isNaN(Number(d.tillReading))) return;
+    const diff = Number(d.cashCounted || 0) - Number(d.floatKept || 0) - Number(d.tillReading);
+    if (Math.abs(diff) < CASH_ALERT_OVER) return;
+    const word = diff > 0 ? 'over' : 'short';
+    const who = d.keyholderName || 'Someone';
+    const managers = (await staffList()).filter(isMgr).filter((m) => !sameName(m.name, who));
+    await both('Cash-up',
+      () => sendPush(managers.map((m) => m.uid), {
+        title: `💷 Till ${word} ${money(diff)}`, body: `${who}'s cash-up for ${niceDate(d.date)}${d.notes ? ' — "' + String(d.notes).slice(0, 80) + '"' : ''}`, page: 'cash-up-log.html', tag: 'cashup'
+      }),
+      () => sendEmail(managers.map((m) => m.email), `Till ${word} ${money(diff)} — ${niceDate(d.date)}`,
+        `${who}'s cash-up for ${niceDate(d.date)} is ${word} by ${money(diff)}.\n\n` +
+        `Cash counted: ${money(d.cashCounted)}\nFloat kept: ${money(d.floatKept)}\nTill reading: ${money(d.tillReading)}\n` +
+        (d.notes ? `Notes: ${d.notes}\n` : '') + `\nSee the cash-up log:\n${SITE}cash-up-log`)
+    );
+  }
+);
+
+// Once per publish, a day later: nudge anyone on the rota who hasn't tapped
+// "I've seen the rota", and tell managers who's still missing.
+exports.rotaChaser = onSchedule(
+  { schedule: '15 * * * *', timeZone: 'Europe/London' },
+  async () => {
+    const doc = await db.collection('rota').doc('current').get();
+    if (!doc.exists) return;
+    const rota = doc.data();
+    const ts = rota.publishedTimestamp;
+    if (!ts) return;
+    const ageH = (Date.now() - new Date(ts).getTime()) / 3600000;
+    if (!(ageH >= 24 && ageH < 24 * 6)) return;
+    const stateRef = db.collection('serverState').doc('rotaChaser');
+    const state = await stateRef.get();
+    if (state.exists && state.data().publishedTimestamp === ts) return; // already chased this one
+    await stateRef.set({ publishedTimestamp: ts, chasedAtMs: Date.now() });
+
+    const names = [...new Set((rota.shifts || []).map((s) => s.n).filter(Boolean))];
+    const confirmed = (await db.collection('rotaConfirmations').get()).docs
+      .map((c) => c.data()).filter((c) => c.publishedTimestamp === ts);
+    const staff = await staffList();
+    const missing = names.filter((n) => !confirmed.some((c) => sameName(c.name, n)));
+    if (!missing.length) { logger.info('Rota chaser: everyone has confirmed'); return; }
+    const missingStaff = staff.filter((s) => missing.some((n) => sameName(n, s.name)));
+    await both('Rota chaser', () => Promise.all([
+      sendPush(missingStaff.map((s) => s.uid), {
+        title: '👀 Have you seen the rota?', body: "Check your shifts and tap “I've seen the rota” so the managers know.", page: 'current-rota.html', tag: 'rota'
+      }),
+      sendPush(staff.filter(isMgr).map((s) => s.uid), {
+        title: `⏳ ${missing.length} not confirmed the rota`, body: missing.join(', '), page: 'weekly-rota-builder.html', tag: 'rota-confirm'
+      })
+    ]).then((n) => n[0] + n[1]));
+  }
+);
+
+// Monday 9am: one email to Site Admins with the week at a glance.
+async function buildWeeklySummary(nowMs) {
+  const weekAgo = nowMs - 7 * 86400000;
+  const today = new Date(nowMs).toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+  const in7 = new Date(nowMs + 7 * 86400000).toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+  const get = async (c) => (await db.collection(c).get()).docs.map((d) => d.data());
+  const [log, incidents, covers, requests, bookings, cashUps, tickets, suggestions, rotaDoc, confirms, pending] = await Promise.all([
+    get('activityLog'), get('incidents'), get('shiftCoverRequests'), get('bookingRequests'), get('bookings'),
+    get('cashUps'), get('tickets'), get('memberSuggestions'), db.collection('rota').doc('current').get(), get('rotaConfirmations'), get('staffSignupRequests')
+  ]);
+  const recent = (arr, key) => arr.filter((x) => (x[key || 'createdAtMs'] || 0) >= weekAgo);
+  const lines = [];
+  const section = (title, items) => { lines.push(`\n${title}`); lines.push(items.length ? items.map((i) => '  • ' + i).join('\n') : '  • None'); };
+
+  section('New staff approved', recent(log).filter((l) => l.action === 'New Staff Approved').map((l) => l.detail || 'someone'));
+  if (pending.length) section('Still waiting for approval', pending.map((p) => p.name || p.email || 'someone'));
+  const inc = recent(incidents);
+  section('Incidents', inc.map((i) => `${i.where || 'Somewhere'} — ${i.reportedByName || 'staff'}${i.status === 'reviewed' ? ' (reviewed)' : ' (NOT reviewed yet)'}`));
+  const cov = recent(covers);
+  section('Shift cover requests', cov.map((c) => `${c.name} on ${niceDate(c.date)} — ${c.status === 'covered' ? 'covered by ' + (c.coveredBy || 'someone') : c.status === 'cancelled' ? 'cancelled' : 'STILL OPEN'}`));
+  section('Booking requests waiting for a reply', requests.filter((r) => (r.status || 'pending') === 'pending').map((r) => `${r.eventName || 'Booking'} — ${niceDate(r.date)}`));
+  section('Bookings in the next 7 days', bookings.filter((b) => b.date >= today && b.date <= in7).sort((a, b) => a.date.localeCompare(b.date)).map((b) => `${niceDate(b.date)} — ${b.eventName || 'Booking'}`));
+  const cash = recent(cashUps).filter((c) => c.tillReading !== undefined && c.tillReading !== null)
+    .map((c) => ({ ...c, diff: Number(c.cashCounted || 0) - Number(c.floatKept || 0) - Number(c.tillReading) }))
+    .filter((c) => Math.abs(c.diff) >= 0.01);
+  section('Cash-ups that didn’t match the till', cash.map((c) => `${niceDate(c.date)} — ${c.keyholderName || 'someone'}: ${c.diff > 0 ? 'over' : 'short'} ${money(c.diff)}`));
+  if (rotaDoc.exists && rotaDoc.data().publishedTimestamp) {
+    const r = rotaDoc.data();
+    const names = [...new Set((r.shifts || []).map((s) => s.n).filter(Boolean))];
+    const done = confirms.filter((c) => c.publishedTimestamp === r.publishedTimestamp);
+    section(`Not confirmed the current rota (published ${r.publishedDate || ''})`, names.filter((n) => !done.some((c) => sameName(c.name, n))));
+  }
+  section('Open tickets', tickets.filter((t) => (t.status || 'open') !== 'resolved').map((t) => `${t.type === 'public' ? '[Public] ' : ''}${(t.description || '').slice(0, 80)}`));
+  section('New member suggestions', recent(suggestions).map((m) => (m.text || '').slice(0, 100)));
+  return `Here's the week at Dunvant WMC (last 7 days).\n` + lines.join('\n') + `\n\nStaff Hub: ${SITE}staff-hub`;
+}
+if (process.env.DUNVANT_TEST) module.exports._buildWeeklySummary = buildWeeklySummary; // tests only
+
+exports.weeklySummary = onSchedule(
+  { schedule: '0 9 * * 1', timeZone: 'Europe/London', secrets: [GMAIL_USER, GMAIL_PASS] },
+  async () => {
+    const admins = (await staffList()).filter((s) => hasRole(s, ['admin']));
+    const text = await buildWeeklySummary(Date.now());
+    const sent = await sendEmail(admins.map((a) => a.email), `Dunvant WMC — your week (${niceDate(new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' }))})`, text);
+    logger.info(`Weekly summary: email ${sent ? 'sent' : 'skipped'}`);
   }
 );
