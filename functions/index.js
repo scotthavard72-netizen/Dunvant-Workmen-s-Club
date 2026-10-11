@@ -217,3 +217,82 @@ exports.alertSwapAnswered = onDocumentUpdated(
     );
   }
 );
+
+// ---------------------------------------------------------------------------
+// Login management, called from the staff app (a web page can't delete
+// someone else's login itself — only the server can).
+// ---------------------------------------------------------------------------
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
+
+async function rolesOf(uid) {
+  if (!uid) return [];
+  const doc = await db.collection('staff').doc(uid).get();
+  return doc.exists ? (doc.data().roles || []) : [];
+}
+
+async function removeEverything(uid) {
+  // Their login first, then everything that points at them.
+  try { await admin.auth().deleteUser(uid); }
+  catch (e) { if (e.code !== 'auth/user-not-found') throw e; }
+  const tokens = await db.collection('pushTokens').where('uid', '==', uid).get();
+  const batch = db.batch();
+  batch.delete(db.collection('staff').doc(uid));
+  batch.delete(db.collection('staffPins').doc(uid));
+  batch.delete(db.collection('staffSignupRequests').doc(uid));
+  tokens.forEach((t) => batch.delete(t.ref));
+  await batch.commit();
+}
+
+// Site Admin: every login, and whether it has staff access.
+exports.listLogins = onCall(async (request) => {
+  if (!(await rolesOf(request.auth && request.auth.uid)).includes('admin')) {
+    throw new HttpsError('permission-denied', 'Only a Site Admin can do this.');
+  }
+  const [users, staff, requests] = await Promise.all([
+    admin.auth().listUsers(1000),
+    db.collection('staff').get(),
+    db.collection('staffSignupRequests').get()
+  ]);
+  const staffIds = new Set(staff.docs.map((d) => d.id));
+  const requestIds = new Set(requests.docs.map((d) => d.id));
+  return users.users.map((u) => ({
+    uid: u.uid,
+    email: u.email || '',
+    created: u.metadata.creationTime || '',
+    lastSignIn: u.metadata.lastSignInTime || '',
+    hasStaffAccess: staffIds.has(u.uid),
+    awaitingApproval: requestIds.has(u.uid)
+  }));
+});
+
+// Site Admin: delete someone completely (login, staff record, PIN, alerts).
+exports.deleteLogin = onCall(async (request) => {
+  const me = request.auth && request.auth.uid;
+  if (!(await rolesOf(me)).includes('admin')) {
+    throw new HttpsError('permission-denied', 'Only a Site Admin can delete logins.');
+  }
+  const uid = String((request.data && request.data.uid) || '');
+  if (!uid) throw new HttpsError('invalid-argument', 'No account given.');
+  if (uid === me) throw new HttpsError('failed-precondition', "You can't delete your own login.");
+  await removeEverything(uid);
+  logger.info('Login deleted', { by: me, uid });
+  return { ok: true };
+});
+
+// Managers and Site Admins: declining a sign-up also removes the login it
+// made — but only for people who were never given staff access.
+exports.declineSignup = onCall(async (request) => {
+  const me = request.auth && request.auth.uid;
+  const roles = await rolesOf(me);
+  if (!roles.includes('admin') && !roles.includes('mgmt')) {
+    throw new HttpsError('permission-denied', 'Only a manager or Site Admin can do this.');
+  }
+  const uid = String((request.data && request.data.uid) || '');
+  if (!uid) throw new HttpsError('invalid-argument', 'No account given.');
+  if ((await db.collection('staff').doc(uid).get()).exists) {
+    throw new HttpsError('failed-precondition', 'That person already has staff access.');
+  }
+  await removeEverything(uid);
+  logger.info('Sign-up declined and login deleted', { by: me, uid });
+  return { ok: true };
+});

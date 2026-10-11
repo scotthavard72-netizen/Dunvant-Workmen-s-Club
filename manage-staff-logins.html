@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
@@ -109,6 +110,11 @@
   .status.success{color:#3d8f6f; font-weight:600;}
   .status.error{color:#c25a4d; font-weight:600;}
   a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+  .other-logins{margin:22px 0 6px;}
+  .other-note{font-size:0.82rem; color:var(--muted); margin:-6px 0 12px; line-height:1.5;}
+  .login-row{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:8px;}
+  .login-email{font-weight:600; font-size:0.88rem; word-break:break-all;}
+  .login-meta{font-size:0.76rem; color:var(--muted); margin-top:2px;}
 </style>
 </head>
 <body>
@@ -121,7 +127,7 @@
   <p>Real accounts, real passwords — no code editing, no GitHub</p>
 </header>
 <main>
-  <div class="notice">Add, edit, or remove staff directly here. Adding someone creates a real login for them — they'll be asked to choose their own password the first time they sign in, so the one you set here is only ever temporary. "Send Password Reset" lets an existing person set a new one by email at any time. For anyone with the Admin role, set their Site Admin passcode here too — that's the code they enter to unlock the Site Admin tab in Staff Hub, separate from their login password.</div>
+  <div class="notice">Add, edit, or delete staff directly here. Adding someone creates a real login for them — they'll be asked to choose their own password the first time they sign in, so the one you set here is only ever temporary. "Send Password Reset" lets an existing person set a new one by email at any time. For anyone with the Admin role, set their Site Admin passcode here too — that's the code they enter to unlock the Site Admin tab in Staff Hub, separate from their login password.</div>
 
   <div class="section-label">Current Staff</div>
   <p class="load-status" id="load-status">Loading…</p>
@@ -140,6 +146,12 @@
   </div>
   <div class="mini-progress" id="save-progress"><div class="mini-progress-track"><div class="mini-progress-bar" id="save-progress-bar"></div></div><span class="mini-progress-pct" id="save-progress-pct">0%</span></div>
   <p class="status" id="save-status"></p>
+
+  <div class="other-logins" id="other-logins" style="display:none;">
+    <div class="section-label">Other Logins — No Staff Access</div>
+    <p class="other-note">Accounts that exist but can't get into anything: test accounts, declined sign-ups, people you've removed. Delete them to keep things tidy.</p>
+    <div id="other-logins-list"></div>
+  </div>
 
   <div class="add-person-card hidden" id="add-person-card">
     <div class="section-label">Add New Person</div>
@@ -213,7 +225,7 @@
       <td data-label="">
         <div class="row-actions">
           <button class="reset-btn" onclick="sendReset('${data.email}')">Reset PW</button>
-          <button class="remove-btn" onclick="removePerson('${id}', this)">✕ Remove</button>
+          ${id === MY_UID ? '' : `<button class="remove-btn" onclick="removePerson('${id}', this)">✕ Remove</button>`}
         </div>
       </td>
     `;
@@ -243,6 +255,7 @@
         tbody.appendChild(makeRow(doc.id, doc.data()));
       });
       statusEl.textContent = `Loaded ${snapshot.size} ${snapshot.size === 1 ? 'person' : 'people'}.`;
+      loadOtherLogins();
     } catch(e){
       statusEl.textContent = "Couldn't load the staff list — " + e.message;
     }
@@ -285,16 +298,61 @@
     }
   }
 
+  // Deleting a login needs the server (functions/index.js) — a web page
+  // can't remove someone else's account by itself.
+  function serverFn(name){ return firebase.app().functions('europe-west1').httpsCallable(name); }
+
   async function removePerson(docId, btn){
     const row = btn.closest('tr');
     const name = row.querySelector('.f-name').value.trim() || 'this person';
-    if(!confirm(`Remove ${name}'s access? This removes their role immediately — they'll no longer be able to get into Staff Area. This can't be undone from here.`)) return;
+    if(!confirm(`Delete ${name} completely?\n\nTheir login, staff access, Site Admin PIN and phone alerts are all removed straight away. This can't be undone — if they come back they'll need to sign up again.`)) return;
+    btn.disabled = true;
     try{
-      await db.collection('staff').doc(docId).delete();
+      await serverFn('deleteLogin')({ uid: docId });
       row.remove();
-      logActivity('Staff Access Removed', name);
+      logActivity('Staff Deleted', name);
+      loadOtherLogins();
     } catch(e){
-      alert("Couldn't remove them — " + e.message);
+      btn.disabled = false;
+      alert("Couldn't delete them — " + (e.message || 'try again in a moment.'));
+    }
+  }
+
+  async function loadOtherLogins(){
+    const box = document.getElementById('other-logins');
+    const list = document.getElementById('other-logins-list');
+    try{
+      const res = await serverFn('listLogins')({});
+      const others = (res.data || []).filter(u => !u.hasStaffAccess && !u.awaitingApproval);
+      box.style.display = 'block';
+      if(others.length === 0){
+        list.innerHTML = '<p class="other-note" style="margin:0;">None — every login belongs to someone on staff.</p>';
+        return;
+      }
+      list.innerHTML = others.map(u => `
+        <div class="login-row">
+          <div>
+            <div class="login-email">${u.email || '(no email)'}</div>
+            <div class="login-meta">Made ${u.created ? new Date(u.created).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}${u.lastSignIn ? ' · last signed in ' + new Date(u.lastSignIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</div>
+          </div>
+          <button class="remove-btn" onclick="deleteOtherLogin('${u.uid}', '${(u.email || '').replace(/'/g, '')}', this)">✕ Delete</button>
+        </div>`).join('');
+    } catch(e){
+      box.style.display = 'none'; // server not set up yet — nothing to show
+    }
+  }
+
+  async function deleteOtherLogin(uid, email, btn){
+    if(!confirm(`Delete the login ${email || ''}? This can't be undone.`)) return;
+    btn.disabled = true;
+    try{
+      await serverFn('deleteLogin')({ uid });
+      btn.closest('.login-row').remove();
+      logActivity('Login Deleted', email);
+      if(!document.querySelector('#other-logins-list .login-row')) loadOtherLogins();
+    } catch(e){
+      btn.disabled = false;
+      alert("Couldn't delete that login — " + (e.message || 'try again in a moment.'));
     }
   }
 

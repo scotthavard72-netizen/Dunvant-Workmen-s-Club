@@ -11,6 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBJ9lzipekmOyh6dkcUlY9oObvpXdv__KE",
@@ -188,9 +189,16 @@
   async function declineSignup(id, btn){
     const item = btn.closest('.pending-item');
     const name = item.dataset.name || 'this person';
-    if(!confirm(`Decline ${name}? They won't get any access.`)) return;
+    if(!confirm(`Decline ${name}? They won't get any access, and the login they made is deleted.`)) return;
     try{
-      await db.collection('staffSignupRequests').doc(id).delete();
+      // The server removes their login as well as the request. If that
+      // isn't available, at least clear the request so they get no access.
+      try{
+        await firebase.app().functions('europe-west1').httpsCallable('declineSignup')({ uid: id });
+      } catch(serverErr){
+        if(serverErr && serverErr.code === 'functions/failed-precondition') throw serverErr;
+        await db.collection('staffSignupRequests').doc(id).delete();
+      }
       item.remove();
       logActivity('New Staff Declined', name);
       refreshEmptyState();
