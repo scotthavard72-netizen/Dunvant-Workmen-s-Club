@@ -176,7 +176,7 @@
   // has passed. Events added in Manage What's On are merged in alongside.
   const CLUB_EVENTS = [
     { date: '2026-10-29', emoji: '🎃', title: 'Halloween Party', time: '6pm–7:30pm',
-      description: "Hosted by Dunvant Three Crosses AFC U8s. £6 a ticket, adults free — sweets, hot dogs, games, a DJ and a prize for the best fancy dress. Ticket details on the poster.",
+      description: "Hosted by Dunvant Three Crosses AFC U8s. £6 a ticket, adults free — sweets, hot dogs, games, a DJ and a prize for the best fancy dress. For tickets, ask at the bar or message the club on Facebook.",
       poster: 'assets/posters/halloween.jpg' },
     { date: '2026-11-14', emoji: '🕺', title: 'Daytime Disco for Grownups', time: '2pm–6pm',
       description: "Floor fillers from the 60s, 70s and 80s with DJ Jules. Tickets £8.",
@@ -211,6 +211,7 @@
     if(data.time) metaParts.push(data.time);
     if(data.description) metaParts.push(data.description);
 
+    const posterSrc = data.poster || data.posterThumb || '';
     return `
       <div class="event-row${soon ? ' soon' : ''}">
         <div class="event-date">
@@ -223,7 +224,7 @@
           ${data.facebookLink ? `<a class="event-fblink" href="${data.facebookLink}" target="_blank" rel="noopener">More on Facebook →</a>` : ''}
           ${badge ? `<div class="event-badge">${badge}</div>` : ''}
         </div>
-        ${data.poster ? `<a class="event-poster" href="${data.poster}" data-lightbox="events" title="${escapeHtml(data.title)}"><img src="${data.poster}" alt="${escapeHtml(data.title)} poster" loading="lazy"></a>` : '<div></div>'}
+        ${posterSrc ? `<a class="event-poster" href="${posterSrc}" data-lightbox="events"${data.posterFullId ? ` data-full-id="${data.posterFullId}"` : ''} title="${escapeHtml(data.title)}"><img src="${posterSrc}" alt="${escapeHtml(data.title)} poster" loading="lazy"></a>` : '<div></div>'}
       </div>
     `;
   }
@@ -255,6 +256,11 @@
     wrap.innerHTML = upcoming.map(renderEvent).join('');
     wrap.style.display = 'block';
   }
+  // Posters added in Manage What's On: tapping opens the full-size copy.
+  window.LIGHTBOX_FULL = async (id) => {
+    const doc = await db.collection('galleryImages').doc(id).get();
+    return doc.exists ? doc.data().image : null;
+  };
   loadEvents();
 
   const themeToggle = document.getElementById('theme-toggle');

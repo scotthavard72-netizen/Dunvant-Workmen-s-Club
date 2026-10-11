@@ -73,6 +73,10 @@
   .status.error{color:#c25a4d; font-weight:600;}
   a.back{display:inline-block; margin-top:24px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
   a.preview-link{display:inline-block; margin-bottom:20px; font-size:0.82rem; color:var(--brass); text-decoration:none; font-weight:600;}
+  .poster-input{font-size:0.84rem; padding:8px 0; border:none; background:none;}
+  .poster-preview img, .poster-current img{width:84px; height:110px; object-fit:cover; border-radius:4px; border:1px solid var(--line); display:block; margin-top:6px;}
+  .poster-current{display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;}
+  .poster-btn{font-family:'Inter', sans-serif; font-size:0.78rem; font-weight:600; background:none; border:1px solid var(--line); color:var(--muted); border-radius:6px; padding:7px 10px; cursor:pointer;}
 </style>
 </head>
 <body>
@@ -112,6 +116,12 @@
     <div class="event-row" style="grid-template-columns:1fr;">
       <div><label>Facebook link (optional)</label><input type="text" id="new-fblink" placeholder="https://facebook.com/..."></div>
     </div>
+    <div class="event-row" style="grid-template-columns:1fr;">
+      <div><label>Poster (optional)</label>
+        <input type="file" id="new-poster" accept="image/*" class="poster-input">
+        <div class="poster-preview" id="new-poster-preview"></div>
+      </div>
+    </div>
     <div class="btn-row">
       <button class="btn btn-create" onclick="addWhatsOnEvent()">Add Event</button>
       <button class="btn btn-cancel" onclick="hideAddForm()">Cancel</button>
@@ -122,11 +132,96 @@
   <a class="back" href="staff-hub.html">← Back to Staff Hub</a>
 </main>
 <script>
+  // Posters: a small copy is kept on the event (shown in the list), and the
+  // full-size one in galleryImages (opened when someone taps the poster).
+  function loadImage(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Couldn't read that image."));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("That doesn't look like an image."));
+        img.onload = () => resolve(img);
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  function toJpeg(img, maxSide, maxBytes){
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * scale);
+    c.height = Math.round(img.height * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    let q = 0.82, out = c.toDataURL('image/jpeg', q);
+    while(out.length > maxBytes && q > 0.35){ q -= 0.08; out = c.toDataURL('image/jpeg', q); }
+    return out;
+  }
+  async function preparePoster(file){
+    const img = await loadImage(file);
+    return { thumb: toJpeg(img, 420, 70000), full: toJpeg(img, 1600, 800000) };
+  }
+  async function savePosterImage(full){
+    const ref = db.collection('galleryImages').doc();
+    await ref.set({ image: full, kind: 'poster' });
+    return ref.id;
+  }
+  async function dropPosterImage(fullId){
+    if(fullId){ try{ await db.collection('galleryImages').doc(fullId).delete(); } catch(e){} }
+  }
+
+  let NEW_POSTER = null;
+  document.addEventListener('change', async (e) => {
+    if(e.target.id !== 'new-poster') return;
+    const prev = document.getElementById('new-poster-preview');
+    NEW_POSTER = null; prev.innerHTML = '';
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    prev.textContent = 'Getting it ready…';
+    try{
+      NEW_POSTER = await preparePoster(f);
+      prev.innerHTML = `<img src="${NEW_POSTER.thumb}" alt="Poster preview">`;
+    } catch(err){
+      prev.textContent = err.message;
+    }
+  });
+
+  async function changePoster(id, input){
+    const f = input.files && input.files[0];
+    if(!f) return;
+    const item = input.closest('.event-item');
+    const label = input.parentElement;
+    label.firstChild.textContent = 'Uploading…';
+    try{
+      const p = await preparePoster(f);
+      const fullId = await savePosterImage(p.full);
+      await db.collection('whatsOnEvents').doc(id).update({ posterThumb: p.thumb, posterFullId: fullId });
+      await dropPosterImage(item.dataset.posterFullId);
+      loadEvents();
+    } catch(e){
+      alert("Couldn't upload that poster — " + e.message);
+      label.firstChild.textContent = 'Change poster';
+    }
+  }
+
+  async function removePoster(id, btn){
+    if(!confirm('Remove the poster from this event?')) return;
+    const item = btn.closest('.event-item');
+    try{
+      await db.collection('whatsOnEvents').doc(id).update({ posterThumb: '', posterFullId: '' });
+      await dropPosterImage(item.dataset.posterFullId);
+      loadEvents();
+    } catch(e){
+      alert("Couldn't remove the poster — " + e.message);
+    }
+  }
+
   function makeEventItem(id, data){
     const isPast = data.date < new Date().toISOString().slice(0, 10);
     const div = document.createElement('div');
     div.className = 'event-item' + (isPast ? ' past' : '');
     div.dataset.docId = id;
+    div.dataset.posterFullId = data.posterFullId || '';
     div.innerHTML = `
       <div class="event-row">
         <div><label>Title ${isPast ? '<span class="past-tag">Past</span>' : ''}</label><input type="text" class="f-title" value="${data.title || ''}"></div>
@@ -141,6 +236,15 @@
       </div>
       <div class="event-row" style="grid-template-columns:1fr;">
         <div><label>Facebook link</label><input type="text" class="f-fblink" value="${data.facebookLink || ''}"></div>
+      </div>
+      <div class="event-row" style="grid-template-columns:1fr;">
+        <div><label>Poster</label>
+          <div class="poster-current">
+            ${data.posterThumb ? `<img src="${data.posterThumb}" alt="Poster">` : '<span style="font-size:0.82rem; color:var(--muted);">No poster yet.</span>'}
+            <label class="poster-btn">${data.posterThumb ? 'Change poster' : '+ Add poster'}<input type="file" accept="image/*" style="display:none;" onchange="changePoster('${id}', this)"></label>
+            ${data.posterThumb ? `<button class="poster-btn" onclick="removePoster('${id}', this)">Remove poster</button>` : ''}
+          </div>
+        </div>
       </div>
       <div class="row-actions">
         <button class="save-btn" onclick="saveEvent('${id}', this)">💾 Save Changes</button>
@@ -195,6 +299,7 @@
     if(!confirm(`Remove "${title}"? This can't be undone.`)) return;
     try{
       await db.collection('whatsOnEvents').doc(id).delete();
+      await dropPosterImage(item.dataset.posterFullId);
       item.remove();
     } catch(e){
       alert("Couldn't remove it — " + e.message);
@@ -208,6 +313,9 @@
   function hideAddForm(){
     document.getElementById('add-card').classList.add('hidden');
     ['new-title','new-date','new-time','new-emoji','new-desc','new-fblink'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('new-poster').value = '';
+    document.getElementById('new-poster-preview').innerHTML = '';
+    NEW_POSTER = null;
     document.getElementById('create-status').textContent = '';
   }
 
@@ -224,7 +332,13 @@
     statusEl.textContent = 'Adding…';
     statusEl.className = 'status';
     try{
+      let poster = {};
+      if(NEW_POSTER){
+        statusEl.textContent = 'Uploading the poster…';
+        poster = { posterThumb: NEW_POSTER.thumb, posterFullId: await savePosterImage(NEW_POSTER.full) };
+      }
       await db.collection('whatsOnEvents').add({
+        ...poster,
         title,
         date,
         time: document.getElementById('new-time').value.trim(),
