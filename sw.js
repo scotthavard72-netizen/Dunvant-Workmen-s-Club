@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dunvant-site-v25';
+const CACHE_NAME = 'dunvant-site-v26';
 const URLS_TO_CACHE = [
   "agm-planning.html",
   "backup-reminder.html",
@@ -49,7 +49,7 @@ const URLS_TO_CACHE = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE).catch(() => {}))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE.map((u) => new Request(u, { cache: 'reload' }))).catch(() => {}))
   );
   self.skipWaiting();
 });
@@ -72,8 +72,10 @@ self.addEventListener('fetch', (event) => {
   // needing a second refresh or a close-and-reopen. Only fall back to the
   // cached copy if there's no connection.
   if (event.request.mode === 'navigate') {
+    // cache: 'no-cache' makes the browser check with the server every time,
+    // instead of reusing a copy it saved earlier.
     event.respondWith(
-      fetch(event.request)
+      fetch(new Request(event.request, { cache: 'no-cache' }))
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
@@ -90,7 +92,7 @@ self.addEventListener('fetch', (event) => {
   // speed, and refresh the cache in the background for next time.
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
+      const fetchPromise = fetch(new Request(event.request, { cache: 'no-cache' })).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
