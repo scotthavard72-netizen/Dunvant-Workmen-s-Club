@@ -1307,15 +1307,16 @@
     else document.getElementById('admin-access-log').style.display = 'none';
   }
 
-  // Makeshift "notification" — since there's no real push notification system,
-  // this checks how recently the rota was published and flags the tile if it's new.
+  // Flags the Current Rota tile for 48 hours after a publish, and pops an
+  // alert once per publish if the app is open. (Phones also get a push from
+  // the server — same 'rota' tag, so the two never double up.)
   async function checkForFreshRota(){
     try{
-      const res = await fetch('current-rota.html');
-      if(!res.ok) return;
-      const text = await res.text();
-      const match = text.match(/const PUBLISHED_TIMESTAMP = "([^"]*)";/);
-      if(!match || !match[1]) return;
+      const doc = await db.collection('rota').doc('current').get();
+      if(!doc.exists) return;
+      const published = doc.data().publishedTimestamp || '';
+      const match = [null, published];
+      if(!match[1]) return;
       const hoursSince = (Date.now() - new Date(match[1]).getTime()) / (1000 * 60 * 60);
       if(hoursSince >= 0 && hoursSince < 48){
         const tile = [...document.querySelectorAll('#menu-items a')].find(a => a.getAttribute('href') === 'current-rota.html');

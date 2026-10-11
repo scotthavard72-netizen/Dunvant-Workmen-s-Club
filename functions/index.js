@@ -9,11 +9,14 @@
 //   • Shift covered       → push to the person who asked, and managers
 //   • Shift swap asked    → push to the colleague asked
 //   • Swap accepted/declined → push to the person who asked
+//   • Rota published      → push to every member of staff, listing their shifts
+//   • 6pm every evening   → push a reminder to anyone working tomorrow
 //
 // Push goes to every device that turned notifications on in Staff Hub
 // (saved in pushTokens). Email is the backup, sent from a Gmail account
 // set up with two secrets (see README in this folder).
-const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
@@ -296,3 +299,71 @@ exports.declineSignup = onCall(async (request) => {
   logger.info('Sign-up declined and login deleted', { by: me, uid });
   return { ok: true };
 });
+
+// "18:00" → "6pm", "11:30" → "11:30am", "23:59" → "midnight"
+function niceTime(t) {
+  if (!t) return '';
+  if (t === '23:59') return 'midnight';
+  const [h, m] = t.split(':').map(Number);
+  const suffix = h >= 12 ? 'pm' : 'am';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}${m ? ':' + String(m).padStart(2, '0') : ''}${suffix}`;
+}
+const shiftLabel = (s) => `${s.d || niceDate(s.fd)} ${niceTime(s.st)}–${niceTime(s.et)}${s.r === 'K' ? ' 🔑' : ''}`;
+
+// Today's date in the UK, as "2026-10-11"
+function ukDate(offsetDays) {
+  const d = new Date(Date.now() + (offsetDays || 0) * 86400000);
+  return d.toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+}
+
+exports.alertRotaPublished = onDocumentWritten(
+  { document: 'rota/{doc}' },
+  async (event) => {
+    if (event.params.doc !== 'current') return;
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    // Only a fresh publish — not an unpublish, and not a cover/swap name change.
+    if (!after || !after.publishedTimestamp) return;
+    if (before && before.publishedTimestamp === after.publishedTimestamp) return;
+    const shifts = after.shifts || [];
+    const staff = await staffList();
+    let sent = 0;
+    await Promise.all(staff.map(async (person) => {
+      const mine = shifts.filter((s) => sameName(s.n, person.name)).sort((a, b) => (a.fd || '').localeCompare(b.fd || ''));
+      const body = mine.length
+        ? `You're on ${mine.length === 1 ? '1 shift' : mine.length + ' shifts'}: ${mine.map(shiftLabel).join(', ')}`
+        : "You're not on this week's rota.";
+      try {
+        sent += await sendPush([person.uid], { title: '📅 New rota is out', body, page: 'current-rota.html', tag: 'rota' });
+      } catch (e) { logger.error('Rota push failed for ' + person.uid, e); }
+    }));
+    logger.info(`Rota published: push sent to ${sent} device(s)`);
+  }
+);
+
+exports.shiftReminders = onSchedule(
+  { schedule: '0 18 * * *', timeZone: 'Europe/London' },
+  async () => {
+    const doc = await db.collection('rota').doc('current').get();
+    if (!doc.exists) return;
+    const tomorrow = ukDate(1);
+    const shifts = (doc.data().shifts || []).filter((s) => s.fd === tomorrow && s.n);
+    if (!shifts.length) { logger.info('Shift reminders: nobody on tomorrow'); return; }
+    const staff = await staffList();
+    let sent = 0;
+    for (const person of staff) {
+      const mine = shifts.filter((s) => sameName(s.n, person.name)).sort((a, b) => (a.st || '').localeCompare(b.st || ''));
+      if (!mine.length) continue;
+      try {
+        sent += await sendPush([person.uid], {
+          title: '⏰ Shift tomorrow',
+          body: `You're on tomorrow, ${mine.map((s) => `${niceTime(s.st)}–${niceTime(s.et)}${s.r === 'K' ? ' (Keyholder)' : ''}`).join(' and ')}.`,
+          page: 'current-rota.html',
+          tag: 'shift-reminder'
+        });
+      } catch (e) { logger.error('Reminder push failed for ' + person.uid, e); }
+    }
+    logger.info(`Shift reminders: push sent to ${sent} device(s)`);
+  }
+);
